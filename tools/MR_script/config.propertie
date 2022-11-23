@@ -1,0 +1,66 @@
+#!/bin/bash
+#hadoop配置相关
+HADOOP_BIN=~/hadoop-szwg-client/hadoop-szwg-client/bin/hadoop
+#-m参数时候，需要用到该参数，必填
+HADOOP_UGI="your ugi"
+
+######### 本地配置相关参数 #########
+PROJECT_PATH=$(cd `dirname $0`; pwd)
+
+#建库工具所在文件夹名字，绝对路径${PROJECT_PATH}/${TOOLS_LOCAL_LIB_NAME},打包之后名字会是{TOOLS_LOCAL_LIB_NAME}.tar.gz
+TOOLS_LOCAL_LIB_NAME=puck_tools
+#建库工具打包后在hadoop上存放的目录
+HADOOP_TOOL_LIB=/user/mms/personal/yinjie06
+#建库完成后，下载索引到本地目录
+DOWNLOAD_INDEX_LIB=${PROJECT_PATH}/"$(date "+%Y-%m-%d-GNOIMI-Index")"
+
+######### MR 配置相关 #########
+#建库特征所在的路径
+RECALL_FEA_LIB=/user/mms/personal/yinjie06/test
+#建库build过程的输出路径
+RECALL_FEA_BUILD_OUTPUT=${RECALL_FEA_LIB}_build_info
+#建库merge过程在输出路径
+RECALL_FEA_MERGE_OUTPUT=${RECALL_FEA_LIB}_index
+#Puck支持增量建库，根据配置参数分组，该过程需要对merge过程的输出进行标识重命名
+#在download索引之前，需要对merge的输出做一个分组和重命名，数据暂时存储在如下目录
+RECALL_FEA_MERGE_OUTPUT_TEMP=${RECALL_FEA_MERGE_OUTPUT}/temp
+
+######### 索引相关 #########
+#MR建库需要的索引文件列表
+INDEX_CODEBOOKS_LIST="GNOIMI_coarse.dat,GNOIMI_fine.dat,index.dat,filter_codebook.dat,learn_codebooks.dat"
+#建库产出的数据文件
+INDEX_FILES_LIST="cell_assign.dat,all_data.url,pq_data.dat,filter_data.dat,"
+
+######### MR任务的参数 #########
+JOB_TAG="hadoop-build-tools"
+#支持多个bs同时建库
+BS_NUMBER="1"
+#merge过程的task个数，会生成的索引文件part数
+MERGE_TASK_NUMBER=$((${BS_NUMBER}*10))
+#echo ${MERGE_TASK_NUMBER}
+
+#建库过程用到的命令
+BUILD_CMD="cd puck_tools && ./bin/distribute_build_puck --flagfile=conf/puck_train.conf"
+#数据随机分片
+SPLIT_BS_SCRIPT="./split_bs.py"
+SPLIT_BS_CMD="python ${SPLIT_BS_SCRIPT} ${MERGE_TASK_NUMBER}"
+#merge过程用到的命令
+MERGE_CMD="cd puck_tools && ./bin/distribute_merge_puck --flagfile=conf/puck_train.conf"
+
+
+################   本地训练的文件相关(与puck_gflags.cpp中保持一致)  ####
+INDEX_PATH_GFLAG="puck_index"
+coarse_code_book_file_name="GNOIMI_coarse.dat"
+fine_code_book_file_name="GNOIMI_fine.dat"
+cell_assign_file_name="cell_assign.dat"
+key_file_name="all_data.url"
+index_file_name="index.dat"
+
+pq_data_file_name="pq_data.dat"
+pq_codebook_file_name="learn_codebooks.dat"
+filter_codebook_file_name="filter_codebook.dat"
+filter_data_file_name="filter_data.dat"
+
+INDEX_CODEBOOKS_LIST="${coarse_code_book_file_name},${fine_code_book_file_name},${filter_codebook_file_name},${pq_codebook_file_name},${index_file_name}"
+#建库产出的数据文件
+INDEX_FILES_LIST="${cell_assign_file_name},${key_file_name},${pq_data_file_name},${filter_data_file_name}"

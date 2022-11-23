@@ -1,0 +1,86 @@
+/***************************************************************************
+*
+* Copyright (c) 2018 Baidu.com, Inc. All Rights Reserved
+*
+************************************************************************/
+
+/**
+* @File Name : train_gnoimi.cpp
+* @Author : yinjie06
+* @Mail : yinjie06@baidu.com
+* @Created Time : 2019-04-16 15:35:30
+* @Brief :
+**/
+
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <base/logging.h>
+#include "tinker/tinker_index.h"
+#include "gflags/puck_gflags.h"
+#include "puck/puck_index.h"
+
+//获取文件行数，index初始化时候通过key file确定样本总个数
+int getFileLineCnt(const char* fileName) {
+    struct stat st;
+
+    if (stat(fileName, &st) != 0) {
+        return 0;
+    }
+
+    char buff[1024];
+    sprintf(buff, "wc -l %s", fileName);
+
+    FILE* fstream = nullptr;
+    fstream = popen(buff, "r");
+    int total_line_cnt = -1;
+
+    if (fstream) {
+        memset(buff, 0x00, sizeof(buff));
+
+        if (fgets(buff, sizeof(buff), fstream)) {
+            int index = strchr((const char*)buff, ' ') - buff;
+            buff[index] = '\0';
+            total_line_cnt =  atoi(buff);
+        }
+    }
+
+    if (fstream) {
+        pclose(fstream);
+    }
+
+    return total_line_cnt;
+}
+
+int main(int argc, char** argv) {
+    com_loadlog("./conf", "puck_log.conf");
+    google::ParseCommandLineFlags(&argc, &argv, true);
+
+    std::cout << "start to train\n";
+    puck::IndexConf conf;
+
+    std::unique_ptr<puck::HierarchicalCluster> cluster;
+
+    if (conf.index_version == 2) {
+        cluster.reset(new puck::TinkerIndex());
+    } else if (conf.index_version == 1 && conf.whether_filter == true) {
+        cluster.reset(new puck::PuckIndex());
+    } else if (conf.index_version == 1 && conf.whether_filter == false) {
+        cluster.reset(new puck::HierarchicalCluster());
+    }
+
+    //uint32_t total_cnt = getFileLineCnt(conf.key_file_name.c_str());
+    //cluster->_conf.total_point_count = total_cnt;
+    cluster->train();
+    //cluster->save_coodbooks();
+
+    std::cout << "train Suc.\n";
+
+    //std::cout << "start to build\n";
+
+    //cluster->build();
+    //cluster->save_index();
+    return 0;
+}
+/* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
+

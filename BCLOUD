@@ -1,0 +1,64 @@
+#edit-mode: -*- python -*-
+#coding:gbk
+
+WORKROOT('../../../')
+
+#platform, if not write PLATFORM('xxx') in BCLOUD file, default is 'redhat4u3'
+#PLATFORM('centos4u3')
+
+#gcc version, default 'gcc'
+COMPILER('gcc82')
+if GLOBAL_GCC_VERSION() == 'gcc82':
+    CPPFLAGS('-Wno-error=sizeof-pointer-div')
+    CPPFLAGS('-Wno-error=cast-function-type')
+    CPPFLAGS('-Wno-error=stringop-truncation')
+    CPPFLAGS('-Wno-error=unused-parameter')
+    CPPFLAGS('-Wno-cast-function-type')
+    CPPFLAGS('-Wno-error=sign-compare')
+
+
+CPPFLAGS('-std=c++11 -Wall -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g')
+
+CONFIGS('baidu/third-party/yael@yael_v438@git_branch')
+CONFIGS('baidu/base/common@stable')
+CONFIGS('baidu/third-party/swig@master@git_branch')
+CONFIGS("baidu/third-party/cpython@cpython_3.6_3-6-0-0_GEN_PD_BL@git_tag")
+
+#link flags
+LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
+
+#-I path
+INCPATHS('./src ./pyapi_wrapper ./include src/tinker/method ')
+
+INCPATHS('$OUT_ROOT/baidu/third-party/cpython/output/include/python3.6m/ ')
+
+GenSources('./swig_run.sh', ' ', './pyapi_wrapper/py_puck_api.i ./pyapi_wrapper/numpy.i ./swig_run.sh ../../../baidu/third-party/swig')
+
+tinker_sources=' src/tinker/method/hnsw.cc src/tinker/method/hnsw_distfunc_opt.cc src/tinker/tinker_index.cpp '
+puck_source=' src/puck/puck_index.cpp src/puck/quantization.cpp src/puck/utils_simd.cpp '
+user_sources=GLOB('./src/*.cpp ./src/gflags/*.cpp ./src/hierarchical_cluster/*.cpp') + tinker_sources + puck_source
+
+#release headers  move result to output
+HEADERS('src/*.h', '$INC')
+HEADERS('src/tinker/*.h ', '$INC/tinker')
+HEADERS('src/gflags/*.h ', '$INC/gflags')
+HEADERS('src/tinker/space/*.h ', '$INC/tinker/space')
+HEADERS('src/tinker/method/*.h ', '$INC/tinker/method')
+HEADERS('src/puck/*.h ', '$INC/puck')
+HEADERS('src/hierarchical_cluster/*.h ', '$INC/hierarchical_cluster')
+
+
+#release files except headers
+OUTPUT(GLOB_GEN_SRCS("py_puck_api/py_puck_api.py"), "$OUT/lib")
+
+#.a
+StaticLibrary('puck', Sources(user_sources, UseUbrpcgen(False)))
+
+#py. so
+py_lib_sources=GLOB(' ./src/*.cpp ./src/gflags/*.cpp  ./src/hierarchical_cluster/*.cpp src/puck/puck_index.cpp src/puck/quantization.cpp src/puck/utils_simd.cpp') + tinker_sources
+py_lib_sources+= ' pyapi_wrapper/py_gnoimi_api_wrapper.cpp '
+SharedLibrary('_py_puck_api', LinkDeps(True), Sources(py_lib_sources + GLOB_GEN_SRCS(' py_puck_api/py_puck_api.cpp ')))
+
+
+Directory("tools")
+Directory("demo")

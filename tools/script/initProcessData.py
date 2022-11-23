@@ -1,0 +1,154 @@
+# -*- coding: UTF-8 -*-
+################################################################################
+#
+# Copyright (c) 2016 Baidu.com, Inc. All Rights Reserved
+#
+################################################################################
+"""
+@file: initProcessData.py
+@author: yinjie06(yinjie06@baidu.com)
+@date: 2018-04-22 15:57
+@brief: init feature file according to gnoimi-train.conf
+"""
+import struct
+import sys
+import time
+import getopt
+import re
+import os
+import math
+import shutil
+import fileinput
+import numpy as np
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+
+def _usage():
+    print '''
+    py initProcessData.py [-f new feature file] [-h help]
+    
+    options:
+        -f use for input file name
+        -h use for help
+    '''
+
+
+class InitProcessData(object):
+    """初始化."""
+
+    def __init__(self):
+        train_conf_file = './conf/puck_train.conf'
+        train_conf_info = open(train_conf_file, 'rb').read()
+
+        # 默认输入路径: mid-data/gnoimi_index，如果不存在则创建
+        if not os.path.exists('mid-data'):
+            os.mkdir('mid-data')
+        if not os.path.exists('puck_index'):
+            os.mkdir('puck_index')
+
+        # all_feature_file_name
+        all_feature_file_name = "./puck_index/all_data.feat.bin" 
+        conf_all_feature_file_name = re.findall(r'--feature_file_name=(\S+)', train_conf_info)
+        if len(conf_all_feature_file_name) == 1:
+            all_feature_file_name = conf_all_feature_file_name[0] 
+        self.all_feature_file = open(all_feature_file_name, 'wb')
+        print all_feature_file_name 
+        
+        # keys_file_name
+        keys_file_name = "./puck_index/all_data.url"
+        conf_keys_file_name = re.findall(r'--key_file_name=(\S+)', train_conf_info)
+        if len(conf_keys_file_name) == 1:
+            keys_file_name = conf_keys_file_name[0] 
+        self.keys_file = open(keys_file_name, 'wb')
+        print keys_file_name
+
+        # whetherNorm
+        self.whetherNorm = 1
+        whetherNorm = re.findall(r'--whether_norm=(\d+)', train_conf_info)
+        if len(whetherNorm) == 1:
+            self.whetherNorm = int(whetherNorm[0])
+        print self.whetherNorm
+
+        self.ip2cos = 0
+        ip2cos = re.findall(r'--ip2cos=(\d+)', train_conf_info)
+        if len(ip2cos) == 1:
+            self.ip2cos = int(ip2cos[0])
+        if self.ip2cos == 1:
+            self.whetherNorm = 0
+        print self.ip2cos
+            
+        # feature_dim
+        self.feature_dim = 256
+        feature_dim = re.findall(r'--feature_dim=(\d+)', train_conf_info)
+        if len(feature_dim) == 1:
+            self.feature_dim = int(feature_dim[0])
+        print self.feature_dim
+
+    def init_process(self, feature_file):
+        """格式化输出特征文件."""
+        all_line = 0
+        valid_line = 0
+        for line in fileinput.input(feature_file):
+            all_line += 1
+            fields = line.strip().split('\t')
+            if len(fields) < 2:
+                continue
+            
+            feat = fields[-1].split(' ')
+            if len(feat) != self.feature_dim:
+                print "feature dim error, true dim = %d feature dim in conf = %d" % (len(feat), self.feature_dim) 
+                return -1
+            feat = np.array(map(float, feat))
+            if (self.ip2cos > 1):
+                return -1
+            elif (self.ip2cos == 1):
+                norm = np.dot(feat, feat)
+                if norm > 1.0 or norm < 0.00001:
+                    return -1
+                feat = np.append(feat, math.sqrt(1.0 - norm))
+            # 归一化
+            elif(self.whetherNorm):
+                if(np.sqrt(np.dot(feat, feat)) < 0.00001):
+                    continue
+                feat = feat / np.sqrt(np.dot(feat, feat))
+            valid_line += 1
+            self.keys_file.write(fields[0])
+            self.keys_file.write('\n')
+            
+            buf = struct.pack('i', len(feat))
+            self.all_feature_file.write(buf)
+            buf = struct.pack('f' * len(feat), *feat)
+            self.all_feature_file.write(buf)
+
+        print 'all=%d, valid=%d' % (all_line, valid_line)
+        self.all_feature_file.close()
+        self.keys_file.close()
+        return 0
+
+if __name__ == '__main__':
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'f:h')
+        if len(opts) < 1:
+            _usage()
+            sys.exit(1)
+    except getopt.GetoptError as error:
+        print 'params error! Error message: ' + error
+        _usage()
+        sys.exit(1)
+    input_file = ''
+    ret = 0 
+    for opt, val in opts:
+        print opt
+        if opt == '-h':
+            _usage()
+            sys.exit(0)
+        elif opt == '-f':
+            if not os.path.exists(val):
+                sys.exit(2)
+            init = InitProcessData()
+            ret = init.init_process(val)
+        else:
+            _usage()
+            sys.exit(1)
+    sys.exit(ret)

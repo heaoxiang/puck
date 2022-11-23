@@ -1,0 +1,35 @@
+#edit-mode: -*- python -*-
+#coding:gbk
+
+ImportConfigsFrom('../')
+
+#platform, if not write PLATFORM('xxx') in BCLOUD file, default is 'redhat4u3'
+#PLATFORM('centos4u3')
+
+#gcc version, default 'gcc'
+COMPILER('gcc82')
+if GLOBAL_GCC_VERSION() == 'gcc82':
+    CPPFLAGS('-Wno-error=sizeof-pointer-div')
+    CPPFLAGS('-Wno-error=cast-function-type')
+    CPPFLAGS('-Wno-error=stringop-truncation')
+    CPPFLAGS('-Wno-error=unused-parameter')
+    CPPFLAGS('-Wno-cast-function-type')
+    CPPFLAGS('-Wno-error=sign-compare')
+
+
+CPPFLAGS('-std=c++11 -Wall -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g')
+
+#link flags
+LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
+
+#-I path
+INCPATHS('../src src/tinker/method ')
+
+tinker_sources=' ../src/tinker/method/hnsw.cc ../src/tinker/method/hnsw_distfunc_opt.cc ../src/tinker/tinker_index.cpp '
+puck_source=' ../src/puck/puck_index.cpp ../src/puck/quantization.cpp ../src/puck/utils_simd.cpp '
+search_client=GLOB('search_client.cpp ../src/gflags/*.cpp ../src/hierarchical_cluster/*.cpp ../src/*.cpp ') + puck_source + tinker_sources
+
+#bin
+Application('search_client', Sources(search_client))
+
+OUTPUT(GLOB('./conf/*'), '$OUT/conf/')

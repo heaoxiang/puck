@@ -1,0 +1,46 @@
+#edit-mode: -*- python -*-
+#coding:gbk
+
+ImportConfigsFrom('../')
+
+#platform, if not write PLATFORM('xxx') in BCLOUD file, default is 'redhat4u3'
+#PLATFORM('centos4u3')
+
+#gcc version, default 'gcc'
+COMPILER('gcc82')
+if GLOBAL_GCC_VERSION() == 'gcc82':
+    CPPFLAGS('-Wno-error=sizeof-pointer-div')
+    CPPFLAGS('-Wno-error=cast-function-type')
+    CPPFLAGS('-Wno-error=stringop-truncation')
+    CPPFLAGS('-Wno-error=unused-parameter')
+    CPPFLAGS('-Wno-cast-function-type')
+    CPPFLAGS('-Wno-error=sign-compare')
+
+
+CPPFLAGS('-std=c++11 -Wall -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g')
+
+#link flags
+LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
+
+#-I path
+INCPATHS('../src src/tinker/method ')
+
+tinker_sources=' ../src/tinker/method/hnsw.cc ../src/tinker/method/hnsw_distfunc_opt.cc ../src/tinker/tinker_index.cpp '
+puck_source=' ../src/puck/puck_index.cpp ../src/puck/quantization.cpp ../src/puck/utils_simd.cpp '
+train_source=GLOB('train.cpp ../src/gflags/*.cpp ../src/hierarchical_cluster/*.cpp ../src/search_context.cpp ') + puck_source + tinker_sources
+build_source=GLOB('build.cpp ../src/gflags/*.cpp ../src/hierarchical_cluster/*.cpp ../src/search_context.cpp ') + puck_source + tinker_sources
+
+mr_build_source=GLOB('distribute_build_gnoimi.cpp ../src/gflags/*.cpp ../src/hierarchical_cluster/*.cpp  ../src/search_context.cpp ') + puck_source #+ tinker_sources
+mr_merge_source=GLOB('distribute_merge_index.cpp ../src/gflags/*.cpp ../src/hierarchical_cluster/*.cpp  ../src/search_context.cpp ') #+ puck_source #+ tinker_sources
+
+#binl
+Application('train', Sources(train_source))
+Application('build', Sources(build_source))
+Application('distribute_build_puck', Sources(mr_build_source))
+Application('distribute_merge_puck', Sources(mr_merge_source))
+
+OUTPUT(GLOB('./conf/*'), '$OUT/build_tools/conf/')
+OUTPUT(GLOB('./script/*'), '$OUT/build_tools/script/')
+OUTPUT(GLOB('./MR_script/*'), '$OUT/MR_build_tools/')
+
+StaticLibrary('gnoimi-train', Sources(train_source, UseUbrpcgen(False)))

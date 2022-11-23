@@ -1,0 +1,204 @@
+/***********************************************************************
+ * Copyright (c) 2021 Baidu.com, Inc. All Rights Reserved
+ * @file    tinker_index.cpp
+ * @author  yinjie06(yinjie06@baidu.com)
+ * @date    2022-05-16 10:34
+ * @brief
+ ***********************************************************************/
+#include <queue>
+#include <memory>
+/////yael库
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <vector.h>
+#include <matrix.h>
+#ifdef __cplusplus
+}
+#endif
+
+#include "tinker/tinker_index.h"
+#include "gflags/puck_gflags.h"
+#include "search_context.h"
+#include "hierarchical_cluster/max_heap.h"
+namespace puck {
+
+TinkerIndex::TinkerIndex() {
+    std::vector<std::string> buildParams;
+    int tinker_neighborhood = puck::FLAGS_tinker_neighborhood;
+    std::string m_str = "M=" + std::to_string(tinker_neighborhood);
+    buildParams.push_back(m_str);
+    int construction = puck::FLAGS_tinker_construction;
+    std::string construction_str = "efConstruction=" + std::to_string(construction);
+    buildParams.push_back(construction_str);
+    int indexThreadQty = puck::FLAGS_context_initial_pool_size;
+    buildParams.push_back("indexThreadQty=" + std::to_string(indexThreadQty));
+    _any_params.reset(new similarity::AnyParams(buildParams));
+
+    _space.reset(new similarity::SpaceLp<float>(2));
+}
+
+int TinkerIndex::search_top1_fine_cluster(puck::SearchContext* context, const float* feature) {
+
+    auto& search_cell_data = context->get_search_cell_data();
+    float* cluster_inner_product = search_cell_data.cluster_inner_product;
+
+    fmat_mul_full(_fine_vocab, feature, _conf.gnoimi_fine_cells_count, 1, _conf.feature_dim,
+                  "TN", cluster_inner_product);
+    puck::MaxHeap gnoimi_heap(_conf.gnoimi_fine_cells_count, search_cell_data.fine_distance,
+                              search_cell_data.fine_tag);
+
+    for (uint32_t k = 0; k < _conf.gnoimi_fine_cells_count; ++k) {
+        gnoimi_heap.max_heap_update(-cluster_inner_product[k], k);
+    }
+
+    gnoimi_heap.reorder();
+
+    std::pair<float, int> nearest_cell;
+    nearest_cell.first = 1 << 20;
+
+    //计算一级聚类中心的距离,使用最大堆
+    float* coarse_distance = search_cell_data.coarse_distance;
+    uint32_t* coarse_tag = search_cell_data.coarse_tag;
+
+    for (uint32_t l = 0; l < _conf.gnoimi_search_cells; ++l) {
+        int coarse_id = coarse_tag[l];
+
+        //计算query与当前一级聚类中心下cell的距离
+        auto* cur_fine_cluster_list = _coarse_clusters[coarse_id].fine_cell_list;
+        //uint32_t updated_fine_cnt = 0;
+        float min_dist = _coarse_clusters[coarse_id].min_dist_offset + coarse_distance[l];
+        //const float* cur_stationary_cell_dist = _stationary_cell_dist + coarse_id *
+        //                                        _conf.gnoimi_fine_cells_count;
+        float max_stationary_dist = nearest_cell.first - coarse_distance[l] - search_cell_data.fine_distance[0];
+
+        for (uint32_t idx = 0; idx < _conf.gnoimi_fine_cells_count; ++idx) {
+
+            if (search_cell_data.fine_distance[idx] + min_dist >= nearest_cell.first) {
+                //LOG(NOTICE)<<l<<" "<<idx<<" break;";
+                break;
+            }
+
+            uint32_t k = search_cell_data.fine_tag[idx];
+
+            if (cur_fine_cluster_list[k].stationary_cell_dist >= max_stationary_dist) {
+                continue;
+            }
+
+            float temp_dist = coarse_distance[l] + cur_fine_cluster_list[k].stationary_cell_dist +
+                              search_cell_data.fine_distance[idx];
+
+
+            if (temp_dist < nearest_cell.first) {
+                nearest_cell.first = temp_dist;
+                nearest_cell.second = coarse_id * _conf.gnoimi_fine_cells_count + k;
+            }
+        }
+    }
+
+    return nearest_cell.second;
+}
+
+int TinkerIndex::search(const float* query_feature, const int topk, float* distance, uint32_t* local_ids) {
+    if (topk > _conf.filter_topk) {
+        LOG(ERROR) << "topk should <= filter_topk, filter_topk = " << _conf.filter_topk;
+        return -1;
+    }
+
+    DataHandler<SearchContext> context(_context_pool);
+
+    if (0 != context->reset(_conf)) {
+        return -1;
+    }
+
+    const float* feature = normalization(context.get(), query_feature);
+    //输出query与一级聚类中心的top-search-cell个ID和距离
+    int ret = search_nearest_coarse_cluster(context.get(), feature,
+                                            _conf.gnoimi_search_cells);
+
+    if (ret != 0) {
+        return ret;
+    }
+
+    int nearest_cell_id = search_top1_fine_cluster(context.get(), feature);
+
+    const auto* cur_fine_cluster = get_fine_cluster(nearest_cell_id);
+    std::vector<int> eps;
+
+    for (auto i = cur_fine_cluster->memory_idx_start; i < (cur_fine_cluster + 1)->memory_idx_start; ++i) {
+        eps.push_back(i);
+    }
+
+    std::priority_queue<std::pair<float, int>> closest_dist_queuei;
+    _tinker_index->SearchOld_level0(feature, _conf.feature_dim,
+                                    std::max(_conf.tinker_search_range, (uint32_t)topk),
+                                    eps, closest_dist_queuei);
+
+    while (closest_dist_queuei.size() > topk) {
+        closest_dist_queuei.pop();
+    }
+
+
+    while (!closest_dist_queuei.empty()) {
+        int idx = closest_dist_queuei.size() - 1;
+        int cur_memory_id = closest_dist_queuei.top().second;
+        float top_dist = closest_dist_queuei.top().first;
+        distance[idx] = top_dist;
+        local_ids[idx] = _memory_to_local[cur_memory_id];
+        closest_dist_queuei.pop();
+    }
+
+    return 0;
+}
+int TinkerIndex::read_feature_index(uint32_t* local_to_memory_idx) {
+    (void)local_to_memory_idx;
+    std::string tinker_index_file = _conf.index_path + "/" + puck::FLAGS_tinker_file_name;
+    LOG(NOTICE) << "tinker_index_file = " << tinker_index_file;
+    similarity::ObjectVector object_vector;
+    _tinker_index.reset(new similarity::Hnsw<float>(*_space.get(), object_vector));
+    _tinker_index->LoadIndex(tinker_index_file);
+    return 0;
+}
+int TinkerIndex::build() {
+    this->HierarchicalCluster::build();
+
+    uint32_t cell_cnt = _conf.gnoimi_coarse_cells_count * _conf.gnoimi_fine_cells_count;
+    std::vector<uint32_t> cell_start_memory_idx(cell_cnt + 1, _conf.total_point_count);
+
+    std::vector<uint32_t> local_to_memory_idx(_conf.total_point_count);
+    //读取local idx，转换memory idx
+    convert_local_to_memory_idx(cell_start_memory_idx.data(), local_to_memory_idx.data());
+
+
+    similarity::ObjectVector object_data(_conf.total_point_count);
+
+    size_t datalength = _conf.feature_dim * sizeof(float);
+
+    std::ifstream data_stream;
+    data_stream.open(_conf.feature_file_name.c_str(), std::ios::binary);
+    std::vector<float> temp_data_fea(_conf.feature_dim);
+    int feature_dim = -1;
+
+    for (uint64_t i = 0; i < local_to_memory_idx.size(); ++i) {
+        data_stream.read((char*)&feature_dim, sizeof(int));
+
+        if (feature_dim != (int)_conf.feature_dim) {
+            LOG(NOTICE) << "read " << _conf.feature_file_name << " error.";
+            return -1;
+        }
+
+        data_stream.read((char*)temp_data_fea.data(), sizeof(float) * _conf.feature_dim);
+        uint32_t memory_idx = local_to_memory_idx[i];
+
+        similarity::Object* cur_object = new similarity::Object(memory_idx, memory_idx, datalength,
+                (void*)(temp_data_fea.data()));
+        object_data[memory_idx] = cur_object;
+    }
+
+    _tinker_index.reset(new similarity::Hnsw<float>(*_space.get(), object_data));
+    _tinker_index->CreateIndex(*_any_params.get());
+    std::string tinker_index_file = _conf.index_path + "/" + puck::FLAGS_tinker_file_name;
+    _tinker_index->SaveIndex(tinker_index_file);
+    return 0;
+}
+}//tinker
