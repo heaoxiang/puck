@@ -27,7 +27,7 @@ public:
      * @brief 插入队列，如果大于堆顶元素直接返回0，否则插入队尾并判断是否进行调整，返回1
      * @@param [in] distance : 距离
      * @@param [in] cell : cell的指针
-     * @@return （uint32_t）入队的cell个数
+     * @@return （uint32_t）:入队的cell个数
      **/
     uint32_t push(const float distance, FineCluster* cell);
 

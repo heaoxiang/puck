@@ -6,7 +6,7 @@
  * @brief
  ***********************************************************************/
 #include <gflags/gflags.h>
-
+#include "index.h"
 #include "py_gnoimi_api_wrapper.h"
 #include "gflags/puck_gflags.h"
 #include "puck/puck_index.h"
@@ -53,9 +53,11 @@ int PySearcher::init() {
     _index.reset(new puck::Searcher());
     int ret = _index->puck::Searcher::init();
     _dim = _index->get_conf().feature_dim;
-    if (_index->get_conf().ip2cos){
+
+    if (_index->get_conf().ip2cos) {
         --_dim;
     }
+
     return ret;
 }
 
@@ -103,12 +105,18 @@ inline void ParallelFor(size_t start, size_t end, size_t numThreads, Function fn
     }
 }
 
-int PySearcher::search(uint32_t n, const float* query_fea, const int topk, float* distance, uint32_t* labels) {
-
+int PySearcher::search(uint32_t n, const float* query_fea, const int topk, float* distance,
+                       uint32_t* labels) {
+    puck::Request request;
+    puck::Response response;
+    request.topk = topk;
     ParallelFor(0, n, puck::FLAGS_context_initial_pool_size, [&](int id, int threadId) {
         (void)threadId;
-        const float* cur_query = query_fea + id * _dim;
-        _index->search(cur_query, topk, distance + id * topk, labels + id * topk);
+        request.feature = query_fea + id * _dim;
+
+        response.distance = distance + id * topk;
+        response.local_idx = labels + id * topk;
+        _index->search(&request, &response);
     });
 
     return 0;

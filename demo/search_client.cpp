@@ -118,29 +118,36 @@ int main(int argc, char** argv) {
     }
 
     char buff[1024] = {0};
-    std::unique_ptr<float[]> distance(new float[searcher->get_conf().topk]);
-    std::unique_ptr<uint32_t[]> labels(new uint32_t[searcher->get_conf().topk]);
+    puck::Request request;
+    puck::Response response;
+    request.topk = searcher->get_conf().topk;
+
+    response.distance = new float[request.topk];
+    response.local_idx = new uint32_t[request.topk];
 
     for (int i = 0; i < item_count; ++i) {
-        ret = searcher->search(in_data[i].data(), searcher->get_conf().topk, distance.get(), labels.get());
+        request.feature = in_data[i].data();
+
+        ret = searcher->search(&request, &response);
 
         if (ret != 0) {
             LOG(ERROR) << "search item " << i << " error" << ret;
             break;
         }
 
-        for (int j = 0; j < (int)searcher->get_conf().topk; j ++) {
+        for (int j = 0; j < (int)request.topk; j ++) {
             char* p = buff;
-            std::string lable = searcher->get_label(labels[j]);
+            std::string lable = searcher->get_label(response.local_idx[j]);
             snprintf(p, 1024, "%s\t%s\t%f", pic_name[i].c_str(),
-                     //labels[j],
                      lable.c_str(),
-                     distance[j]);
+                     response.distance[j]);
 
             fprintf(pf, "%s\n", buff);
         }
     }
 
+    delete [] response.distance;
+    delete [] response.local_idx;
     fclose(pf);
 
     return 0;

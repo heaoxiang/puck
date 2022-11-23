@@ -99,9 +99,9 @@ int TinkerIndex::search_top1_fine_cluster(puck::SearchContext* context, const fl
     return nearest_cell.second;
 }
 
-int TinkerIndex::search(const float* query_feature, const int topk, float* distance, uint32_t* local_ids) {
-    if (topk > _conf.filter_topk) {
-        LOG(ERROR) << "topk should <= filter_topk, filter_topk = " << _conf.filter_topk;
+int TinkerIndex::search(Request* request, Response* response) {
+    if (request->topk > _conf.topk || request->feature == nullptr) {
+        LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk <<", or feature is nullptr";
         return -1;
     }
 
@@ -111,7 +111,7 @@ int TinkerIndex::search(const float* query_feature, const int topk, float* dista
         return -1;
     }
 
-    const float* feature = normalization(context.get(), query_feature);
+    const float* feature = normalization(context.get(), request->feature);
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
                                             _conf.gnoimi_search_cells);
@@ -131,25 +131,25 @@ int TinkerIndex::search(const float* query_feature, const int topk, float* dista
 
     std::priority_queue<std::pair<float, int>> closest_dist_queuei;
     _tinker_index->SearchOld_level0(feature, _conf.feature_dim,
-                                    std::max(_conf.tinker_search_range, (uint32_t)topk),
+                                    std::max(_conf.tinker_search_range, (uint32_t)request->topk),
                                     eps, closest_dist_queuei);
 
-    while (closest_dist_queuei.size() > topk) {
+    while (closest_dist_queuei.size() > request->topk) {
         closest_dist_queuei.pop();
     }
-
 
     while (!closest_dist_queuei.empty()) {
         int idx = closest_dist_queuei.size() - 1;
         int cur_memory_id = closest_dist_queuei.top().second;
         float top_dist = closest_dist_queuei.top().first;
-        distance[idx] = top_dist;
-        local_ids[idx] = _memory_to_local[cur_memory_id];
+        response->distance[idx] = top_dist;
+        response->local_idx[idx] = _memory_to_local[cur_memory_id];
         closest_dist_queuei.pop();
     }
 
     return 0;
 }
+
 int TinkerIndex::read_feature_index(uint32_t* local_to_memory_idx) {
     (void)local_to_memory_idx;
     std::string tinker_index_file = _conf.index_path + "/" + puck::FLAGS_tinker_file_name;

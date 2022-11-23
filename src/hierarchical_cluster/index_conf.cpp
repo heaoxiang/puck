@@ -144,16 +144,19 @@ int IndexConf::adaptive_search_param() {
     if (index_version == 2) {
         tinker_search_range = FLAGS_tinker_search_range;
         google::CommandLineFlagInfo info;
+
         //如果没有设置，更新检索参数（与topK有关）
         if (google::GetCommandLineFlagInfo("tinker_search_range", &info) && info.is_default) {
             tinker_search_range = 5 * topk;
         }
+
         //Tinker的检索一级聚类中心的个数很少，20足矣
         if (google::GetCommandLineFlagInfo("gnoimi_search_cells", &info) && info.is_default) {
             gnoimi_search_cells = std::min(20, (int)gnoimi_coarse_cells_count);
         }
     } else {
         google::CommandLineFlagInfo info;
+
         //如果没有设置filter_topk，更新filter_topk，取值与topk有关
         if (google::GetCommandLineFlagInfo("filter_topk", &info) && info.is_default) {
             filter_topk = topk * 11;

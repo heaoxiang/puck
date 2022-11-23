@@ -15,11 +15,15 @@ namespace puck {
 class Searcher {
 public:
     int init();
-    //int search(uint32_t n, const float* query_fea, float* distance, uint32_t* labels);
-    //static int batch_search(const ThreadSearchParam&, void* p);
-    int search(const float* query_fea, const int topk, float* distance, uint32_t* labels) {
-        return _index->search(query_fea, topk, distance, labels);
 
+    /*
+     * @brief 检索最近的topk个样本
+     * @@param [in] request : request
+     * @@param [out] response : response
+     * @@return (int) : 正常返回0，错误返回值<0
+     **/
+    virtual int search(Request* request, Response* response) {
+        return _index->search(request, response);
     }
     const IndexConf get_conf() {
         return _index->_conf;

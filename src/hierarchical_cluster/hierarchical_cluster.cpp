@@ -688,10 +688,9 @@ int HierarchicalCluster::search_nearest_fine_cluster(SearchContext* context, con
     return cell_cnt;
 }
 
-int HierarchicalCluster::search(const float* query_feature, const int topk, float* distance,
-                                uint32_t* local_ids) {
-    if (topk > _conf.filter_topk) {
-        LOG(ERROR) << "topk should <= filter_topk, filter_topk = " << _conf.filter_topk;
+int HierarchicalCluster::search(Request* request, Response* response) {
+    if (request->topk > _conf.topk || request->feature == nullptr) {
+        LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk << ", or feature is nullptr";
         return -1;
     }
 
@@ -702,7 +701,7 @@ int HierarchicalCluster::search(const float* query_feature, const int topk, floa
     }
 
 
-    const float* feature = normalization(context.get(), query_feature);
+    const float* feature = normalization(context.get(), request->feature);
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
                                             _conf.gnoimi_search_cells);//, coarse_distance, coarse_tag);
@@ -714,7 +713,7 @@ int HierarchicalCluster::search(const float* query_feature, const int topk, floa
     //计算query与二级聚类中心的距离并排序
     int search_cell_cnt = search_nearest_fine_cluster(context.get(), feature);
 
-    MaxHeap max_heap(topk, distance, local_ids);
+    MaxHeap max_heap(request->topk, response->distance, response->local_idx);
 
     return flat_topN_docs(context.get(), feature, search_cell_cnt, max_heap);
 

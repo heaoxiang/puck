@@ -83,20 +83,20 @@ void load_bytes_array_thread(const ThreadReaderParam reader, unsigned char* code
 
 bool check_file_length_info(const std::string& file_name,
                             const uint64_t file_length);
-bool Quantization::init_codebooks_memory() {
+int Quantization::init_codebooks_memory() {
     u_int64_t pq_codebook_length = (u_int64_t)_params.nsq * _params.ks * _params.lsq;
     //LOG(NOTICE) << "init_codebooks_memory " << pq_codebook_length;
     _coodbooks.reset(new float[pq_codebook_length]);
 
     if (_coodbooks.get() == nullptr) {
         LOG(FATAL) << "malloc memory quantization codebooks " << pq_codebook_length << " error.";
-        return false;
+        return -1;
     }
 
-    return true;
+    return 0;
 }
 
-bool Quantization::load_codebooks(const std::string& codebook_file) {
+int Quantization::load_codebooks(const std::string& codebook_file) {
     //LOG(NOTICE) << "load codebooks " << codebook_file;
 
     int ret = fvecs_read(codebook_file.c_str(), _params.lsq,
@@ -106,12 +106,12 @@ bool Quantization::load_codebooks(const std::string& codebook_file) {
         LOG(FATAL) << "load file error, file : " << codebook_file << " feature_dim : " <<
                    _params.lsq
                    << " number : " << _params.nsq* _params.ks << " return code : " << ret;
-        return false;
+        return -1;
     }
 
-    return true;
+    return 0;
 }
-bool Quantization::init_quantized_feature_memory() {
+int Quantization::init_quantized_feature_memory() {
     uint64_t pq_feature_length = (u_int64_t)_total_point_count * _per_fea_len;
     LOG(NOTICE) << "init quantized feature memory, length = " << pq_feature_length;
 
@@ -129,17 +129,17 @@ bool Quantization::init_quantized_feature_memory() {
 
     if (_quantized_feature.get() == nullptr) {
         LOG(FATAL) << "malloc memory quantized feature vector " << pq_feature_length << " error.";
-        return false;
+        return -1;
     }
 
-    return true;
+    return 0;
 }
 
-bool Quantization::load_quantized_feature(const std::string& quantization_file,
+int Quantization::load_quantized_feature(const std::string& quantization_file,
         const uint32_t* local_2memory_idx) {
     if (_params.ks != 256) {
         LOG(FATAL) << "only for ks = 256";
-        return false;
+        return -1;
     }
 
     LOG(NOTICE) << "load quantized feature " << quantization_file << "; _total_point_count = " <<
@@ -149,11 +149,11 @@ bool Quantization::load_quantized_feature(const std::string& quantization_file,
     bool is_ok = check_file_length_info(quantization_file, pq_feature_length);
 
     if (is_ok == false) {
-        return false;
+        return -1;
     }
 
-    if (init_quantized_feature_memory() == false) {
-        return false;
+    if (init_quantized_feature_memory() != 0) {
+        return -1;
     }
 
     //多线程加载文件
@@ -183,36 +183,35 @@ bool Quantization::load_quantized_feature(const std::string& quantization_file,
     }
 
     LOG(NOTICE) << "load quantized feature " << quantization_file << " suc.";
-    return true;
+    return 0;
 
 }
 
-
-bool Quantization::load(const std::string& codebook_file, const std::string& quantized_feafile,
-                        const uint32_t* local_2memory_idx) {
+int Quantization::load(const std::string& codebook_file, const std::string& quantized_feafile,
+                       const uint32_t* local_2memory_idx) {
     if (_params.ks != 256) {
         LOG(FATAL) << "only for ks = 256";
-        return false;
+        return -1;
     }
 
-    if (load_codebooks(codebook_file) == false) {
-        return false;
+    if (load_codebooks(codebook_file) != 0) {
+        return -1;
     }
 
     if (local_2memory_idx != nullptr) {
-        if (load_quantized_feature(quantized_feafile, local_2memory_idx) == false) {
-            return false;
+        if (load_quantized_feature(quantized_feafile, local_2memory_idx) != 0) {
+            return -1;
         }
     } else {
         std::vector<uint32_t> temp_cnts_index(_total_point_count);
         std::iota(temp_cnts_index.begin(), temp_cnts_index.end(), 0);
 
-        if (load_quantized_feature(quantized_feafile, temp_cnts_index.data()) == false) {
-            return false;
+        if (load_quantized_feature(quantized_feafile, temp_cnts_index.data()) != 0) {
+            return -1;
         }
     }
 
-    return true;
+    return 0;
 }
 
 std::unique_ptr<float[]> Quantization::decode(uint64_t idx) const {
@@ -231,9 +230,9 @@ std::unique_ptr<float[]> Quantization::decode(uint64_t idx) const {
 
     return std::move(residual);
 }
-bool Quantization::set_static_value_of_formula(uint64_t idx, float* vocab) {
+int Quantization::set_static_value_of_formula(uint64_t idx, float* vocab) {
     if (idx >= _total_point_count || !vocab) {
-        return false;
+        return -1;
     }
 
     float* static_dist = (float*)get_quantized_feature(idx);
@@ -244,12 +243,12 @@ bool Quantization::set_static_value_of_formula(uint64_t idx, float* vocab) {
         vocab[idx] += residual[idx];
     }
 
-    return true;
+    return 0;
 }
 
 void fvec_L2sqr_ny(float* dis, const float* x,
                    const float* y, size_t d, size_t ny);
-bool Quantization::get_dist_table(const float*  feature, float* dist_table) const {
+int Quantization::get_dist_table(const float*  feature, float* dist_table) const {
 
     for (uint32_t m = 0; m < _params.nsq; ++m) {
         fvec_L2sqr_ny(dist_table + m * _params.ks,
@@ -259,7 +258,7 @@ bool Quantization::get_dist_table(const float*  feature, float* dist_table) cons
                       _params.ks);
     }
 
-    return true;
+    return 0;
 }
 
 }//namespace puck

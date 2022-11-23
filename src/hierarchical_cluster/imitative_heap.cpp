@@ -37,6 +37,7 @@ uint32_t ImitativeHeap::push(const float distance, FineCluster* cell) {
         //尽量快的找到合适的堆顶
         _top_idx = imitative_heap_partition();
     }
+
     //入队1个cell
     return 1;
 }

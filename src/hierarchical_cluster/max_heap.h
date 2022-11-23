@@ -15,8 +15,6 @@
 
 namespace puck {
 
-//farward declare
-struct DocInfo;
 
 class MaxHeap {
 public:

@@ -99,14 +99,14 @@ int PuckIndex::read_coodbooks() {
         return -1;
     }
 
-    if (_filter_quantization->load_codebooks(_conf.filter_codebook_file_name) == false) {
+    if (_filter_quantization->load_codebooks(_conf.filter_codebook_file_name) != 0) {
         LOG(ERROR) << "read filter quantization codebook fail";
         return -2;
     }
 
     //PQ量化的时候
     if (_conf.whether_pq) {
-        if (_pq_quantization->load_codebooks(_conf.pq_codebook_file_name) == false) {
+        if (_pq_quantization->load_codebooks(_conf.pq_codebook_file_name) != 0) {
             LOG(ERROR) << "read pq quantization codebook fail";
             return -2;
         }
@@ -122,7 +122,7 @@ int PuckIndex::read_feature_index(uint32_t* local_to_memory_idx) {
     }
 
     if (_filter_quantization->load(_conf.filter_codebook_file_name, _conf.filter_data_file_name,
-                                   local_to_memory_idx) == false) {
+                                   local_to_memory_idx) != 0) {
         LOG(ERROR) << "read_feature_index filter quantization Error.";
         return -1;
     }
@@ -131,7 +131,7 @@ int PuckIndex::read_feature_index(uint32_t* local_to_memory_idx) {
 
     if (_conf.whether_pq) {
         if (_pq_quantization->load(_conf.pq_codebook_file_name, _conf.pq_data_file_name,
-                                   local_to_memory_idx) == false) {
+                                   local_to_memory_idx) != 0) {
             LOG(ERROR) << "read_feature_index PQ quantization Error.";
             return -1;
         }
@@ -164,7 +164,8 @@ int PuckIndex::convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint
     q_param.init(_conf, true);
     filter_quantization.reset(new Quantization(q_param, _conf.total_point_count));
 
-    if (filter_quantization->load(_conf.filter_codebook_file_name, _conf.filter_data_file_name) == false) {
+    if (filter_quantization->load(_conf.filter_codebook_file_name, _conf.filter_data_file_name) != 0) {
+        LOG(ERROR) << "load " << _conf.filter_codebook_file_name << " error.";
         return -1;
     }
 
@@ -407,9 +408,9 @@ int PuckIndex::filter_topN_docs(SearchContext* context, const float* feature, co
     return 0;
 }
 
-int PuckIndex::search(const float* query_feature, const int topk, float* distance, uint32_t* local_ids) {
-    if (topk > _conf.filter_topk) {
-        LOG(ERROR) << "topk should <= filter_topk, filter_topk = " << _conf.filter_topk;
+int PuckIndex::search(Request* request, Response* response) {
+    if (request->topk > _conf.topk || request->feature == nullptr) {
+        LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk << ", or feature is nullptr";
         return -1;
     }
 
@@ -419,7 +420,7 @@ int PuckIndex::search(const float* query_feature, const int topk, float* distanc
         return -1;
     }
 
-    const float* feature = normalization(context.get(), query_feature);
+    const float* feature = normalization(context.get(), request->feature);
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
                                             _conf.gnoimi_search_cells);//, coarse_distance, coarse_tag);
@@ -431,7 +432,7 @@ int PuckIndex::search(const float* query_feature, const int topk, float* distanc
     //计算query与二级聚类中心的距离并排序
     int search_cell_cnt = search_nearest_fine_cluster(context.get(), feature);//, coarse_tag, coarse_distance);
 
-    MaxHeap gnoimi_heap(topk, distance, local_ids);
+    MaxHeap gnoimi_heap(request->topk, response->distance, response->local_idx);
 
     return filter_topN_docs(context.get(), feature, search_cell_cnt, gnoimi_heap);
 
@@ -711,13 +712,13 @@ int PuckIndex::init_single_build() {
         return -1;
     }
 
-    if (_filter_quantization->init_quantized_feature_memory() == false) {
+    if (_filter_quantization->init_quantized_feature_memory() != 0) {
         LOG(NOTICE) << "get_filter_quantization init_quantized_feature_memory error";
         return -1;
     }
 
     if (_conf.whether_pq) {
-        if (_pq_quantization->init_quantized_feature_memory() == false) {
+        if (_pq_quantization->init_quantized_feature_memory() != 0) {
             LOG(NOTICE) << "pq_quantization init_quantized_feature_memory error";
             return -1;
         }

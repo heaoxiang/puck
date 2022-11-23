@@ -25,9 +25,9 @@ float fvec_L2sqr(
     size_t d);
 
 /* same without SSE */
-inline float fvec_L2sqr_ref(const float* x,
-                            const float* y,
-                            size_t d) {
+float fvec_L2sqr_ref(const float* x,
+                     const float* y,
+                     size_t d) {
     float res = 0;
 
     for (size_t i = 0; i < d; i++) {
@@ -36,6 +36,15 @@ inline float fvec_L2sqr_ref(const float* x,
     }
 
     return res;
+}
+void fvec_L2sqr_ny_ref(float* dis,
+                       const float* x,
+                       const float* y,
+                       size_t d, size_t ny) {
+    for (size_t i = 0; i < ny; i++) {
+        dis[i] = fvec_L2sqr(x, y, d);
+        y += d;
+    }
 }
 /*
 #ifdef __SSE__
