@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2017 Baidu.com, Inc. All Rights Reserved *
  **************************************************************************/ /**
- * @file   gnoimi_data_pool.h
+ * @file   puck_data_pool.h
  * @author huangben(huangben@baidu.com)
  * @date   2017年08月13日 星期一 19时50分32秒
  * @brief

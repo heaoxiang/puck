@@ -722,6 +722,20 @@ int PuckIndex::init_single_build() {
             LOG(NOTICE) << "pq_quantization init_quantized_feature_memory error";
             return -1;
         }
+    }else   {
+        void* memb = nullptr;
+        int32_t pagesize = getpagesize();
+        size_t all_feature_length = (size_t)_conf.total_point_count * _conf.feature_dim * sizeof(float);
+        size_t size = all_feature_length + (pagesize - all_feature_length % pagesize);
+
+        int err = posix_memalign(&memb, pagesize, size);
+
+        if (err != 0) {
+            std::runtime_error("alloc_aligned_mem_failed errno=" + errno);
+            return -1;
+        }
+
+        _all_feature = reinterpret_cast<float*>(memb);
     }
 
     return 0;

@@ -31,7 +31,7 @@ TinkerIndex::TinkerIndex() {
     int construction = puck::FLAGS_tinker_construction;
     std::string construction_str = "efConstruction=" + std::to_string(construction);
     buildParams.push_back(construction_str);
-    int indexThreadQty = puck::FLAGS_context_initial_pool_size;
+    int indexThreadQty = puck::FLAGS_threads_count;
     buildParams.push_back("indexThreadQty=" + std::to_string(indexThreadQty));
     _any_params.reset(new similarity::AnyParams(buildParams));
 

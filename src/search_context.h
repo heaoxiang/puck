@@ -13,7 +13,7 @@
 #include <base/string_printf.h>
 #include <vector>
 #include "hierarchical_cluster/index_conf.h"
-
+#include "index.h"
 namespace puck {
 class FineCluster;
 typedef std::vector<std::pair<float, FineCluster*>>
@@ -58,7 +58,7 @@ struct SearchDocData {
 
     }
 };
-
+struct Request;
 class SearchContext {
 public:
     SearchContext();
@@ -70,14 +70,12 @@ public:
     uint64_t set_logid(uint64_t logid) {
         return _logid = logid;
     }
-
-    //uint32_t get_topk() {
-    //    return _topk;
-    //}
-    //uint32_t set_topk(uint32_t topk) {
-    //    return topk > 0 && topk < _topk ? _topk = topk : _topk;
-    //}
-
+    void set_request(Request* request){
+        _request = request;
+    }
+    Request* get_request(){
+        return _request;
+    }
     /**
      * @brief push notice
      */
@@ -112,7 +110,7 @@ public:
 
 private:
     uint64_t _logid;
-    //uint32_t _topk;//实际topK
+    Request* _request;
     bool _debug;
     bool _inited;
     char* _model;

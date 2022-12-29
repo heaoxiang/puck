@@ -14,6 +14,7 @@ struct Response;
 
 class Index {
 public:
+    virtual ~Index(){}
     /*
     * @brief 根据配置文件修改conf、初始化内存、加载索引文件
     * @@return (int) : 正常返回0，错误返回值<0
@@ -46,13 +47,16 @@ public:
     const float* feature;            //query feature
     Request() : topk(100), feature(nullptr) {
     }
+    virtual ~Request(){
+        feature = nullptr;
+    }
 };
 
 struct Response {
     float* distance;
     uint32_t* local_idx;
     Response(): distance(nullptr), local_idx(nullptr) {}
-    ~Response() {
+    virtual ~Response() {
         distance = nullptr;
         local_idx = nullptr;
     }

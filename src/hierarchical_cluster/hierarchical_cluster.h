@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 #include "hierarchical_cluster/index_conf.h"
-#include "gnoimi_data_pool.h"
+#include "puck_data_pool.h"
 #include "index.h"
 namespace puck {
 
@@ -94,7 +94,7 @@ public:
     /*
      * @brief 默认析构函数
      **/
-    ~HierarchicalCluster();
+    virtual ~HierarchicalCluster();
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、加载索引文件，检索前需要先调用该函数
     * @@return (int) : 正常返回0，错误返回值<0

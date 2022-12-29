@@ -40,11 +40,10 @@ bool check_file_length_info(const std::string& file_name,
     fd = open(file_name.c_str(), O_RDONLY);
     struct stat st;
 
-    if (fd == -1 || -1 == fstat(fd, &st)) {
+    if (fd == -1 || -1 == fstat(fd, &st) || (file_length != (uint64_t)st.st_size)) {
         return false;
     }
-
-    return (long)file_length == st.st_size;
+    return true;
 }
 
 //写码本
@@ -699,7 +698,7 @@ int HierarchicalCluster::search(Request* request, Response* response) {
     if (0 != context->reset(_conf)) {
         return -1;
     }
-
+    context->set_request(request);
 
     const float* feature = normalization(context.get(), request->feature);
     //输出query与一级聚类中心的top-search-cell个ID和距离
@@ -1283,15 +1282,15 @@ int HierarchicalCluster::single_build(BuildInfo* build_info) {
 
 void HierarchicalCluster::init_context_pool() {
     //初始化cpu逻辑内核数个context
-    std::vector<SearchContext*> init_pool_vect(FLAGS_context_initial_pool_size, nullptr);
+    std::vector<SearchContext*> init_pool_vect(FLAGS_threads_count, nullptr);
 
-    for (int i = 0; i < FLAGS_context_initial_pool_size; ++i) {
+    for (int i = 0; i < FLAGS_threads_count; ++i) {
         init_pool_vect[i] = _context_pool.Borrow();
 
         while (init_pool_vect[i]->reset(_conf) != 0) {}
     }
 
-    for (int i = 0; i < FLAGS_context_initial_pool_size; ++i) {
+    for (int i = 0; i < FLAGS_threads_count; ++i) {
         if (init_pool_vect[i]) {
             _context_pool.Return(init_pool_vect[i]);
         }

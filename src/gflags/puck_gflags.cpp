@@ -17,7 +17,7 @@
 #include "gflags/puck_gflags.h"
 #include <thread>
 namespace puck {
-DEFINE_int32(context_initial_pool_size, std::thread::hardware_concurrency(), "initial pool size");
+//DEFINE_int32(context_initial_pool_size, std::thread::hardware_concurrency(), "initial pool size");
 //索引文件，默认不需要修改
 DEFINE_string(index_path, "puck_index", "lib of index files");
 DEFINE_string(feature_file_name, "all_data.feat.bin", "feature data");

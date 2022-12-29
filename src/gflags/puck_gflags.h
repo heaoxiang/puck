@@ -22,7 +22,7 @@
 namespace puck {
 
 //内存池初始化大小
-DECLARE_int32(context_initial_pool_size);
+//DECLARE_int32(context_initial_pool_size);
 
 //索引文件，默认不需要修改
 DECLARE_string(index_path);
