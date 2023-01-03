@@ -69,15 +69,14 @@ if [ $is_train -eq 1 ]; then
     echo "train retcode : " $retcode
     [ $retcode -ne 0 ] && exit $retcode
     echo "train succ"
-    #cp gnoimi_index/filer_codebook.dat mid-data/filer_codebook.dat
 fi
 
 if [ $is_build -eq 1 ]; then
-    echo "start build gnoimi"
+    echo "start build puck"
     ./bin/build --flagfile=conf/puck_train.conf 
     retcode=$?
-    echo "build gnoimi retcode : " $retcode
+    echo "build puck retcode : " $retcode
     [ $retcode -ne 0 ] && exit $retcode
-    echo "build gnoimi succ"
+    echo "build puck succ"
 fi
 

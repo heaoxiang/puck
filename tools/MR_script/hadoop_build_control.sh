@@ -1,11 +1,11 @@
 #!/bin/bash
 
 function _usage(){
-    usage_str="sh ${0}[-i build_path] [-p push gnoimi_tools.tar.gz] [-b build] [-m merge] [-d download] [-h help]
+    usage_str="sh ${0}[-i build_path] [-p push puck_tools.tar.gz] [-b build] [-m merge] [-d download] [-h help]
     \n\t\t
     \n\toptions:
     \n\t\t-i codebooks train lib  init ${TOOLS_LOCAL_LIB_NAME}(index files & conf file)
-    \n\t\t-p  push gnoimi_tools.tar.gz
+    \n\t\t-p  push puck_tools.tar.gz
     \n\t\t-b  use for build method
     \n\t\t-m  use for merge method
     \n\t\t-d  download index
@@ -24,7 +24,7 @@ INDEX_CODEBOOKS_ARRAY=(`echo ${INDEX_CODEBOOKS_LIST}| tr ',' ' '`)
 
 is_prepare=0
 puck_train_path=""
-is_push_gnoimi_tools=0
+is_push_puck_tools=0
 
 is_build=0
 is_merge=0
@@ -36,7 +36,7 @@ do
             is_prepare=1
             puck_train_path=$OPTARG;;
         p) 
-            is_push_gnoimi_tools=1;;
+            is_push_puck_tools=1;;
         b) 
             is_build=1;;
         m) 
@@ -56,18 +56,20 @@ if [ ${is_prepare} -eq 1 ]; then
     #根据输入产生（codebooks的训练目录），初始化建库工具
     cd ${PROJECT_PATH}
     echo ${puck_train_path}
-    rm -f ${TOOLS_LOCAL_LIB_NAME}/${INDEX_PATH_GFLAG}/*
-
+    rm -rf ${TOOLS_LOCAL_LIB_NAME} 
+    mkdir -p ${TOOLS_LOCAL_LIB_NAME}/${INDEX_PATH_GFLAG}/
+    mkdir -p ${TOOLS_LOCAL_LIB_NAME}/conf
     for file in ${INDEX_CODEBOOKS_ARRAY[@]}
     do 
         cp ${puck_train_path}/${INDEX_PATH_GFLAG}/${file}  ${TOOLS_LOCAL_LIB_NAME}/${INDEX_PATH_GFLAG}/${file}
     done
-
+    cp -a ${puck_train_path}/conf ${TOOLS_LOCAL_LIB_NAME}
+    cp -a ${PROJECT_PATH}/bin ${TOOLS_LOCAL_LIB_NAME} 
     hadoop_ugi_str=$(echo "--hadoop_ugi="${HADOOP_UGI})
-    echo ${hadoop_ugi_str} >> ${TOOLS_LOCAL_LIB_NAME}/conf/puck_train.conf
+    echo ${hadoop_ugi_str} >> ${TOOLS_LOCAL_LIB_NAME}/conf/${CONF_FILE_NAME}
 fi
 
-if [ ${is_push_gnoimi_tools} -eq 1 ]; then
+if [ ${is_push_puck_tools} -eq 1 ]; then
     cd ${PROJECT_PATH}
     rm -f ${TOOLS_LOCAL_LIB_NAME}.tar.gz
     tar zcvf ${TOOLS_LOCAL_LIB_NAME}.tar.gz ${TOOLS_LOCAL_LIB_NAME}/*
@@ -76,7 +78,7 @@ if [ ${is_push_gnoimi_tools} -eq 1 ]; then
     if [ $? -eq 0 ];then
         ${HADOOP_BIN} fs -rm ${HADOOP_TOOL_LIB}/${TOOLS_LOCAL_LIB_NAME}.tar.gz
     fi
-
+    
     ${HADOOP_BIN} fs -put ${TOOLS_LOCAL_LIB_NAME}.tar.gz  ${HADOOP_TOOL_LIB}
     retcode=$? 
     [ $retcode -ne 0 ] && exit $retcode	
@@ -84,22 +86,22 @@ if [ ${is_push_gnoimi_tools} -eq 1 ]; then
 fi
 
 if [ ${is_build} -eq 1 ]; then
-    echo "\nstart build gnoimi index"
+    echo "\nstart build puck index"
     ./buildindex_example.sh    
     retcode=$? 
     [ $retcode -ne 0 ] && exit $retcode	
-    echo "build gnoimi index suc"
+    echo "build puck index suc"
 fi
 
 if [ ${is_merge} -eq 1 ]; then
-    echo "\nstart merge gnoimi index"
+    echo "\nstart merge puck index"
     ./mergeindex_example.sh    
     retcode=$? 
     [ $retcode -ne 0 ] && exit $retcode	
-    echo "merge gnoimi index suc"
+    echo "merge puck index suc"
 fi
 
-function mv_index_file()
+function merge_index_file_by_order()
 {
     local file_name="${1}"
     local _input="${2}"
@@ -109,6 +111,7 @@ function mv_index_file()
     local _shard_num="${5}"
 
     local shard_id=0
+    local merge_file_list=""
     while(( ${shard_id} < ${_shard_num} ))
     do
         cur_shard_id=$((${shard_id} + ${_bs_id} * ${_shard_num}))
@@ -122,50 +125,37 @@ function mv_index_file()
         if [ $? -ne 0 ];then
             break
         fi
-        target_file="${_output}/${INDEX_PATH_GFLAG}/${file_name}_${part}"
-        echo "TARGET FILE NAME: "${target_file}
-        
-        #${HADOOP_BIN} fs -mv ${input_file} ${target_file}
-        ${HADOOP_BIN} fs -cp ${input_file} ${target_file}
-        if [ $? -ne 0 ]; then
-            log_error "cp [${input_file}] to [${target_file}] fail!!!"
-            exit 1
-        fi
+        merge_file_list=`echo ${merge_file_list} ${input_file}`
+        #continue
+        #target_file="${_output}/${INDEX_PATH_GFLAG}/${file_name}_${part}"
+        #echo "TARGET FILE NAME: "${target_file}
+        #
+        ##${HADOOP_BIN} fs -mv ${input_file} ${target_file}
+        #${HADOOP_BIN} fs -cp ${input_file} ${target_file}
+        #if [ $? -ne 0 ]; then
+        #    log_error "cp [${input_file}] to [${target_file}] fail!!!"
+        #    exit 1
+        #fi
 
         let "shard_id++"
     done
+    echo "${HADOOP_BIN} fs -cat ${merge_file_list} | ${HADOOP_BIN} fs -put - ${_output}/${INDEX_PATH_GFLAG}/${file_name}"
+    ${HADOOP_BIN} fs -cat ${merge_file_list} | ${HADOOP_BIN} fs -put - ${_output}/${INDEX_PATH_GFLAG}/${file_name}
+    return ${?}
 }
 
 # 通过cat方式合并索引
-function merge_index_by_cat()
+function download_index_to_local()
 {
     local _cur_bs_id=${1}
     local hadoop_bs_lib=${2}
     
     cd ${DOWNLOAD_INDEX_LIB}
     rm -rf ${_cur_bs_id} && mkdir ${_cur_bs_id} && cd ${_cur_bs_id}
-    if [ -d "./${INDEX_PATH_GFLAG}_TEMP" ]; then
-        rm -rf "./${INDEX_PATH_GFLAG}_TEMP"
-    fi
-    mkdir "./${INDEX_PATH_GFLAG}_TEMP"
-    
-    local _bs_output="${hadoop_bs_lib}/${INDEX_PATH_GFLAG}/*" 
-    ${HADOOP_BIN} fs -get  ${_bs_output} ./${INDEX_PATH_GFLAG}_TEMP
-
-    if [ -d "./${INDEX_PATH_GFLAG}" ]; then
-        rm -rf "./${INDEX_PATH_GFLAG}"
-    fi
-    mkdir "./${INDEX_PATH_GFLAG}"
-
-    for file in ${INDEX_FILES_ARRAY[@]}
-    do
-        cat ./${INDEX_PATH_GFLAG}_TEMP/${file}_* > ./${INDEX_PATH_GFLAG}_TEMP/${file}
-        cp ./${INDEX_PATH_GFLAG}_TEMP/${file} ./${INDEX_PATH_GFLAG}/${file} 
-    done
-    
+    ${HADOOP_BIN} fs -get ${hadoop_bs_lib}/${INDEX_PATH_GFLAG} .
     for file in ${INDEX_CODEBOOKS_ARRAY[@]}
     do 
-        cp ${PROJECT_PATH}/${TOOLS_LOCAL_LIB_NAME}/${INDEX_PATH_GFLAG}/${file} ./${INDEX_PATH_GFLAG}
+        cp ${TOOLS_LOCAL_LIB_NAME}/${INDEX_PATH_GFLAG}/${file} ${INDEX_PATH_GFLAG} 
     done
 }
 
@@ -175,7 +165,7 @@ if [ ${is_download} -eq 1 ]; then
     #每个bs下的分片个数
     _shard_num=$((${MERGE_TASK_NUMBER}/${BS_NUMBER}))
 	echo $_shard_num    
-    echo "start download gnoimi index from hadoop to local, total bs number=${_bs_num}"
+    echo "start download puck index from hadoop to local, total bs number=${_bs_num}"
     #-m后的输出目录
     merge_output_lib="${RECALL_FEA_MERGE_OUTPUT}"
     #对不同shard 下的相同bs，标记顺序
@@ -205,13 +195,12 @@ if [ ${is_download} -eq 1 ]; then
 
         for file in ${INDEX_FILES_ARRAY[@]}
         do
-            mv_index_file "${file}" "${merge_output_lib}" "${merge_bs_temp_lib}" "${bs_id}" "${_shard_num}"
+            merge_index_file_by_order "${file}" "${merge_output_lib}" "${merge_bs_temp_lib}" "${bs_id}" "${_shard_num}"
         done
-        
-        merge_index_by_cat "${bs_id}" "${merge_bs_temp_lib}"
+        download_index_to_local "${bs_id}" "${merge_bs_temp_lib}"
         retcode=$? 
     	[ $retcode -ne 0 ] && exit $retcode	
-    	echo "download gnoimi index (bs id = ${k}) suc"
+    	echo "download puck index (bs id = ${k}) suc"
         let "bs_id++"
     done
 fi

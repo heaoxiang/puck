@@ -1,6 +1,6 @@
 /***********************************************************************
  * Copyright (c) 2016 Baidu.com, Inc. All Rights Reserved
- * @file    gnoimi_heap.cpp
+ * @file    max_heap.cpp
  * @author  yinjie06(yinjie06@baidu.com)
  * @date    2019-08-20 15:05
  * @brief

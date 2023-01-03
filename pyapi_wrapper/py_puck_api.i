@@ -4,8 +4,8 @@ using namespace std;
 
 %{
 #define SWIG_FILE_WITH_INIT
-#include "py_gnoimi_api_wrapper.h"
-    using namespace py_gnoimi_api;
+#include "py_api_wrapper.h"
+    using namespace py_puck_api;
     using namespace puck;
 %}
 
@@ -123,7 +123,7 @@ REV_SWIG_PTR(int64_t, NPY_INT64);
 REV_SWIG_PTR(uint64_t, NPY_UINT64);
 
 
-namespace py_gnoimi_api{
+namespace py_puck_api{
     void update_gflag(const char* gflag_key, const char* gflag_val);
     class PySearcher{
         public:

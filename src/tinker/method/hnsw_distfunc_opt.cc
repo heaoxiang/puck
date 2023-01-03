@@ -5,7 +5,7 @@
  **************************************************************************/
 
 /**
- * @file   gnoimi_searcher.cpp
+ * @file   hnsw_distfunc_opt.cc
  * @author huangben(huangben@baidu.com)
  * @author yinjie06(yinjie06@baidu.com)
  * @date   2017年11月05日 星期一 20时17分38秒
@@ -53,7 +53,7 @@ Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, co
         int curNodeNum = enterpointId;
         dist_t curdist = (fstdistfunc_(
                               pVectq, (float*)(data_level0_memory_ + curNodeNum * memoryPerObject_ + offsetData_ + objectDataOffset_), qty, TmpRes));
-        //LOG(NOTICE)<<curNodeNum<<"\t"<<curdist;
+        //LOG(INFO)<<curNodeNum<<"\t"<<curdist;
         ++distance_computations;
         // EvaluatedMSWNodeInt<dist_t> evi(curdist, curNodeNum);
         //closestDistQueuei.emplace(curdist, curNodeNum);
@@ -71,7 +71,7 @@ Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, co
         EvaluatedMSWNodeInt<dist_t> currEv = candidateQueuei.top(); // This one was already compared to the query
 
         if (closestDistQueuei.size() >= (size_t)topk && (-currEv.getDistance()) > closestDistQueuei.top().first) {
-            //LOG(NOTICE)<<closestDistQueuei.size()<<" break";
+            //LOG(INFO)<<closestDistQueuei.size()<<" break";
             break;
         }
         /*
@@ -122,7 +122,7 @@ Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, co
         }
     }
 
-    //LOG(NOTICE)<<distance_computations<<" CMP TIMES";
+    //LOG(INFO)<<distance_computations<<" CMP TIMES";
 
     visitedlistpool->releaseVisitedList(vl);
 }

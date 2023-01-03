@@ -28,7 +28,7 @@
 
 //#include "global.h"
 #include "tinker/idtype.h"
-#include <base/logging.h>
+#include <glog/logging.h>
 
 namespace similarity {
 

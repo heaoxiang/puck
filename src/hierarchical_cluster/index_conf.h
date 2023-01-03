@@ -5,8 +5,7 @@
  * @date    2022-09-28 14:23
  * @brief
  ***********************************************************************/
-#ifndef BAIDU_MMS_GRAPH_GNOIMI_INDEX_CONF_H
-#define BAIDU_MMS_GRAPH_GNOIMI_INDEX_CONF_H
+#pragma once
 #include <string>
 
 namespace puck {
@@ -18,9 +17,9 @@ struct IndexConf {
     uint32_t feature_dim;                        //特征维度(单位float)
     uint32_t ks;                                 //pq的类聚中心点个数,一般就是256,保证一个char能放下
 
-    uint32_t gnoimi_coarse_cells_count;          //一级聚类中心个数
-    uint32_t gnoimi_fine_cells_count;            //二级聚类中心个数
-    uint32_t gnoimi_search_cells;                //检索过程中取top-gnoimi_search_cells个一级聚类中心
+    uint32_t coarse_cluster_count;          //一级聚类中心个数
+    uint32_t fine_cluster_count;            //二级聚类中心个数
+    uint32_t search_coarse_count;                //检索过程中取top-search_coarse_count个一级聚类中心
 
     uint32_t total_point_count;                  //索引包含的样本数据总数
 
@@ -34,14 +33,14 @@ struct IndexConf {
     float cell_keep_ratio;              //根据平均cell内包含doc个数，获得二级聚类中心检索时保留cell个数的比例
     std::string feature_file_name;          //whether_pq = 0的时候存储全部原始特征
 
-    std::string coarse_code_book_file_name; //一级类聚中心点码本
-    std::string fine_code_book_file_name;   //二级残差类聚中心点码本
+    std::string coarse_codebook_file_name; //一级类聚中心点码本
+    std::string fine_codebook_file_name;   //二级残差类聚中心点码本
     //std::string alpha_file_name;            //alpha文件
 
     std::string cell_assign_file_name;
     //std::string pq_assign_file_name;
     std::string pq_codebook_file_name;
-    std::string key_file_name;
+    std::string label_file_name;
     //filter
     uint32_t filter_nsq;
     uint32_t filter_topk;
@@ -78,7 +77,5 @@ struct IndexConf {
     void show();
 };
 
-} //namesapce gnoimi
-
-#endif
+} //namesapce puck
 

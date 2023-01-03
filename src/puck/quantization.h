@@ -5,16 +5,14 @@
  * @date    2021-07-20 11:17
  * @brief
  ***********************************************************************/
-#ifndef BAIDU_MMS_GRAPH_GNOIMI_QUANTIZATION_H
-#define BAIDU_MMS_GRAPH_GNOIMI_QUANTIZATION_H
+#pragma once
 #include <string>
-#include <base/logging.h>
+#include <glog/logging.h>
 #include <memory>
 #include <functional>
 #include <numeric>
 #include <math.h>
 #include <vector>
-#include <base/logging.h>
 #include "hierarchical_cluster/index_conf.h"
 
 namespace puck {
@@ -33,7 +31,7 @@ struct QuantizationParams {
         dim = conf.feature_dim;
         nsq = (is_filter == false) ? conf.nsq : conf.filter_nsq;
         lsq = std::ceil(1.0 * dim / nsq);
-        LOG(NOTICE) << "QuantizationParams.dim = " << dim << ", QuantizationParams.ks = " << ks <<
+        LOG(INFO) << "QuantizationParams.dim = " << dim << ", QuantizationParams.ks = " << ks <<
                     ", QuantizationParams.lsq = " << lsq << ", QuantizationParams.nsq = " << nsq;
         return 0;
     }
@@ -119,7 +117,7 @@ private:
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     size_t get_coodbook_length() {
-        LOG(NOTICE) << "get_coodbook_length = " << _params.nsq* _params.ks* _params.lsq* sizeof(float);
+        LOG(INFO) << "get_coodbook_length = " << _params.nsq* _params.ks* _params.lsq* sizeof(float);
         return _params.nsq * _params.ks * _params.lsq * sizeof(float);
     }
     /*
@@ -157,5 +155,4 @@ private:
 };
 
 }//namespace puck
-#endif
 

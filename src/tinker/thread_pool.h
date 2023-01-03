@@ -52,7 +52,7 @@ inline void ParallelFor(size_t start, size_t end, size_t numThreads, Function fn
                 size_t thread_id = threadId;
                 int id = std::max(thread_id * avg_cnt, start);
                 int cur_end = std::min((thread_id + 1) * avg_cnt, end);
-                LOG(NOTICE) << "threadId = " << threadId << " [" << id << ", " << cur_end << "]";
+                LOG(INFO) << "threadId = " << threadId << " [" << id << ", " << cur_end << "]";
 
                 while (true) {
                     if ((id >= cur_end)) {

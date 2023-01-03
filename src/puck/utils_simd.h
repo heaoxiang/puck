@@ -5,8 +5,7 @@
  * @date    2021-08-23 17:49
  * @brief
  ***********************************************************************/
-#ifndef BAIDU_MMS_GRAPH_GNOIMI_UTILS_SIMD_H
-#define BAIDU_MMS_GRAPH_GNOIMI_UTILS_SIMD_H
+#pragma once
 #include <cmath>
 #include <cassert>
 #ifdef __SSE__
@@ -62,4 +61,3 @@ inline void L2SqrSIMD4Ext(const float* pVect1, const float* pVect2, __m128& sum)
 */
 
 }
-#endif

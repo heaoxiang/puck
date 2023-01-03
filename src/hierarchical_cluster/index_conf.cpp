@@ -5,8 +5,8 @@
  * @date    2022-09-28 14:23
  * @brief
  ***********************************************************************/
-
-#include <base/logging.h>
+#include <math.h>
+#include <glog/logging.h>
 #include "hierarchical_cluster/index_conf.h"
 #include "gflags/puck_gflags.h"
 namespace puck {
@@ -44,26 +44,26 @@ IndexConf::IndexConf() {
     }
 
     total_point_count = 0;
-    gnoimi_search_cells = std::min(FLAGS_gnoimi_search_cells, FLAGS_gnoimi_coarse_cells_count);
+    search_coarse_count = std::min(FLAGS_search_coarse_count, FLAGS_coarse_cluster_count);
 
     neighbors_count = FLAGS_neighbors_count;
     topk = FLAGS_topk;
 
     //加载文件相关参数
     threads_count = FLAGS_threads_count;
-    gnoimi_coarse_cells_count = FLAGS_gnoimi_coarse_cells_count;
-    gnoimi_fine_cells_count = FLAGS_gnoimi_fine_cells_count;
+    coarse_cluster_count = FLAGS_coarse_cluster_count;
+    fine_cluster_count = FLAGS_fine_cluster_count;
 
     //索引文件
     index_path = FLAGS_index_path;
     feature_file_name = index_path + "/" + FLAGS_feature_file_name;
-    coarse_code_book_file_name = index_path + "/" + FLAGS_coarse_code_book_file_name;
-    fine_code_book_file_name = index_path + "/" + FLAGS_fine_code_book_file_name;
+    coarse_codebook_file_name = index_path + "/" + FLAGS_coarse_codebook_file_name;
+    fine_codebook_file_name = index_path + "/" + FLAGS_fine_codebook_file_name;
 
     cell_assign_file_name = index_path + "/" + FLAGS_cell_assign_file_name;
 
     pq_codebook_file_name = index_path + "/" + FLAGS_pq_codebook_file_name;
-    key_file_name = index_path + "/" + FLAGS_key_file_name;
+    label_file_name = index_path + "/" + FLAGS_label_file_name;
 
     cell_keep_ratio = 1;
 
@@ -151,8 +151,8 @@ int IndexConf::adaptive_search_param() {
         }
 
         //Tinker的检索一级聚类中心的个数很少，20足矣
-        if (google::GetCommandLineFlagInfo("gnoimi_search_cells", &info) && info.is_default) {
-            gnoimi_search_cells = std::min(20, (int)gnoimi_coarse_cells_count);
+        if (google::GetCommandLineFlagInfo("search_coarse_count", &info) && info.is_default) {
+            search_coarse_count = std::min(20, (int)coarse_cluster_count);
         }
     } else {
         google::CommandLineFlagInfo info;
@@ -178,43 +178,43 @@ int IndexConf::adaptive_search_param() {
 }
 
 void IndexConf::show() {
-    LOG(NOTICE) << "feature_dim = " << feature_dim;
-    LOG(NOTICE) << "whether_norm = " << whether_norm;
-    LOG(NOTICE) << "index_version = " << index_version;
+    LOG(INFO) << "feature_dim = " << feature_dim;
+    LOG(INFO) << "whether_norm = " << whether_norm;
+    LOG(INFO) << "index_version = " << index_version;
 
     //filer
     if (whether_filter) {
-        LOG(NOTICE) << "whether_filter = " << whether_filter;
-        LOG(NOTICE) << "filter_nsq = " << filter_nsq;
-        LOG(NOTICE) << "ks = " << ks;
+        LOG(INFO) << "whether_filter = " << whether_filter;
+        LOG(INFO) << "filter_nsq = " << filter_nsq;
+        LOG(INFO) << "ks = " << ks;
     }
 
     //pq
     if (whether_pq) {
-        LOG(NOTICE) << "whether_pq = " << whether_pq;
-        LOG(NOTICE) << "nsq = " << nsq;
-        LOG(NOTICE) << "ks = " << ks;
+        LOG(INFO) << "whether_pq = " << whether_pq;
+        LOG(INFO) << "nsq = " << nsq;
+        LOG(INFO) << "ks = " << ks;
     }
 
-    LOG(NOTICE) << "gnoimi_coarse_cells_count = " << gnoimi_coarse_cells_count;
-    LOG(NOTICE) << "gnoimi_fine_cells_count = " << gnoimi_fine_cells_count;
+    LOG(INFO) << "coarse_cluster_count = " << coarse_cluster_count;
+    LOG(INFO) << "fine_cluster_count = " << fine_cluster_count;
 
-    LOG(NOTICE) << "gnoimi_search_cells = " << gnoimi_search_cells;
+    LOG(INFO) << "search_coarse_count = " << search_coarse_count;
 
     if (index_version == 2) {
-        LOG(NOTICE) << "tinker_neighborhood = " << FLAGS_tinker_neighborhood;
-        LOG(NOTICE) << "tinker_construction = " << FLAGS_tinker_construction;
-        LOG(NOTICE) << "tinker_search_range = " << tinker_search_range;
+        LOG(INFO) << "tinker_neighborhood = " << FLAGS_tinker_neighborhood;
+        LOG(INFO) << "tinker_construction = " << FLAGS_tinker_construction;
+        LOG(INFO) << "tinker_search_range = " << tinker_search_range;
     }
 
-    LOG(NOTICE) << "neighbors_count = " << neighbors_count;
-    LOG(NOTICE) << "topk = " << topk;
+    LOG(INFO) << "neighbors_count = " << neighbors_count;
+    LOG(INFO) << "topk = " << topk;
 
     if (ip2cos) {
-        LOG(NOTICE) << "ip2cos = " << ip2cos;
+        LOG(INFO) << "ip2cos = " << ip2cos;
     }
 
-    LOG(NOTICE) << key_file_name;
+    LOG(INFO) << label_file_name;
 }
 
-} //namesapce gnoimi
+} //namesapce puck

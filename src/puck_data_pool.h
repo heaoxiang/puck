@@ -8,8 +8,7 @@
  * @brief
  *
  **/
-#ifndef GNOIMI_GNOIMI_DATA_POOL_H
-#define GNOIMI_GNOIMI_DATA_POOL_H
+#pragma once
 
 #include "simple_data_pool.h"
 
@@ -89,5 +88,3 @@ private:
 };
 
 }
-
-#endif /* !SESSION_DATA_H */

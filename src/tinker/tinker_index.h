@@ -5,9 +5,7 @@
  * @date    2022-05-16 10:34
  * @brief
  ***********************************************************************/
-
-#ifndef  BAIDU_MMS_GRAPH_GNOIMI_TINKER_INDEX_H
-#define  BAIDU_MMS_GRAPH_GNOIMI_TINKER_INDEX_H
+#pragma once
 
 #include <vector>
 #include "hierarchical_cluster/hierarchical_cluster.h"
@@ -73,5 +71,5 @@ private:
 
 
 }//tinker
-#endif
+
 

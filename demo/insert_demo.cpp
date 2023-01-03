@@ -1,32 +1,19 @@
 /***********************************************************************
  * Copyright (c) 2021 Baidu.com, Inc. All Rights Reserved
- * @file    search_client.cpp
+ * @file    insert_demo.cpp
  * @author  yinjie06(yinjie06@baidu.com)
- * @date    2022-10-09 15:24
+ * @date    2022-11-11 17:04
  * @brief
  ***********************************************************************/
 
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include "searcher.h"
+//#include <boost/algorithm/string.hpp>
+//#include <boost/lexical_cast.hpp>
+#include "puck/puck_index.h"
+#include "puck/realtime_insert_puck_index.h"
+#include "tools/string_split.h"
 
-uint32_t s_split(const std::string& input_stream, const std::string& delim_1, std::vector<std::string>& ret) {
-    boost::split(ret, input_stream, boost::is_any_of(delim_1));
-    int true_size = ret.size() - 1;
 
-    while (true_size >= 0) {
-        if (ret[true_size].length() < 1) {
-            --true_size;
-        } else {
-            break;
-        }
-    }
-
-    ret.resize(true_size + 1);
-    return ret.size();
-}
-
-int read_feature_data(std::string& input_file, const u_int32_t dim, std::vector<std::string>& pic_name,
+int read_feature_data(std::string& input_file, std::vector<std::string>& pic_name,
                       std::vector<std::vector<float> >& doc_feature) {
     std::ifstream fin;
     fin.open(input_file.c_str(), std::ios::binary);
@@ -45,7 +32,7 @@ int read_feature_data(std::string& input_file, const u_int32_t dim, std::vector<
     while (std::getline(fin, line)) {
         std::vector<std::string> split_str;
 
-        if (s_split(line, "\t", split_str) < 2) {
+        if (puck::s_split(line, "\t", split_str) < 2) {
             LOG(ERROR) << "id:" << pic_name.size() << " get name error.";
             ret = -1;
             break;
@@ -54,15 +41,11 @@ int read_feature_data(std::string& input_file, const u_int32_t dim, std::vector<
         pic_name.push_back(split_str[0]);
         std::string feature_str = split_str[1];
 
-        if (s_split(feature_str, " ", split_str) != dim) {
-            LOG(ERROR) << "id:" << doc_feature.size() << " get feature error.";
-            ret = -2;
-            break;
-        }
+        puck::s_split(feature_str, " ", split_str);
 
         std::vector<float> cur_feature;
 
-        for (u_int32_t idx = 0; idx < dim; ++idx) {
+        for (u_int32_t idx = 0; idx < split_str.size(); ++idx) {
             cur_feature.push_back(std::atof(split_str[idx].c_str()));
         }
 
@@ -70,7 +53,7 @@ int read_feature_data(std::string& input_file, const u_int32_t dim, std::vector<
     }
 
     fin.close();
-    LOG(NOTICE) << "total query cnt = " << pic_name.size();
+    LOG(INFO) << "total query cnt = " << pic_name.size();
     return ret;
 }
 
@@ -78,7 +61,9 @@ int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     //1. load index
-    std::unique_ptr<puck::Searcher> searcher(new puck::Searcher());
+    std::unique_ptr<puck::RealtimeInsertPuckIndex> searcher;
+
+    searcher.reset(new puck::RealtimeInsertPuckIndex());
 
     if (searcher == nullptr) {
         LOG(ERROR) << "create new SearchInterface error.";
@@ -93,37 +78,93 @@ int main(int argc, char** argv) {
     }
 
     //2. read input
-    const int dim = searcher->get_conf().feature_dim;
     std::string input(argv[1]);
     std::string output(argv[2]);
     std::vector<std::vector<float> > in_data;
     std::vector<std::string> pic_name;
 
-    ret = read_feature_data(input, dim, pic_name, in_data);
+    ret = read_feature_data(input, pic_name, in_data);
 
     if (ret != 0) {
         LOG(ERROR) << "read_feature_data error:" << ret;
         return -4;
     } else {
-        LOG(NOTICE) << "read_feature_data item:" << in_data.size();
+        LOG(INFO) << "read_feature_data item:" << in_data.size();
     }
+
+
+    //return 0;
 
     //3. search
     const int item_count = in_data.size();
-    FILE* pf = fopen(output.c_str(), "w");
 
-    if (nullptr == pf) {
-        LOG(ERROR) << "open outfile[" << output.c_str() << "] error.";
-        return -1;
+    FILE* pf = nullptr;
+    {
+        std::string temp_output = output + "_old";
+
+        pf = fopen(temp_output.c_str(), "w");
+
+        if (nullptr == pf) {
+            LOG(ERROR) << "open outfile[" << output.c_str() << "] error.";
+            return -1;
+        }
     }
 
     char buff[1024] = {0};
     puck::Request request;
     puck::Response response;
-    request.topk = searcher->get_conf().topk;
+    request.topk = 100;
 
     response.distance = new float[request.topk];
     response.local_idx = new uint32_t[request.topk];
+
+    for (int i = 0; i < item_count; ++i) {
+        request.feature = in_data[i].data();
+        ret = searcher->search(&request, &response);
+
+        if (ret != 0) {
+            LOG(ERROR) << "search item " << i << " error" << ret;
+            break;
+        }
+
+        for (int j = 0; j < (int)request.topk; j ++) {
+            char* p = buff;
+            std::string lable = searcher->get_label(response.local_idx[j]);
+            //std::string lable = std::to_string(response.local_idx[j]);
+            snprintf(p, 1024, "%s\t%s\t%f", pic_name[i].c_str(),
+                     lable.c_str(),
+                     response.distance[j]);
+
+            fprintf(pf, "%s\n", buff);
+        }
+    }
+
+    fclose(pf);
+
+    puck::InsertRequest insert_request;
+
+    for (int i = 0; i < in_data.size(); ++i) {
+        insert_request.feature = in_data[i].data();
+       
+        insert_request.label = pic_name[i];
+        int ret = searcher->insert(&insert_request);
+
+        if (ret != 0) {
+            LOG(ERROR) << "insert item " << i << " error" << ret;
+            return -1;
+        }
+    }
+
+    {
+        std::string temp_output = output + "_new";
+
+        pf = fopen(temp_output.c_str(), "w");
+
+        if (nullptr == pf) {
+            LOG(ERROR) << "open outfile[" << output.c_str() << "] error.";
+            return -1;
+        }
+    }
 
     for (int i = 0; i < item_count; ++i) {
         request.feature = in_data[i].data();
@@ -138,17 +179,20 @@ int main(int argc, char** argv) {
         for (int j = 0; j < (int)request.topk; j ++) {
             char* p = buff;
             std::string lable = searcher->get_label(response.local_idx[j]);
-            snprintf(p, 1024, "%s\t%s\t%f", pic_name[i].c_str(),
+            //std::string lable = std::to_string(response.local_idx[j]);
+            snprintf(p, 1024, "%s\t%s\t%d\t%f", pic_name[i].c_str(),
                      lable.c_str(),
+                     response.local_idx[j],
                      response.distance[j]);
 
             fprintf(pf, "%s\n", buff);
         }
     }
 
+    fclose(pf);
+
     delete [] response.distance;
     delete [] response.local_idx;
-    fclose(pf);
 
     return 0;
 }

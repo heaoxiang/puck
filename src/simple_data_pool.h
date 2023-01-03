@@ -17,7 +17,8 @@
 #pragma once
 
 #include <pthread.h>
-#include <base/scoped_lock.h>
+#include <mutex>
+//#include "base/scoped_lock.h"
 
 namespace puck {
 
@@ -58,10 +59,10 @@ public:
     Stat stat() const;
 
 private:
-    base::Mutex _mutex;
+    std::mutex _mutex;
     unsigned _capacity;
     unsigned _size;
-    base::atomic<unsigned> _ncreated;
+    std::atomic<unsigned> _ncreated;
     void** _pool;
     const DataFactory* _factory;
 };
@@ -83,13 +84,14 @@ inline void SimpleDataPool::Reset(const DataFactory* factory) {
     void** saved_pool = nullptr;
     const DataFactory* saved_factory = nullptr;
     {
-        BAIDU_SCOPED_LOCK(_mutex);
+        
+        std::unique_lock<std::mutex> mu(_mutex);
         saved_size = _size;
         saved_pool = _pool;
         saved_factory = _factory;
         _capacity = 0;
         _size = 0;
-        _ncreated.store(0, base::memory_order_relaxed);
+        _ncreated.store(0, std::memory_order_relaxed);
         _pool = nullptr;
         _factory = factory;
     }
@@ -110,7 +112,7 @@ inline void SimpleDataPool::Reserve(unsigned n) {
         return;
     }
 
-    BAIDU_SCOPED_LOCK(_mutex);
+    std::unique_lock<std::mutex> mu(_mutex);
 
     if (_capacity >= n) {
         return;
@@ -140,14 +142,14 @@ inline void SimpleDataPool::Reserve(unsigned n) {
             break;
         }
 
-        _ncreated.fetch_add(1,  base::memory_order_relaxed);
+        _ncreated.fetch_add(1,  std::memory_order_relaxed);
         _pool[_size++] = data;
     }
 }
 
 inline void* SimpleDataPool::Borrow() {
     if (_size) {
-        BAIDU_SCOPED_LOCK(_mutex);
+        std::unique_lock<std::mutex> mu(_mutex);
 
         if (_size) {
             return _pool[--_size];
@@ -157,7 +159,7 @@ inline void* SimpleDataPool::Borrow() {
     void* data = _factory->CreateData();
 
     if (data) {
-        _ncreated.fetch_add(1,  base::memory_order_relaxed);
+        _ncreated.fetch_add(1,  std::memory_order_relaxed);
     }
 
     return data;
@@ -168,7 +170,7 @@ inline void SimpleDataPool::Return(void* data) {
         return;
     }
 
-    std::unique_lock<base::Mutex> mu(_mutex);
+    std::unique_lock<std::mutex> mu(_mutex);
 
     if (_capacity == _size) {
         const unsigned new_cap = (_capacity == 0 ? 128 : (_capacity * 3 / 2));
@@ -192,7 +194,7 @@ inline void SimpleDataPool::Return(void* data) {
 }
 
 inline SimpleDataPool::Stat SimpleDataPool::stat() const {
-    Stat s = { _size, _ncreated.load(base::memory_order_relaxed) };
+    Stat s = { _size, _ncreated.load(std::memory_order_relaxed) };
     return s;
 }
 

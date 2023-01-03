@@ -695,7 +695,7 @@ public:
         pool.push_front(vl);
     };
     ~VisitedListPool() {
-        //LOG(NOTICE) << "Total " << pool.size() << " lists allocated";
+        //LOG(INFO) << "Total " << pool.size() << " lists allocated";
         while (pool.size()) {
             VisitedList* rez = pool.front();
             pool.pop_front();

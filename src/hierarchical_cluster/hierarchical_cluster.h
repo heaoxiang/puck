@@ -5,16 +5,19 @@
  * @date    2022-09-02 11:35
  * @brief
  ***********************************************************************/
-#ifndef BAIDU_MMS_GRAPH_GNOIMI_HIERARCHICAL_CLUSTER_H
-#define BAIDU_MMS_GRAPH_GNOIMI_HIERARCHICAL_CLUSTER_H
+#pragma once
 
 #include <fstream>
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <cmath>
+#include <algorithm>
 #include <gflags/gflags.h>
-#include <base/logging.h>
-
+#include <fcntl.h>
+#include <math.h>
+//#include <glog/logging.h>
+#include <glog/logging.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -22,7 +25,6 @@ extern "C" {
 #include <matrix.h>
 #include <kmeans.h>
 #include <mkl_cblas.h>
-//#include <machinedeps.h>
 #include <nn.h>
 #ifdef __cplusplus
 }
@@ -31,12 +33,17 @@ extern "C" {
 #include "hierarchical_cluster/index_conf.h"
 #include "puck_data_pool.h"
 #include "index.h"
+#include "base/time.h"
 namespace puck {
 
 //训练相关
 DECLARE_int32(thread_chunk_size);
 DECLARE_int32(train_points_count);
 DECLARE_string(train_fea_file_name);
+
+#define DISALLOW_COPY_AND_ASSIGN(TypeName)                      \
+    TypeName(const TypeName&) = delete;            \
+    void operator=(const TypeName&) = delete
 
 #ifdef __GNUC__
 # define BAIDU_CACHELINE_ALIGNMENT_8 __attribute__((aligned(8)))
@@ -135,7 +142,6 @@ public:
 
 protected:
 
-    friend class Searcher;
     /*
      * @brief 获取索引文件的配置信息
      * @@return （IndexConf）:当前索引的配置
@@ -186,8 +192,8 @@ protected:
      * @@return (FineCluster*):cell_id对应的cell的指针
      **/
     FineCluster* get_fine_cluster(const uint32_t cell_id) const {
-        return _coarse_clusters[cell_id / _conf.gnoimi_fine_cells_count].fine_cell_list + cell_id %
-               _conf.gnoimi_fine_cells_count;;
+        return _coarse_clusters[cell_id / _conf.fine_cluster_count].fine_cell_list + cell_id %
+               _conf.fine_cluster_count;;
     }
 
     /*
@@ -212,21 +218,21 @@ protected:
      * @@param [in\out] context : context由内存池管理
      * @@param [in] cell_idx : 某个cell的id
      * @@param [in] feature : query的特征向量
-     * @@param [in] gnoimi_heap : 堆结构，存储query与样本的topk
+     * @@param [in] result_heap : 堆结构，存储query与样本的topk
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     int compute_exhaustive_distance_with_docs(SearchContext* context, const int cell_idx,
-            const float* feature, MaxHeap& gnoimi_heap);
+            const float* feature, MaxHeap& result_heap);
     /*
      * @brief 计算query与top-N个cell下所有样本的距离（样本的原始特征）
      * @@param [in\out] context : context由内存池管理
      * @@param [in] feature : query的特征向量
      * @@param [in] search_cell_cnt : 需要计算的cell的个数
-     * @@param [in] gnoimi_heap : 堆结构，存储query与样本的topk
+     * @@param [in] result_heap : 堆结构，存储query与样本的topk
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     int flat_topN_docs(SearchContext* context, const float* feature, const int search_cell_cnt,
-                       MaxHeap& gnoimi_heap);
+                       MaxHeap& result_heap);
 
     /*
      * @brief 导出配置
@@ -321,8 +327,8 @@ protected:
     * @@param [in] feature_init : 原始特征向量
     * @@return (float*) : 检索过程中实际使用的feature
     **/
-    const float* normalization(SearchContext* context, const float* feature_init);
-
+    const float* normalization(SearchContext* context, const float* feature);
+    int check_feature_dim();
     DISALLOW_COPY_AND_ASSIGN(HierarchicalCluster);
 protected:
     IndexConf  _conf;
@@ -434,5 +440,4 @@ struct BuildInfo {
 };
 IndexConf load_index_conf_file();
 }
-#endif
 

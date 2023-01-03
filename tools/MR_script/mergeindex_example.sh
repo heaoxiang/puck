@@ -1,7 +1,7 @@
 #!/bin/bash
 source ./config.propertie
 
-function gnoimi_mergeindex()
+function puck_mergeindex()
 {
     local _input="${1}"
     local _output="${2}"
@@ -34,6 +34,6 @@ _input=${RECALL_FEA_BUILD_OUTPUT}
 _output=${RECALL_FEA_MERGE_OUTPUT}
 _jobname=${JOB_TAG}"_merge"
 echo ${_input} ${_output} ${_jobname}
-gnoimi_mergeindex ${_input} ${_output} ${_jobname}
+puck_mergeindex ${_input} ${_output} ${_jobname}
 exit $?
 

@@ -8,7 +8,7 @@
 @file: initProcessData.py
 @author: yinjie06(yinjie06@baidu.com)
 @date: 2018-04-22 15:57
-@brief: init feature file according to gnoimi-train.conf
+@brief: init feature file according to puck_train.conf
 """
 import struct
 import sys
@@ -41,7 +41,7 @@ class InitProcessData(object):
         train_conf_file = './conf/puck_train.conf'
         train_conf_info = open(train_conf_file, 'rb').read()
 
-        # 默认输入路径: mid-data/gnoimi_index，如果不存在则创建
+        # 默认输入路径: mid-data,puck_index，如果不存在则创建
         if not os.path.exists('mid-data'):
             os.mkdir('mid-data')
         if not os.path.exists('puck_index'):
@@ -57,7 +57,7 @@ class InitProcessData(object):
         
         # keys_file_name
         keys_file_name = "./puck_index/all_data.url"
-        conf_keys_file_name = re.findall(r'--key_file_name=(\S+)', train_conf_info)
+        conf_keys_file_name = re.findall(r'--label_file_name=(\S+)', train_conf_info)
         if len(conf_keys_file_name) == 1:
             keys_file_name = conf_keys_file_name[0] 
         self.keys_file = open(keys_file_name, 'wb')
@@ -86,7 +86,14 @@ class InitProcessData(object):
         print self.feature_dim
 
     def init_process(self, feature_file):
-        """格式化输出特征文件."""
+        """格式化输出特征文件demo
+            实时入库的索引需要每个样本有单独的label，
+            其他情况非必须
+        """
+        """
+        The vectors are stored in raw little endian. 
+        Each vector takes sizeof(int)+dim * sizeof(float) bytes for .fvecs
+        """
         all_line = 0
         valid_line = 0
         for line in fileinput.input(feature_file):

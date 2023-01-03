@@ -2,10 +2,10 @@
 
 source ./config.propertie
 
-function gnoimi_buildindex()
+function puck_buildindex()
 {
     if [ $# -ne 3 ]; then
-        error "gnoimi_buildindex param error"
+        error "puck_buildindex param error"
         exit -1
     fi
 
@@ -38,7 +38,7 @@ _input=${RECALL_FEA_LIB}
 _output=${RECALL_FEA_BUILD_OUTPUT}
 _jobname=${JOB_TAG}"_build"
 echo ${_input}  ${_output}  ${_jobname}
-gnoimi_buildindex ${_input}  ${_output}  ${_jobname}
+puck_buildindex ${_input}  ${_output}  ${_jobname}
 
 exit $?
 

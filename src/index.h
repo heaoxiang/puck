@@ -5,8 +5,7 @@
  * @date    2022-10-25 11:49
  * @brief
  ***********************************************************************/
-#ifndef BAIDU_MMS_GRAPH_GNOIMI_INDEX_H
-#define BAIDU_MMS_GRAPH_GNOIMI_INDEX_H
+#pragma once
 namespace puck {
 
 struct Request;
@@ -55,13 +54,14 @@ public:
 struct Response {
     float* distance;
     uint32_t* local_idx;
+    uint32_t result_num;
     Response(): distance(nullptr), local_idx(nullptr) {}
     virtual ~Response() {
         distance = nullptr;
         local_idx = nullptr;
+        result_num = 0;
     }
 };
 
 }//namespace puck
-#endif
 
