@@ -130,21 +130,12 @@ int main(int argc, char** argv) {
     
     google::ParseCommandLineFlags(&argc, &argv, true);
     google::InitGoogleLogging(argv[0]);
-    std::unique_ptr<puck::HierarchicalCluster> cluster;
+    std::unique_ptr<puck::PuckIndex> cluster;
     
     conf = puck::load_index_conf_file();
 
-    if (conf.index_version == 1 && conf.whether_filter == true) { //PUCK
-        LOG(INFO) << "init index of Puck";
-        cluster.reset(new puck::PuckIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == false) {
-        //Flat
-        cluster.reset(new puck::HierarchicalCluster());
-        LOG(INFO) << "init index of Flat";
-    } else {
-        LOG(INFO) << "init index of Error, Nan type";
-        return -1;
-    }
+    cluster.reset(new puck::PuckIndex());
+    
     int ret = cluster->init_single_build();
     if (ret != 0) {
         std::cout << "init error:" << ret << std::endl;

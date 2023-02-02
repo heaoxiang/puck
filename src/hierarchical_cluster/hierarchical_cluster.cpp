@@ -551,6 +551,15 @@ int HierarchicalCluster::read_model_file() {
     temp_buffer = GetValueAndIncPtr<size_t>(temp_buffer, part_size);
     LOG(INFO) << "part_size=" << part_size << " st.st_size= " << st.st_size << " sizeof(size_t) = " << sizeof(
                     size_t);
+    {
+        //realtime insert和分布式建库的索引必须有label file，search返回的local_id是该样本label在label_file的行数
+        struct stat buffer;
+        if(stat(_conf.label_file_name.c_str(), &buffer) == 0){
+            _conf.total_point_count = getFileLineCnt(_conf.label_file_name.c_str());
+            LOG(INFO)<<"Index has label("<<_conf.label_file_name<<"), total_point_count = "<<_conf.total_point_count;
+        }
+    }
+    
     uint32_t total_point_count = _conf.total_point_count;
     temp_buffer = load_model_config(temp_buffer);
 
@@ -1334,4 +1343,37 @@ IndexConf load_index_conf_file() {
     index.read_model_file();
     return index._conf;
 }
+
+//获取文件行数，index初始化时候通过key file确定样本总个数
+int getFileLineCnt(const char* fileName) {
+    struct stat st;
+
+    if (stat(fileName, &st) != 0) {
+        return 0;
+    }
+
+    char buff[1024];
+    sprintf(buff, "wc -l %s", fileName);
+
+    FILE* fstream = nullptr;
+    fstream = popen(buff, "r");
+    int total_line_cnt = -1;
+
+    if (fstream) {
+        memset(buff, 0x00, sizeof(buff));
+
+        if (fgets(buff, sizeof(buff), fstream)) {
+            int index = strchr((const char*)buff, ' ') - buff;
+            buff[index] = '\0';
+            total_line_cnt =  atoi(buff);
+        }
+    }
+
+    if (fstream) {
+        pclose(fstream);
+    }
+
+    return total_line_cnt;
+}
+
 }//puck

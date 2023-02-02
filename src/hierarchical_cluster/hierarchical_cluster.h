@@ -141,7 +141,6 @@ public:
     virtual int init_single_build();
 
 protected:
-
     /*
      * @brief 获取索引文件的配置信息
      * @@return （IndexConf）:当前索引的配置
@@ -439,5 +438,6 @@ struct BuildInfo {
     virtual ~BuildInfo() {}
 };
 IndexConf load_index_conf_file();
+int getFileLineCnt(const char* fileName);
 }
 

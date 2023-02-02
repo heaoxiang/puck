@@ -8,7 +8,7 @@ HADOOP_UGI="your ugi"
 PROJECT_PATH=$(cd `dirname $0`; pwd)
 
 #建库工具所在文件夹名字，绝对路径${PROJECT_PATH}/${TOOLS_LOCAL_LIB_NAME},打包之后名字会是{TOOLS_LOCAL_LIB_NAME}.tar.gz
-TOOLS_LOCAL_LIB_NAME=puck_tools
+TOOLS_LOCAL_LIB_NAME=${PROJECT_PATH}/puck_tools
 #建库工具打包后在hadoop上存放的目录
 HADOOP_TOOL_LIB=/user/mms/personal/yinjie06
 #建库完成后，下载索引到本地目录

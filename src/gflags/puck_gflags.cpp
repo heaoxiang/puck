@@ -27,7 +27,7 @@ DEFINE_string(fine_codebook_file_name, "GNOIMI_fine.dat", "fine codebook");
 DEFINE_string(cell_assign_file_name, "cell_assign.dat", "cell assign");
 DEFINE_string(pq_codebook_file_name, "learn_codebooks.dat", "pq codebook");
 DEFINE_string(pq_data_file_name, "pq_data.dat", "pq data of all points");
-
+//realtime insert和分布式建库的索引需要这个索引文件，search返回的local id是这个样本在该文件的行数
 DEFINE_string(label_file_name, "all_data.url", "label of points");
 
 //检索相关参数
