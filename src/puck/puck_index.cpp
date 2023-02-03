@@ -635,6 +635,7 @@ int PuckIndex::train() {
     }
 
     this->HierarchicalCluster::train();
+    this->HierarchicalCluster::read_coodbooks();
 
     std::string train_pq_file_name = FLAGS_train_pq_file_name;
 
