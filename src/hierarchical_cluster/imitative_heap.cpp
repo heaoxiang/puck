@@ -6,6 +6,7 @@
  * @brief
  ***********************************************************************/
 #include <algorithm>
+#include <cmath>
 #include "imitative_heap.h"
 #include "hierarchical_cluster/hierarchical_cluster.h"
 namespace puck {
@@ -20,16 +21,16 @@ ImitativeHeap::ImitativeHeap(const uint32_t neighbors_count, DistanceInfo& cell_
     _min_distance = _pivot;
 }
 
-uint32_t ImitativeHeap::push(const float distance, FineCluster* cell) {
+uint32_t ImitativeHeap::push(const float distance, FineCluster* cell, uint32_t point_cnt) {
     //当前距离大于堆顶，返回0
     if (_pivot < distance) {
         return 0;
     }
 
-    _cell_distance[_top_idx] = {distance, cell};
+    _cell_distance[_top_idx] = {distance, std::make_pair(cell, point_cnt)};
     _min_distance = std::min(_min_distance, distance);
     ++_top_idx;
-    _contain_doc_cnt += cell->get_point_cnt();
+    _contain_doc_cnt += point_cnt;
 
     //新入堆的doc个数>=_neighbors_count * 1.4 或 有越界风险,进行堆调整
     if (_contain_doc_cnt >= _neighbors_count * 1.4
@@ -37,6 +38,7 @@ uint32_t ImitativeHeap::push(const float distance, FineCluster* cell) {
         //尽量快的找到合适的堆顶
         _top_idx = imitative_heap_partition();
     }
+
     //入队1个cell
     return 1;
 }
@@ -50,17 +52,18 @@ uint32_t ImitativeHeap::imitative_heap_partition() {
     auto last = _cell_distance.begin() + _top_idx;
     float pivot = _min_distance + (_neighbors_count * 1.0 / _contain_doc_cnt) * (_pivot - _min_distance);
 
-    auto middle = std::partition(first, last, [pivot](const std::pair<float, FineCluster*>& a) {
+    auto middle = std::partition(first,
+    last, [pivot](const std::pair<float, std::pair<FineCluster*, uint32_t>>& a) {
         return a.first <= pivot;
     });
 
-    //LOG(NOTICE)<<"imitative_heap_partition "<<_pivot;
+    //LOG(INFO)<<"imitative_heap_partition "<<_pivot;
     std::sort(middle, last);
     uint32_t tail_idx = _top_idx - 1;
     uint32_t tail_min = std::distance(first, middle);
 
     while (tail_idx > tail_min) {
-        auto cur_doc_cnt = _cell_distance[tail_idx].second->get_point_cnt();
+        auto cur_doc_cnt = _cell_distance[tail_idx].second.second;
 
         if (_contain_doc_cnt - cur_doc_cnt >= _neighbors_count) {
             _contain_doc_cnt -= cur_doc_cnt;

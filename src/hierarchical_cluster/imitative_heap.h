@@ -5,8 +5,7 @@
  * @date    2019-07-12 14:54
  * @brief
  ***********************************************************************/
-#ifndef BAIDU_MMS_GRAPH_GNOIMI_IMITATIVE_HEAP_H
-#define BAIDU_MMS_GRAPH_GNOIMI_IMITATIVE_HEAP_H
+#pragma once
 #include "search_context.h"
 namespace puck {
 
@@ -27,9 +26,9 @@ public:
      * @brief 插入队列，如果大于堆顶元素直接返回0，否则插入队尾并判断是否进行调整，返回1
      * @@param [in] distance : 距离
      * @@param [in] cell : cell的指针
-     * @@return （uint32_t）入队的cell个数
+     * @@return （uint32_t）:入队的cell个数
      **/
-    uint32_t push(const float distance, FineCluster* cell);
+    uint32_t push(const float distance, FineCluster* cell, uint32_t point_cnt);
 
     /*
      * @brief 返回当前堆的包含的元素个数
@@ -70,5 +69,4 @@ private:
 };
 
 }
-#endif
 

@@ -5,7 +5,7 @@
  * @date    2021-07-20 11:17
  * @brief
  ***********************************************************************/
-#include <base/logging.h>
+#include <glog/logging.h>
 #include<thread>
 #include <numeric>
 #include <fstream>
@@ -36,9 +36,9 @@ Quantization::Quantization(const QuantizationParams& params,
     _total_point_count = point_count;
     _per_fea_len = _params.nsq * _per_subspace_len;
     _per_fea_len += _fea_offset;
-    LOG(NOTICE) << "_per_fea_len=" << _per_fea_len;
-    LOG(NOTICE) << "_per_subspace_len=" << _per_subspace_len;
-    LOG(NOTICE) << "_params.nsq=" << _params.nsq;
+    LOG(INFO) << "_per_fea_len=" << _per_fea_len;
+    LOG(INFO) << "_per_subspace_len=" << _per_subspace_len;
+    LOG(INFO) << "_params.nsq=" << _params.nsq;
     init_codebooks_memory();
 }
 
@@ -66,14 +66,14 @@ void load_bytes_array_thread(const ThreadReaderParam reader, unsigned char* code
             memory_idx = local_2memory_idx[reader.start_id + i];
         }
 
-        //LOG(NOTICE)<<"local_idx = "<<local_idx<<" "<<reader.start_id + i;
+        //LOG(INFO)<<"local_idx = "<<local_idx<<" "<<reader.start_id + i;
         u_int64_t pq_curr_offset = (u_int64_t)memory_idx * (reader.read_len + reader.read_offset) +
                                    reader.read_offset;
 
         input_file.read((char*)(code_bytes + pq_curr_offset), reader.read_len);
 
         if ((i + 1) % 1000000 == 0) {
-            LOG(NOTICE) << "loading index file " << reader.file_name << " thread " << reader.thread_idx << " processed "
+            LOG(INFO) << "loading index file " << reader.file_name << " thread " << reader.thread_idx << " processed "
                         << 1.0 * i / reader.count;
         }
     }
@@ -83,21 +83,21 @@ void load_bytes_array_thread(const ThreadReaderParam reader, unsigned char* code
 
 bool check_file_length_info(const std::string& file_name,
                             const uint64_t file_length);
-bool Quantization::init_codebooks_memory() {
+int Quantization::init_codebooks_memory() {
     u_int64_t pq_codebook_length = (u_int64_t)_params.nsq * _params.ks * _params.lsq;
-    //LOG(NOTICE) << "init_codebooks_memory " << pq_codebook_length;
+    //LOG(INFO) << "init_codebooks_memory " << pq_codebook_length;
     _coodbooks.reset(new float[pq_codebook_length]);
 
     if (_coodbooks.get() == nullptr) {
         LOG(FATAL) << "malloc memory quantization codebooks " << pq_codebook_length << " error.";
-        return false;
+        return -1;
     }
 
-    return true;
+    return 0;
 }
 
-bool Quantization::load_codebooks(const std::string& codebook_file) {
-    //LOG(NOTICE) << "load codebooks " << codebook_file;
+int Quantization::load_codebooks(const std::string& codebook_file) {
+    //LOG(INFO) << "load codebooks " << codebook_file;
 
     int ret = fvecs_read(codebook_file.c_str(), _params.lsq,
                          _params.nsq * _params.ks, _coodbooks.get());
@@ -106,14 +106,14 @@ bool Quantization::load_codebooks(const std::string& codebook_file) {
         LOG(FATAL) << "load file error, file : " << codebook_file << " feature_dim : " <<
                    _params.lsq
                    << " number : " << _params.nsq* _params.ks << " return code : " << ret;
-        return false;
+        return -1;
     }
 
-    return true;
+    return 0;
 }
-bool Quantization::init_quantized_feature_memory() {
+int Quantization::init_quantized_feature_memory() {
     uint64_t pq_feature_length = (u_int64_t)_total_point_count * _per_fea_len;
-    LOG(NOTICE) << "init quantized feature memory, length = " << pq_feature_length;
+    LOG(INFO) << "init quantized feature memory, length = " << pq_feature_length;
 
     void* memb = nullptr;
     int32_t pagesize = getpagesize();
@@ -129,31 +129,31 @@ bool Quantization::init_quantized_feature_memory() {
 
     if (_quantized_feature.get() == nullptr) {
         LOG(FATAL) << "malloc memory quantized feature vector " << pq_feature_length << " error.";
-        return false;
+        return -1;
     }
 
-    return true;
+    return 0;
 }
 
-bool Quantization::load_quantized_feature(const std::string& quantization_file,
+int Quantization::load_quantized_feature(const std::string& quantization_file,
         const uint32_t* local_2memory_idx) {
     if (_params.ks != 256) {
         LOG(FATAL) << "only for ks = 256";
-        return false;
+        return -1;
     }
 
-    LOG(NOTICE) << "load quantized feature " << quantization_file << "; _total_point_count = " <<
+    LOG(INFO) << "load quantized feature " << quantization_file << "; _total_point_count = " <<
                 _total_point_count;
     //文件长度检查
     u_int64_t pq_feature_length = (u_int64_t)_total_point_count * _per_fea_len;
     bool is_ok = check_file_length_info(quantization_file, pq_feature_length);
 
     if (is_ok == false) {
-        return false;
+        return -1;
     }
 
-    if (init_quantized_feature_memory() == false) {
-        return false;
+    if (init_quantized_feature_memory() != 0) {
+        return -1;
     }
 
     //多线程加载文件
@@ -166,7 +166,7 @@ bool Quantization::load_quantized_feature(const std::string& quantization_file,
     params.read_len = _per_fea_len;
     params.file_offset = 0;
     params.read_offset = 0;
-    LOG(NOTICE) << "params.read_len = " << params.read_len << " " << params.read_offset << " " <<
+    LOG(INFO) << "params.read_len = " << params.read_len << " " << params.read_offset << " " <<
                 (local_2memory_idx == nullptr);
 
     for (uint32_t thread_id = 0; thread_id < threads_count; ++thread_id) {
@@ -182,37 +182,36 @@ bool Quantization::load_quantized_feature(const std::string& quantization_file,
         threads[thread_id].join();
     }
 
-    LOG(NOTICE) << "load quantized feature " << quantization_file << " suc.";
-    return true;
+    LOG(INFO) << "load quantized feature " << quantization_file << " suc.";
+    return 0;
 
 }
 
-
-bool Quantization::load(const std::string& codebook_file, const std::string& quantized_feafile,
-                        const uint32_t* local_2memory_idx) {
+int Quantization::load(const std::string& codebook_file, const std::string& quantized_feafile,
+                       const uint32_t* local_2memory_idx) {
     if (_params.ks != 256) {
         LOG(FATAL) << "only for ks = 256";
-        return false;
+        return -1;
     }
 
-    if (load_codebooks(codebook_file) == false) {
-        return false;
+    if (load_codebooks(codebook_file) != 0) {
+        return -1;
     }
 
     if (local_2memory_idx != nullptr) {
-        if (load_quantized_feature(quantized_feafile, local_2memory_idx) == false) {
-            return false;
+        if (load_quantized_feature(quantized_feafile, local_2memory_idx) != 0) {
+            return -1;
         }
     } else {
         std::vector<uint32_t> temp_cnts_index(_total_point_count);
         std::iota(temp_cnts_index.begin(), temp_cnts_index.end(), 0);
 
-        if (load_quantized_feature(quantized_feafile, temp_cnts_index.data()) == false) {
-            return false;
+        if (load_quantized_feature(quantized_feafile, temp_cnts_index.data()) != 0) {
+            return -1;
         }
     }
 
-    return true;
+    return 0;
 }
 
 std::unique_ptr<float[]> Quantization::decode(uint64_t idx) const {
@@ -231,9 +230,9 @@ std::unique_ptr<float[]> Quantization::decode(uint64_t idx) const {
 
     return std::move(residual);
 }
-bool Quantization::set_static_value_of_formula(uint64_t idx, float* vocab) {
+int Quantization::set_static_value_of_formula(uint64_t idx, float* vocab) {
     if (idx >= _total_point_count || !vocab) {
-        return false;
+        return -1;
     }
 
     float* static_dist = (float*)get_quantized_feature(idx);
@@ -244,12 +243,12 @@ bool Quantization::set_static_value_of_formula(uint64_t idx, float* vocab) {
         vocab[idx] += residual[idx];
     }
 
-    return true;
+    return 0;
 }
 
 void fvec_L2sqr_ny(float* dis, const float* x,
                    const float* y, size_t d, size_t ny);
-bool Quantization::get_dist_table(const float*  feature, float* dist_table) const {
+int Quantization::get_dist_table(const float*  feature, float* dist_table) const {
 
     for (uint32_t m = 0; m < _params.nsq; ++m) {
         fvec_L2sqr_ny(dist_table + m * _params.ks,
@@ -259,7 +258,7 @@ bool Quantization::get_dist_table(const float*  feature, float* dist_table) cons
                       _params.ks);
     }
 
-    return true;
+    return 0;
 }
 
 }//namespace puck

@@ -9,7 +9,7 @@
  *
  **/
 #include <malloc.h>
-#include <base/logging.h>
+#include <glog/logging.h>
 #include "search_context.h"
 //#define _aligned_malloc(size, alignment) aligned_alloc(alignment, size)
 
@@ -39,7 +39,7 @@ int SearchContext::reset(const IndexConf& conf) {
     _debug = false;
 
     if (_inited == false ||  _init_conf.filter_topk < conf.filter_topk
-            || _init_conf.gnoimi_search_cells < conf.gnoimi_search_cells
+            || _init_conf.search_coarse_count < conf.search_coarse_count
             || _init_conf.neighbors_count < conf.neighbors_count) {
         _inited = false;
         _init_conf = conf;
@@ -59,8 +59,8 @@ int SearchContext::reset(const IndexConf& conf) {
         all_cells_cnt = conf.neighbors_count * 1.1;
     }
 
-    if (all_cells_cnt > conf.gnoimi_search_cells * conf.gnoimi_fine_cells_count) {
-        all_cells_cnt = conf.gnoimi_search_cells * conf.gnoimi_fine_cells_count;
+    if (all_cells_cnt > conf.search_coarse_count * conf.fine_cluster_count) {
+        all_cells_cnt = conf.search_coarse_count * conf.fine_cluster_count;
     }
 
     if (_search_cell_data.cell_distance.size() != all_cells_cnt) {
@@ -74,14 +74,14 @@ int SearchContext::reset(const IndexConf& conf) {
     size_t model_size = 0;
     //每个过程需要的内存
     //coarse
-    size_t coarse_ip_dist = sizeof(float) * conf.gnoimi_coarse_cells_count;
-    size_t coarse_heap_size = (sizeof(float) + sizeof(uint32_t)) * conf.gnoimi_search_cells;
+    size_t coarse_ip_dist = sizeof(float) * conf.coarse_cluster_count;
+    size_t coarse_heap_size = (sizeof(float) + sizeof(uint32_t)) * conf.search_coarse_count;
     size_t stage_coarse = coarse_ip_dist + coarse_heap_size;
 
     model_size = std::max(model_size, stage_coarse);
     //fine
-    size_t fine_ip_dist = sizeof(float) * conf.gnoimi_fine_cells_count;
-    size_t fine_ip_heap_size = (sizeof(float) + sizeof(uint32_t)) * conf.gnoimi_fine_cells_count;
+    size_t fine_ip_dist = sizeof(float) * conf.fine_cluster_count;
+    size_t fine_ip_heap_size = (sizeof(float) + sizeof(uint32_t)) * conf.fine_cluster_count;
 
     size_t stage_fine = coarse_heap_size + fine_ip_dist + fine_ip_heap_size;
     model_size = std::max(model_size, stage_fine);
@@ -109,7 +109,7 @@ int SearchContext::reset(const IndexConf& conf) {
     int32_t pagesize = getpagesize();
 
     size_t size = model_size + (pagesize - model_size % pagesize);
-    //LOG(NOTICE) << pagesize << " " << model_size << " " << size;
+    //LOG(INFO) << pagesize << " " << model_size << " " << size;
     int err = posix_memalign(&memb, pagesize, size);
 
     if (err != 0) {
@@ -122,16 +122,16 @@ int SearchContext::reset(const IndexConf& conf) {
     char* temp = _model + sizeof(float) * conf.feature_dim;
 
     _search_cell_data.coarse_distance = (float*)temp;
-    temp +=  sizeof(float) * conf.gnoimi_search_cells;
+    temp +=  sizeof(float) * conf.search_coarse_count;
 
     _search_cell_data.coarse_tag = (uint32_t*)temp;
-    temp +=  sizeof(uint32_t) * conf.gnoimi_search_cells;
+    temp +=  sizeof(uint32_t) * conf.search_coarse_count;
 
     _search_cell_data.cluster_inner_product = (float*)temp;
-    temp += sizeof(float) * std::max(conf.gnoimi_fine_cells_count, conf.gnoimi_coarse_cells_count);
+    temp += sizeof(float) * std::max(conf.fine_cluster_count, conf.coarse_cluster_count);
 
     _search_cell_data.fine_distance = (float*)temp;
-    temp += sizeof(float) * conf.gnoimi_fine_cells_count;
+    temp += sizeof(float) * conf.fine_cluster_count;
 
     _search_cell_data.fine_tag = (uint32_t*)temp;
 
@@ -159,6 +159,6 @@ int SearchContext::reset(const IndexConf& conf) {
     return 0;
 }
 
-} //namesapce gnoimi
+} //namesapce puck
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
 

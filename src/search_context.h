@@ -8,22 +8,22 @@
  * @brief
  *
  **/
-#ifndef  BAIDU_MMS_GRAPH_GNOIMI_GNOIMI_CONTEXT_H
-#define  BAIDU_MMS_GRAPH_GNOIMI_GNOIMI_CONTEXT_H
-#include <base/string_printf.h>
+#pragma once
+//#include <base/string_printf.h>
 #include <vector>
 #include "hierarchical_cluster/index_conf.h"
-
+#include "index.h"
 namespace puck {
 class FineCluster;
-typedef std::vector<std::pair<float, FineCluster*>>
-        DistanceInfo; //存储query到二级类聚中心距离的结构
+//typedef std::vector<std::pair<float, FineCluster*>>
+//        DistanceInfo; //存储query到二级类聚中心距离的结构
+typedef std::vector<std::pair<float, std::pair<FineCluster*, uint32_t>>> DistanceInfo;
 
 struct SearchCellData {
     float* query_norm;                  //存储归一后的query,长度=feature_dim
-    float* cluster_inner_product;       //query与聚类中心的内积,长度=max(gnoimi_coarse_cells_count, gnoimi_fine_cells_count)
-    float* coarse_distance;             //query与一级聚类中心的距离，和coarse_tag一起在最大堆调整时使用,长度=gnoimi_search_cells
-    uint32_t* coarse_tag;              //与query距离最近的一级聚类中心的id,长度=gnoimi_search_cells
+    float* cluster_inner_product;       //query与聚类中心的内积,长度=max(coarse_cluster_count, fine_cluster_count)
+    float* coarse_distance;             //query与一级聚类中心的距离，和coarse_tag一起在最大堆调整时使用,长度=search_coarse_count
+    uint32_t* coarse_tag;              //与query距离最近的一级聚类中心的id,长度=search_coarse_count
     float* fine_distance;
     uint32_t* fine_tag;
     DistanceInfo cell_distance;
@@ -58,7 +58,7 @@ struct SearchDocData {
 
     }
 };
-
+struct Request;
 class SearchContext {
 public:
     SearchContext();
@@ -70,14 +70,12 @@ public:
     uint64_t set_logid(uint64_t logid) {
         return _logid = logid;
     }
-
-    //uint32_t get_topk() {
-    //    return _topk;
-    //}
-    //uint32_t set_topk(uint32_t topk) {
-    //    return topk > 0 && topk < _topk ? _topk = topk : _topk;
-    //}
-
+    void set_request(Request* request) {
+        _request = request;
+    }
+    Request* get_request() {
+        return _request;
+    }
     /**
      * @brief push notice
      */
@@ -112,7 +110,7 @@ public:
 
 private:
     uint64_t _logid;
-    //uint32_t _topk;//实际topK
+    Request* _request;
     bool _debug;
     bool _inited;
     char* _model;
@@ -122,7 +120,7 @@ private:
     SearchDocData _search_doc_data;
     //DISALLOW_COPY_AND_ASSIGN(SearchContext);
 };
-
+/*
 inline void SearchContext::log_push(const char* key, const char* fmt, ...) {
     if (!_debug) {
         return;
@@ -137,8 +135,7 @@ inline void SearchContext::log_push(const char* key, const char* fmt, ...) {
     base::string_vappendf(&_log_string, tmp, args);
     va_end(args);
 }
-
-} //namesapce gnoimi
-#endif  //BAIDU_MMS_GRAPH_GNOIMI_GNOIMI_CONTEXT_H
+*/
+} //namesapce puck
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
 

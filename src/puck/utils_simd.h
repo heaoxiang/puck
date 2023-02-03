@@ -5,8 +5,7 @@
  * @date    2021-08-23 17:49
  * @brief
  ***********************************************************************/
-#ifndef BAIDU_MMS_GRAPH_GNOIMI_UTILS_SIMD_H
-#define BAIDU_MMS_GRAPH_GNOIMI_UTILS_SIMD_H
+#pragma once
 #include <cmath>
 #include <cassert>
 #ifdef __SSE__
@@ -25,9 +24,9 @@ float fvec_L2sqr(
     size_t d);
 
 /* same without SSE */
-inline float fvec_L2sqr_ref(const float* x,
-                            const float* y,
-                            size_t d) {
+float fvec_L2sqr_ref(const float* x,
+                     const float* y,
+                     size_t d) {
     float res = 0;
 
     for (size_t i = 0; i < d; i++) {
@@ -36,6 +35,15 @@ inline float fvec_L2sqr_ref(const float* x,
     }
 
     return res;
+}
+void fvec_L2sqr_ny_ref(float* dis,
+                       const float* x,
+                       const float* y,
+                       size_t d, size_t ny) {
+    for (size_t i = 0; i < ny; i++) {
+        dis[i] = fvec_L2sqr(x, y, d);
+        y += d;
+    }
 }
 /*
 #ifdef __SSE__
@@ -53,4 +61,3 @@ inline void L2SqrSIMD4Ext(const float* pVect1, const float* pVect2, __m128& sum)
 */
 
 }
-#endif

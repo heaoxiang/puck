@@ -223,18 +223,18 @@ Hnsw<dist_t>::CreateIndex(const AnyParams& IndexParams) {
     int skip_optimized_index = 0;
     pmgr.GetParamOptional("skip_optimized_index", skip_optimized_index, 0);
 
-    LOG(NOTICE) << "M                   = " << M_;
-    LOG(NOTICE) << "indexThreadQty      = " << indexThreadQty_;
-    LOG(NOTICE) << "efConstruction      = " << efConstruction_;
-    LOG(NOTICE) << "maxM			          = " << maxM_;
-    LOG(NOTICE) << "maxM0			          = " << maxM0_;
+    LOG(INFO) << "M                   = " << M_;
+    LOG(INFO) << "indexThreadQty      = " << indexThreadQty_;
+    LOG(INFO) << "efConstruction      = " << efConstruction_;
+    LOG(INFO) << "maxM			          = " << maxM_;
+    LOG(INFO) << "maxM0			          = " << maxM0_;
 
-    LOG(NOTICE) << "mult                = " << mult_;
-    LOG(NOTICE) << "skip_optimized_index= " << skip_optimized_index;
-    LOG(NOTICE) << "delaunay_type       = " << delaunay_type_;
+    LOG(INFO) << "mult                = " << mult_;
+    LOG(INFO) << "skip_optimized_index= " << skip_optimized_index;
+    LOG(INFO) << "delaunay_type       = " << delaunay_type_;
 
     SetQueryTimeParams(getEmptyParams());
-    LOG(NOTICE) << "this->data_.empty() = " << this->data_.empty();
+    LOG(INFO) << "this->data_.empty() = " << this->data_.empty();
 
     if (this->data_.empty()) {
         ////pmgr.CheckUnused();
@@ -253,7 +253,7 @@ Hnsw<dist_t>::CreateIndex(const AnyParams& IndexParams) {
     ParallelFor(1, this->data_.size(), indexThreadQty_, [&](int id, int threadId) {
         HnswNode* node = new HnswNode(this->data_[id], id);
         if (id % 1000000 == 0){
-            LOG(NOTICE) << "adding "<<id <<" / "<<this->data_.size() <<" in threadId = "<<threadId;
+            LOG(INFO) << "adding "<<id <<" / "<<this->data_.size() <<" in threadId = "<<threadId;
         }
         add(&space_, node);
         {
@@ -269,7 +269,7 @@ Hnsw<dist_t>::CreateIndex(const AnyParams& IndexParams) {
     enterpointId_ = enterpoint_->getId();
 
     if (skip_optimized_index) {
-        LOG(NOTICE) << "searchMethod			  = " << searchMethod_;
+        LOG(INFO) << "searchMethod			  = " << searchMethod_;
         //pmgr.CheckUnused();
         return;
     }
@@ -301,15 +301,15 @@ Hnsw<dist_t>::CreateIndex(const AnyParams& IndexParams) {
 
     if (pLpSpace != nullptr) {
         if (pLpSpace->getP() == 2) {
-            LOG(NOTICE) << "\nThe space is Euclidean";
+            LOG(INFO) << "\nThe space is Euclidean";
             //vectorlength_ = ((dataSectionSize - 16) >> 2);
-            LOG(NOTICE) << "Vector length=" << vectorlength_;
+            LOG(INFO) << "Vector length=" << vectorlength_;
 
             if (vectorlength_ % 16 == 0) {
-                LOG(NOTICE) << "Thus using an optimised function for base 16";
+                LOG(INFO) << "Thus using an optimised function for base 16";
                 dist_func_type_ = DIST_TYPE_L2SQR16EXT;
             } else {
-                LOG(NOTICE) << "Thus using function with any base";
+                LOG(INFO) << "Thus using function with any base";
                 dist_func_type_ = DIST_TYPE_L2SQREXT;
             }
         }
@@ -324,24 +324,24 @@ Hnsw<dist_t>::CreateIndex(const AnyParams& IndexParams) {
 
     /*
     else if (dynamic_cast<const SpaceCosineSimilarity<dist_t>*>(&space_) != nullptr) {
-        LOG(NOTICE) << "\nThe vector space is " << space_.StrDesc();
+        LOG(INFO) << "\nThe vector space is " << space_.StrDesc();
         vectorlength_ = ((dataSectionSize - 16) >> 2);
-        LOG(NOTICE) << "Vector length=" << vectorlength_;
+        LOG(INFO) << "Vector length=" << vectorlength_;
         dist_func_type_ = NORMCOSINE;
     } else if (dynamic_cast<const SpaceNegativeScalarProduct<dist_t>*>(&space_) != nullptr) {
-        LOG(NOTICE) << "\nThe space is " << SPACE_NEGATIVE_SCALAR;
+        LOG(INFO) << "\nThe space is " << SPACE_NEGATIVE_SCALAR;
         vectorlength_ = ((dataSectionSize - 16) >> 2);
-        LOG(NOTICE) << "Vector length=" << vectorlength_;
+        LOG(INFO) << "Vector length=" << vectorlength_;
         dist_func_type_ = kNegativeDotProduct;
     }*/
-    LOG(NOTICE) << "dist_func_type: " << dist_func_type_;
+    LOG(INFO) << "dist_func_type: " << dist_func_type_;
     fstdistfunc_ = getDistFunc(dist_func_type_);
     iscosine_ = (dist_func_type_ == DIST_TYPE_NORMCOSINE);
 
     if (fstdistfunc_ == nullptr) {
-        //LOG(NOTICE) << "No appropriate custom distance function for " << space_.StrDesc();
+        //LOG(INFO) << "No appropriate custom distance function for " << space_.StrDesc();
         searchMethod_ = 0;
-        LOG(NOTICE) << "searchMethod			  = " << searchMethod_;
+        LOG(INFO) << "searchMethod			  = " << searchMethod_;
         //pmgr.CheckUnused();
         return; // No optimized index
     }
@@ -349,7 +349,7 @@ Hnsw<dist_t>::CreateIndex(const AnyParams& IndexParams) {
     CHECK(dist_func_type_ != DIST_TYPE_UNKNOWN);
 
     //pmgr.CheckUnused();
-    LOG(NOTICE) << "searchMethod			  = " << searchMethod_;
+    LOG(INFO) << "searchMethod			  = " << searchMethod_;
     //第0层每个样本需要的存储空间
     memoryPerObject_ = dataSectionSize + friendsSectionSize + 1; // 非0层的offset
     //uint64_t total_level = 0;
@@ -370,7 +370,7 @@ Hnsw<dist_t>::CreateIndex(const AnyParams& IndexParams) {
     offsetData_ = 0;
 
     //memset(data_level0_memory_, 1, memoryPerObject_ * ElList_.size());
-    //LOG(NOTICE) << "Making optimized index";
+    //LOG(INFO) << "Making optimized index";
 
     //data_rearranged_.resize(ElList_.size());
     //for (long i = 0; i < ElList_.size(); i++) {
@@ -379,11 +379,11 @@ Hnsw<dist_t>::CreateIndex(const AnyParams& IndexParams) {
         //data_rearranged_[i] = new Object(data_level0_memory_ + (i)*memoryPerObject_ + offsetData_);
     //};
 
-    LOG(NOTICE) << "Finished making optimized index";
+    LOG(INFO) << "Finished making optimized index";
 
-    LOG(NOTICE) << "Maximum level = " << enterpoint_->level;
+    LOG(INFO) << "Maximum level = " << enterpoint_->level;
 
-    //LOG(NOTICE) << "Total memory allocated for optimized index+data: " << (total_memory_allocated >> 20) << " Mb";
+    //LOG(INFO) << "Total memory allocated for optimized index+data: " << (total_memory_allocated >> 20) << " Mb";
 }
 
 template <typename dist_t>
@@ -418,9 +418,9 @@ Hnsw<dist_t>::SetQueryTimeParams(const AnyParams& QueryTimeParams) {
     //}
 
     //pmgr.CheckUnused();
-    LOG(NOTICE) << "Set HNSW query-time parameters:";
-    LOG(NOTICE) << "ef(Search)         =" << ef_;
-    //LOG(NOTICE) << "algoType           =" << searchAlgoType_;
+    LOG(INFO) << "Set HNSW query-time parameters:";
+    LOG(INFO) << "ef(Search)         =" << ef_;
+    //LOG(INFO) << "algoType           =" << searchAlgoType_;
 }
 
 template <typename dist_t>
@@ -455,7 +455,7 @@ Hnsw<dist_t>::add(const Space<dist_t>* space, HnswNode* NewElement) {
     }
 
     NewElement->init(curlevel, maxM_, maxM0_);
-    //LOG(NOTICE)<<NewElement->getId()<<"\t"<<NewElement->level;
+    //LOG(INFO)<<NewElement->getId()<<"\t"<<NewElement->level;
     int maxlevelcopy = maxlevel_;
     HnswNode* ep = enterpoint_;
 
@@ -675,19 +675,19 @@ Hnsw<dist_t>::SaveOptimizedIndex(std::ostream& output) {
     writeBinaryPOD(output, searchMethod_);
 
 
-    LOG(NOTICE) << "totalElementsStored_                   = " << totalElementsStored_;
-    LOG(NOTICE) << "memoryPerObject_      = " << memoryPerObject_;
-    LOG(NOTICE) << "offsetData_      = " << offsetData_;
-    LOG(NOTICE) << "maxlevel_			          = " << maxlevel_;
-    LOG(NOTICE) << "enterpointId_			          = " << enterpointId_;
+    LOG(INFO) << "totalElementsStored_                   = " << totalElementsStored_;
+    LOG(INFO) << "memoryPerObject_      = " << memoryPerObject_;
+    LOG(INFO) << "offsetData_      = " << offsetData_;
+    LOG(INFO) << "maxlevel_			          = " << maxlevel_;
+    LOG(INFO) << "enterpointId_			          = " << enterpointId_;
 
-    LOG(NOTICE) << "maxM_                = " << maxM_;
-    LOG(NOTICE) << "maxM0_= " << maxM0_;
-    LOG(NOTICE) << "dist_func_type_       = " << dist_func_type_;
-    LOG(NOTICE) << "searchMethod_       = " << searchMethod_;
+    LOG(INFO) << "maxM_                = " << maxM_;
+    LOG(INFO) << "maxM0_= " << maxM0_;
+    LOG(INFO) << "dist_func_type_       = " << dist_func_type_;
+    LOG(INFO) << "searchMethod_       = " << searchMethod_;
 
     size_t data_plus_links0_size = memoryPerObject_ * totalElementsStored_;
-    LOG(NOTICE) << "writing " << data_plus_links0_size << " bytes";
+    LOG(INFO) << "writing " << data_plus_links0_size << " bytes";
     //output.write(data_level0_memory_, data_plus_links0_size);
     char* data_level0_memory_ = (char*)malloc((memoryPerObject_) + EXTRA_MEM_PAD_SIZE);
     CHECK(data_level0_memory_);
@@ -706,7 +706,7 @@ Hnsw<dist_t>::SaveOptimizedIndex(std::ostream& output) {
 template <typename dist_t>
 void
 Hnsw<dist_t>::LoadIndex(const string& location) {
-    LOG(NOTICE) << "Loading index from " << location;
+    LOG(INFO) << "Loading index from " << location;
     std::ifstream input(location,
                         std::ios::binary); /* text files can be opened in binary mode as well */
     //CHECK_MSG(input, "Cannot open file '" + location + "' for reading");
@@ -718,7 +718,7 @@ Hnsw<dist_t>::LoadIndex(const string& location) {
     LoadOptimizedIndex(input);
     input.close();
 
-    LOG(NOTICE) << "Finished loading index";
+    LOG(INFO) << "Finished loading index";
     visitedlistpool = new VisitedListPool(1, totalElementsStored_);
 
 
@@ -727,7 +727,7 @@ Hnsw<dist_t>::LoadIndex(const string& location) {
 template <typename dist_t>
 void
 Hnsw<dist_t>::LoadOptimizedIndex(std::istream& input) {
-    LOG(NOTICE) << "Loading optimized index.";
+    LOG(INFO) << "Loading optimized index.";
 
     readBinaryPOD(input, totalElementsStored_);
     readBinaryPOD(input, memoryPerObject_);
@@ -740,27 +740,27 @@ Hnsw<dist_t>::LoadOptimizedIndex(std::istream& input) {
     readBinaryPOD(input, dist_func_type_);
     readBinaryPOD(input, searchMethod_);
 
-    LOG(NOTICE) << "totalElementsStored_                   = " << totalElementsStored_;
-    LOG(NOTICE) << "memoryPerObject_      = " << memoryPerObject_;
-    LOG(NOTICE) << "offsetData_      = " << offsetData_;
-    LOG(NOTICE) << "maxlevel_			          = " << maxlevel_;
-    LOG(NOTICE) << "enterpointId_			          = " << enterpointId_;
+    LOG(INFO) << "totalElementsStored_                   = " << totalElementsStored_;
+    LOG(INFO) << "memoryPerObject_      = " << memoryPerObject_;
+    LOG(INFO) << "offsetData_      = " << offsetData_;
+    LOG(INFO) << "maxlevel_			          = " << maxlevel_;
+    LOG(INFO) << "enterpointId_			          = " << enterpointId_;
 
-    LOG(NOTICE) << "maxM_                = " << maxM_;
-    LOG(NOTICE) << "maxM0_= " << maxM0_;
-    LOG(NOTICE) << "dist_func_type_       = " << dist_func_type_;
-    LOG(NOTICE) << "searchMethod_       = " << searchMethod_;
+    LOG(INFO) << "maxM_                = " << maxM_;
+    LOG(INFO) << "maxM0_= " << maxM0_;
+    LOG(INFO) << "dist_func_type_       = " << dist_func_type_;
+    LOG(INFO) << "searchMethod_       = " << searchMethod_;
 
 
 
-    LOG(NOTICE) << "searchMethod: " << searchMethod_;
-    LOG(NOTICE) << "dist_func_type: " << dist_func_type_;
+    LOG(INFO) << "searchMethod: " << searchMethod_;
+    LOG(INFO) << "dist_func_type: " << dist_func_type_;
     fstdistfunc_ = getDistFunc(dist_func_type_);
     iscosine_ = (dist_func_type_ == DIST_TYPE_NORMCOSINE);
     //CHECK_MSG(fstdistfunc_ != nullptr, "Unknown distance function code: " + std::to_string(dist_func_type_));
 
-    //        LOG(NOTICE) << input.tellg();
-    LOG(NOTICE) << "Total: " << totalElementsStored_ << ", Memory per object: " << memoryPerObject_;
+    //        LOG(INFO) << input.tellg();
+    LOG(INFO) << "Total: " << totalElementsStored_ << ", Memory per object: " << memoryPerObject_;
     size_t data_plus_links0_size = memoryPerObject_ * totalElementsStored_;
     // we allocate a few extra bytes to prevent prefetch from accessing out of range memory
 

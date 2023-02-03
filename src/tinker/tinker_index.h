@@ -5,9 +5,7 @@
  * @date    2022-05-16 10:34
  * @brief
  ***********************************************************************/
-
-#ifndef  BAIDU_MMS_GRAPH_GNOIMI_TINKER_INDEX_H
-#define  BAIDU_MMS_GRAPH_GNOIMI_TINKER_INDEX_H
+#pragma once
 
 #include <vector>
 #include "hierarchical_cluster/hierarchical_cluster.h"
@@ -24,18 +22,18 @@ public:
      **/
     TinkerIndex();
     ~TinkerIndex() {}
+    
     /*
      * @brief 检索最近的topk个样本
-     * @@param [in] query_fea : query的特征向量
-     * @@param [in] k : 检索topk个最近的样本
-     * @@param [out] distance : 返回样本与query的距离
-     * @@param [out] local_idx :  返回样本的local idx
-     * @@return 0 => 正常 非0 => 错误
+     * @@param [in] request : request
+     * @@param [out] response : response
+     * @@return (int) : 正常返回0，错误返回值<0
      **/
-    virtual int search(const float* feature, const int topk, float* distance, uint32_t* local_idx);
+    virtual int search(Request* request, Response* response);
+
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、建库（计算样本最近的1个聚类中心）、写索引文件
-    * @@return 0 => 正常 非0 => 错误
+    * @@return (int) : 正常返回0，错误返回值<0
     **/
     int build();
 protected:
@@ -43,7 +41,7 @@ protected:
     * @brief 计算query与一级聚类中心的距离并排序，返回top-1
     * @@param [in\out] context : context由内存池管理
     * @@param [in] feature : query的特征向量
-    * @@return top1个cell的id
+    * @@return (int) : top1个cell的id
     **/
     int search_top1_fine_cluster(puck::SearchContext* context, const float* feature);
     /*
@@ -52,7 +50,7 @@ protected:
      * @@param [in] feature : query的特征向量
      * @@param [out] distance : topk个样本的距离
      * @@param [out] labels : topk个样本的idx
-     * @@return 0 => 正常 非0 => 错误
+     * @@return (int) : 正常返回0，错误返回值<0
      **/
     int tinker_topN_docs(puck::SearchContext* context, const float* feature, float* distance,
                          uint32_t* labels_idx);
@@ -60,7 +58,7 @@ private:
     /*
     * @brief 加载与样本相关的索引文件
     * @@param [in] local_to_memory_idx : 每个样本local_idx 与 memory_idx的映射关系
-    * @@return 0 => 正常 非0 => 错误
+    * @@return (int) : 正常返回0，错误返回值<0
     **/
     int read_feature_index(uint32_t* local_to_memory_idx = nullptr);
 
@@ -73,5 +71,5 @@ private:
 
 
 }//tinker
-#endif
+
 

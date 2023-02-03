@@ -5,8 +5,7 @@
  * @date    2019-08-20 10:43
  * @brief
  ***********************************************************************/
-#ifndef BAIDU_MMS_GRAPH_GNOIMI_GNOIMI_HEAP_H
-#define BAIDU_MMS_GRAPH_GNOIMI_GNOIMI_HEAP_H
+#pragma once
 
 #include <cstdio>
 #include <stdlib.h>
@@ -15,8 +14,6 @@
 
 namespace puck {
 
-//farward declare
-struct DocInfo;
 
 class MaxHeap {
 public:
@@ -65,5 +62,4 @@ private:
 };
 
 }
-#endif
 

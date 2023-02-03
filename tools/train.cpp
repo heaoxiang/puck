@@ -5,7 +5,7 @@
 ************************************************************************/
 
 /**
-* @File Name : train_gnoimi.cpp
+* @File Name : train.cpp
 * @Author : yinjie06
 * @Mail : yinjie06@baidu.com
 * @Created Time : 2019-04-16 15:35:30
@@ -15,7 +15,11 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-#include <base/logging.h>
+#include <glog/logging.h>
+#include <fcntl.h>
+#include <sys/types.h> 
+//#include <base/md5.h>
+#include <sys/stat.h>
 #include "tinker/tinker_index.h"
 #include "gflags/puck_gflags.h"
 #include "puck/puck_index.h"
@@ -53,10 +57,11 @@ int getFileLineCnt(const char* fileName) {
 }
 
 int main(int argc, char** argv) {
-    com_loadlog("./conf", "puck_log.conf");
+    //com_loadlog("./conf", "puck_log.conf");
     google::ParseCommandLineFlags(&argc, &argv, true);
-
+   // google::InitGoogleLogging("train");
     std::cout << "start to train\n";
+    LOG(INFO)<<"FLAGS_log_dir = "<<FLAGS_log_dir;
     puck::IndexConf conf;
 
     std::unique_ptr<puck::HierarchicalCluster> cluster;
@@ -69,7 +74,7 @@ int main(int argc, char** argv) {
         cluster.reset(new puck::HierarchicalCluster());
     }
 
-    //uint32_t total_cnt = getFileLineCnt(conf.key_file_name.c_str());
+    //uint32_t total_cnt = getFileLineCnt(conf.label_file_name.c_str());
     //cluster->_conf.total_point_count = total_cnt;
     cluster->train();
     //cluster->save_coodbooks();

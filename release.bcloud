@@ -4,8 +4,13 @@ mkdir build_tools/bin
 mv bin/train build_tools/bin
 mv bin/build build_tools/bin
 
+mkdir MR_build_tools/bin
+mv bin/distribute_build_puck MR_build_tools/bin
+mv bin/distribute_merge_puck MR_build_tools/bin
 ####python3
 mkdir puck 
 cp so/lib_py_puck_api.so puck/_py_puck_api.so
 cp lib/py_puck_api.py puck/
 tar zcvf puck_to_python.tar.gz ./puck/*
+
+rm -rf baidu_third-party_gflags 

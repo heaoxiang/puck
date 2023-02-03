@@ -5,7 +5,7 @@
 ************************************************************************/
 
 /**
-* @File Name : distribute_build_gnoimi.cpp
+* @File Name : distribute_build_puck.cpp
 * @Author : yinjie06
 * @Mail : yinjie06@baidu.com
 * @Created Time : 2019-04-16 15:36:06
@@ -17,38 +17,25 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
-#include <base/logging.h>
+#include <glog/logging.h>
 #include <gflags/gflags.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
+//#include <boost/algorithm/string.hpp>
+//#include <boost/lexical_cast.hpp>
 #include "gflags/puck_gflags.h"
 #include "puck/puck_index.h"
+#include "string_split.h"
 
 void incrcounter(std::string countername) {
-    std::cerr << "reporter:counter:gnoimi_buildindex," << countername << ",1" << std::endl;
+    std::cerr << "reporter:counter:puck_buildindex," << countername << ",1" << std::endl;
 }
 puck::IndexConf conf;
-u_int32_t s_split(const std::string& input_stream, const std::string& delim_1, std::vector<std::string>& ret) {
-    boost::split(ret, input_stream, boost::is_any_of(delim_1)); 
-    int true_size = ret.size()-1;   
-    while (true_size >= 0)
-    {
-        if (ret[true_size].length() < 1){
-            --true_size;
-        }else{
-            break;
-        }
-    }
-    ret.resize(true_size + 1);
-    return ret.size();
-}
 
 int parse_input_stream(const std::string& input_str, const u_int32_t dim,
                        puck::PuckBuildInfo& build_info) {
 
     std::vector<std::string> splited_str;
 
-    if (s_split(input_str, "\t", splited_str) < 2) {
+    if (puck::s_split(input_str, "\t", splited_str) < 2) {
         LOG(WARNING) << "parse_input_stream error";
         return -1;
     }
@@ -62,7 +49,7 @@ int parse_input_stream(const std::string& input_str, const u_int32_t dim,
     build_info.lable = splited_str[0];
     std::vector<std::string> splited_fea;
     
-    if (s_split(splited_str[1], " ", splited_fea) != dim) {
+    if (puck::s_split(splited_str[1], " ", splited_fea) != dim) {
 
         for (uint32_t idx =0;idx < splited_fea.size();++idx){
             LOG(WARNING) << idx<<" "<<splited_fea[idx];
@@ -138,26 +125,17 @@ void compute_single_assigns_subset(const char* line, const u_int32_t dim, void* 
 }
 
 int main(int argc, char** argv) {
-    google::ParseCommandLineFlags(&argc, &argv, true);
     //从索引加载文件
-    com_loadlog("./conf", "puck_log.conf");
+    //com_loadlog("./conf", "puck_log.conf");
+    
     google::ParseCommandLineFlags(&argc, &argv, true);
-
-    std::unique_ptr<puck::HierarchicalCluster> cluster;
+    google::InitGoogleLogging(argv[0]);
+    std::unique_ptr<puck::PuckIndex> cluster;
     
     conf = puck::load_index_conf_file();
 
-    if (conf.index_version == 1 && conf.whether_filter == true) { //PUCK
-        LOG(NOTICE) << "init index of Puck";
-        cluster.reset(new puck::PuckIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == false) {
-        //Flat
-        cluster.reset(new puck::HierarchicalCluster());
-        LOG(NOTICE) << "init index of Flat";
-    } else {
-        LOG(NOTICE) << "init index of Error, Nan type";
-        return -1;
-    }
+    cluster.reset(new puck::PuckIndex());
+    
     int ret = cluster->init_single_build();
     if (ret != 0) {
         std::cout << "init error:" << ret << std::endl;

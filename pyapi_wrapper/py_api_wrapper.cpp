@@ -1,17 +1,17 @@
 /***********************************************************************
  * Copyright (c) 2021 Baidu.com, Inc. All Rights Reserved
- * @file    py_gnoimi_api_wrapper.cpp
+ * @file    py_puck_api_wrapper.cpp
  * @author  yinjie06(yinjie06@baidu.com)
  * @date    2021-08-18 14:30
  * @brief
  ***********************************************************************/
 #include <gflags/gflags.h>
-
-#include "py_gnoimi_api_wrapper.h"
+#include "index.h"
+#include "py_api_wrapper.h"
 #include "gflags/puck_gflags.h"
 #include "puck/puck_index.h"
 #include "tinker/tinker_index.h"
-namespace py_gnoimi_api {
+namespace py_puck_api {
 
 void update_gflag(const char* gflag_key, const char* gflag_val) {
     google::SetCommandLineOption(gflag_key, gflag_val);
@@ -49,13 +49,30 @@ int PySearcher::build(uint32_t total_cnt) {
 }
 
 int PySearcher::init() {
-    update_gflag("has_key", "false");
-    _index.reset(new puck::Searcher());
-    int ret = _index->puck::Searcher::init();
-    _dim = _index->get_conf().feature_dim;
-    if (_index->get_conf().ip2cos){
+
+    puck::IndexConf conf = puck::load_index_conf_file();
+
+    if (conf.index_version == 2) { //Tinker
+        LOG(INFO) << "init index of Tinker";
+        _index.reset(new puck::TinkerIndex());
+    } else if (conf.index_version == 1 && conf.whether_filter == true) { //PUCK
+        LOG(INFO) << "init index of Puck";
+        _index.reset(new puck::PuckIndex());
+    } else if (conf.index_version == 1 && conf.whether_filter == false) {
+        _index.reset(new puck::HierarchicalCluster());
+        LOG(INFO) << "init index of Flat";
+    } else {
+        LOG(INFO) << "init index of Error, Nan type";
+        return -1;
+    }
+
+    int ret = _index->init();
+    _dim = conf.feature_dim;
+
+    if (conf.ip2cos) {
         --_dim;
     }
+
     return ret;
 }
 
@@ -103,12 +120,19 @@ inline void ParallelFor(size_t start, size_t end, size_t numThreads, Function fn
     }
 }
 
-int PySearcher::search(uint32_t n, const float* query_fea, const int topk, float* distance, uint32_t* labels) {
+int PySearcher::search(uint32_t n, const float* query_fea, const uint32_t topk, float* distance,
+                       uint32_t* labels) {
 
-    ParallelFor(0, n, puck::FLAGS_context_initial_pool_size, [&](int id, int threadId) {
+    ParallelFor(0, n, puck::FLAGS_threads_count, [&](int id, int threadId) {
         (void)threadId;
-        const float* cur_query = query_fea + id * _dim;
-        _index->search(cur_query, topk, distance + id * topk, labels + id * topk);
+        puck::Request request;
+        puck::Response response;
+        request.topk = topk;
+        request.feature = query_fea + id * _dim;
+
+        response.distance = distance + id * topk;
+        response.local_idx = labels + id * topk;
+        _index->search(&request, &response);
     });
 
     return 0;
@@ -117,7 +141,7 @@ int PySearcher::search(uint32_t n, const float* query_fea, const int topk, float
 void PySearcher::update_params(uint32_t topk, uint32_t search_cells, uint32_t neighbors,
                                uint32_t filter_topk) {
     update_gflag("topk", std::to_string(topk).c_str());
-    update_gflag("gnoimi_search_cells", std::to_string(search_cells).c_str());
+    update_gflag("search_coarse_count", std::to_string(search_cells).c_str());
     update_gflag("neighbors_count", std::to_string(neighbors).c_str());
     update_gflag("filter_topk", std::to_string(filter_topk).c_str());
     update_gflag("tinker_search_range", std::to_string(neighbors).c_str());
@@ -125,4 +149,4 @@ void PySearcher::update_params(uint32_t topk, uint32_t search_cells, uint32_t ne
 }
 
 PySearcher::~PySearcher() {};
-};//namespace py_gnoimi_apidacker -d
+};//namespace py_puck_api

@@ -16,13 +16,14 @@
 #include "gflags/puck_gflags.h"
 #include "hierarchical_cluster/max_heap.h"
 #include "search_context.h"
+
 //#include "imitative_heap.h"
 #include "tinker/method/hnsw_distfunc_opt_impl_inline.h"
 #include "puck/puck_index.h"
 namespace puck {
 
-DEFINE_int32(pq_train_points_count, 1000000, "used for gnoimi pq codebooks");
-DEFINE_string(train_pq_file_name, "mid-data/train_pq.dat", "random sampling for gnoimi train clusters");
+DEFINE_int32(pq_train_points_count, 1000000, "used for puck train pq codebooks");
+DEFINE_string(train_pq_file_name, "mid-data/train_pq.dat", "random sampling for puck train pq codebooks");
 
 PuckIndex::PuckIndex() {
 
@@ -42,7 +43,7 @@ void write_sequential_format(const char* file_name, const void* wrt_vocab, const
 
 int PuckIndex::save_coodbooks() const {
     this->HierarchicalCluster::save_coodbooks();
-    LOG(NOTICE) << "GnoimiTrainIndex start save save_coodbooks";
+    LOG(INFO) << "PuckIndex save coodbooks";
     std::vector<std::thread> writers;
 
     if (_conf.whether_pq) {
@@ -54,7 +55,7 @@ int PuckIndex::save_coodbooks() const {
     }
 
     auto& cur_params = _filter_quantization->get_quantization_params();
-    LOG(NOTICE) << cur_params.dim << " " << cur_params.lsq << " " << cur_params.nsq << " " << cur_params.ks;
+    LOG(INFO) << cur_params.dim << " " << cur_params.lsq << " " << cur_params.nsq << " " << cur_params.ks;
     std::thread write_filer_codebook_data(write_fvec_format, _conf.filter_codebook_file_name.c_str(),
                                           _filter_quantization->get_coodbooks(), cur_params.nsq * cur_params.ks, cur_params.lsq);
     writers.push_back(std::move(write_filer_codebook_data));
@@ -71,14 +72,14 @@ int PuckIndex::save_index() {
     std::vector<std::thread> writers;
 
     if (_conf.whether_pq) {
-        LOG(NOTICE) << "save_index pq";
+        LOG(INFO) << "save_index pq";
         std::thread write_pq_assign_data(write_sequential_format, _conf.pq_data_file_name.c_str(),
                                          _pq_quantization->get_quantized_feature(0),
                                          _conf.total_point_count * _pq_quantization->get_per_fea_len());
         writers.push_back(std::move(write_pq_assign_data));
     }
 
-    LOG(NOTICE) << "save_index filer";
+    LOG(INFO) << "save_index filer";
     std::thread write_filer_assign_data(write_sequential_format, _conf.filter_data_file_name.c_str(),
                                         _filter_quantization->get_quantized_feature(0),
                                         _conf.total_point_count * _filter_quantization->get_per_fea_len());
@@ -92,27 +93,27 @@ int PuckIndex::save_index() {
 }
 
 int PuckIndex::read_coodbooks() {
-    LOG(NOTICE) << "PuckIndex read_coodbooks Start.";
+    LOG(INFO) << "PuckIndex read_coodbooks Start.";
 
     if (this->HierarchicalCluster::read_coodbooks() != 0) {
         LOG(ERROR) << "read HierarchicalCluster codebook fail";
         return -1;
     }
 
-    if (_filter_quantization->load_codebooks(_conf.filter_codebook_file_name) == false) {
+    if (_filter_quantization->load_codebooks(_conf.filter_codebook_file_name) != 0) {
         LOG(ERROR) << "read filter quantization codebook fail";
         return -2;
     }
 
     //PQ量化的时候
     if (_conf.whether_pq) {
-        if (_pq_quantization->load_codebooks(_conf.pq_codebook_file_name) == false) {
+        if (_pq_quantization->load_codebooks(_conf.pq_codebook_file_name) != 0) {
             LOG(ERROR) << "read pq quantization codebook fail";
             return -2;
         }
     }
 
-    LOG(NOTICE) << "PuckIndex read_coodbooks Suc.";
+    LOG(INFO) << "PuckIndex read_coodbooks Suc.";
     return 0;
 }
 
@@ -122,39 +123,40 @@ int PuckIndex::read_feature_index(uint32_t* local_to_memory_idx) {
     }
 
     if (_filter_quantization->load(_conf.filter_codebook_file_name, _conf.filter_data_file_name,
-                                   local_to_memory_idx) == false) {
+                                   local_to_memory_idx) != 0) {
         LOG(ERROR) << "read_feature_index filter quantization Error.";
         return -1;
     }
 
-    LOG(NOTICE) << "read_feature_index filter quantization Suc.";
+    LOG(INFO) << "read_feature_index filter quantization Suc.";
 
     if (_conf.whether_pq) {
         if (_pq_quantization->load(_conf.pq_codebook_file_name, _conf.pq_data_file_name,
-                                   local_to_memory_idx) == false) {
+                                   local_to_memory_idx) != 0) {
             LOG(ERROR) << "read_feature_index PQ quantization Error.";
             return -1;
         }
 
-        LOG(NOTICE) << "read_feature_index PQ quantization Suc.";
+        LOG(INFO) << "read_feature_index PQ quantization Suc.";
     } else {
         if (this->HierarchicalCluster::read_feature_index(local_to_memory_idx) != 0) {
             LOG(ERROR) << "read_feature_index HierarchicalCluster Error.";
             return -1;
         }
 
-        LOG(NOTICE) << "read_feature_index HierarchicalCluster Suc";
+        LOG(INFO) << "read_feature_index HierarchicalCluster Suc";
     }
 
-    LOG(NOTICE) << "PuckIndex::read_quantization_index Suc.";
+    LOG(INFO) << "PuckIndex::read_quantization_index Suc.";
     return 0;
 }
 
 int PuckIndex::convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint32_t* local_to_memory_idx) {
-    LOG(NOTICE) << "convert_local_to_memory_idx";
+    LOG(INFO) << "convert_local_to_memory_idx";
     std::unique_ptr<uint32_t[]> cell_assign(new uint32_t[_conf.total_point_count]);
 
     if (load_cell_assign(cell_assign.get()) != 0) {
+        LOG(INFO) << "load_cell_assign has error.";
         return -1;
     }
 
@@ -164,7 +166,8 @@ int PuckIndex::convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint
     q_param.init(_conf, true);
     filter_quantization.reset(new Quantization(q_param, _conf.total_point_count));
 
-    if (filter_quantization->load(_conf.filter_codebook_file_name, _conf.filter_data_file_name) == false) {
+    if (filter_quantization->load(_conf.filter_codebook_file_name, _conf.filter_data_file_name) != 0) {
+        LOG(ERROR) << "load " << _conf.filter_codebook_file_name << " error.";
         return -1;
     }
 
@@ -175,7 +178,7 @@ int PuckIndex::convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint
     for (uint32_t i = 0; i < _conf.total_point_count; ++i) {
         doc_reorder[i].first = cell_assign[i];
 
-        if (cell_assign[i] >= _conf.gnoimi_coarse_cells_count * _conf.gnoimi_fine_cells_count) {
+        if (cell_assign[i] >= _conf.coarse_cluster_count * _conf.fine_cluster_count) {
             LOG(ERROR) << i << " " << cell_assign[i];
             return -1;
         }
@@ -205,16 +208,16 @@ int PuckIndex::convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint
         }
     }
 
-    for (uint32_t i = 0; i < _conf.gnoimi_fine_cells_count * _conf.gnoimi_coarse_cells_count; ++i) {
+    for (uint32_t i = 0; i < _conf.fine_cluster_count * _conf.coarse_cluster_count; ++i) {
         int start_doc_id = cell_start_memory_idx[i];
         int end_doc_id = cell_start_memory_idx[i + 1];
 
-        int coarse_id = i / _conf.gnoimi_fine_cells_count;
-        int fine_id = i % _conf.gnoimi_fine_cells_count;
+        int coarse_id = i / _conf.fine_cluster_count;
+        int fine_id = i % _conf.fine_cluster_count;
 
         if (start_doc_id > end_doc_id) {
-            LOG(NOTICE) << "start_doc_id = " << start_doc_id << ", end_doc_id = " << end_doc_id;
-            LOG(NOTICE) << "load index error";
+            LOG(INFO) << "start_doc_id = " << start_doc_id << ", end_doc_id = " << end_doc_id;
+            LOG(INFO) << "load index error";
             return -1;
         }
 
@@ -229,7 +232,7 @@ int PuckIndex::convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint
                 cur_fine_cluster.stationary_cell_dist);
     }
 
-    LOG(NOTICE) << "convert_local_to_memory_idx Suc.";
+    LOG(INFO) << "convert_local_to_memory_idx Suc.";
     return 0;
 }
 
@@ -262,11 +265,11 @@ int PuckIndex::init_model_memory() {
 }
 
 int PuckIndex::compute_quantized_distance(SearchContext* context, const int cell_idx,
-        const float* pq_dist_table, MaxHeap& gnoimi_heap) {
+        const float* pq_dist_table, MaxHeap& result_heap) {
     SearchCellData& search_cell_data = context->get_search_cell_data();
-    const FineCluster* cur_fine_cluster = search_cell_data.cell_distance[cell_idx].second;
+    const FineCluster* cur_fine_cluster = search_cell_data.cell_distance[cell_idx].second.first;
 
-    float* result_distance = gnoimi_heap.get_top_addr();
+    float* result_distance = result_heap.get_top_addr();
 
     ///docinfo存储的量化特征对应的参数
     auto& quantization_params = _filter_quantization->get_quantization_params();
@@ -297,7 +300,7 @@ int PuckIndex::compute_quantized_distance(SearchContext* context, const int cell
         }
 
         if (temp_dist < result_distance[0]) {
-            gnoimi_heap.max_heap_update(temp_dist, cur_fine_cluster->memory_idx_start + i);
+            result_heap.max_heap_update(temp_dist, cur_fine_cluster->memory_idx_start + i);
         }
     }
 
@@ -305,7 +308,7 @@ int PuckIndex::compute_quantized_distance(SearchContext* context, const int cell
 }
 
 int PuckIndex::filter_topN_docs(SearchContext* context, const float* feature, const int search_cell_cnt,
-                                MaxHeap& gnoimi_heap) {
+                                MaxHeap& result_heap) {
     SearchDocData& search_doc_data = context->get_search_doc_data();
 
     float* result_distance = search_doc_data.result_distance;
@@ -339,7 +342,6 @@ int PuckIndex::filter_topN_docs(SearchContext* context, const float* feature, co
     auto* cur_quantization = _filter_quantization.get();
 
     cur_quantization->get_dist_table(feature, pq_dist_table);
-    float query_norm = cblas_sdot(_conf.feature_dim, feature, 1, feature, 1);
 
     for (int idx = 0; idx < search_cell_cnt && found < _conf.neighbors_count; idx++) {
         found += compute_quantized_distance(context, idx, pq_dist_table, filter_heap);
@@ -349,14 +351,29 @@ int PuckIndex::filter_topN_docs(SearchContext* context, const float* feature, co
         filter_heap.reorder();
     }
 
+    return rank_topN_docs(context, feature, filter_heap.get_heap_size(), result_heap);
+}
+
+int PuckIndex::rank_topN_docs(SearchContext* context, const float* feature, const uint32_t filter_topk,
+                              MaxHeap& result_heap) {
+
+    //LOG(INFO)<<"PuckIndex::rank_topN_docs";
+    SearchDocData& search_doc_data = context->get_search_doc_data();
+
+    float* result_distance = search_doc_data.result_distance;
+    uint32_t* result_tag = search_doc_data.result_tag;
+
+    float query_norm = cblas_sdot(_conf.feature_dim, feature, 1, feature, 1);
     ////真正会返回的结果存储的位置
-    float* true_result_distance = gnoimi_heap.get_top_addr();
+    float* true_result_distance = result_heap.get_top_addr();
 
     if (_conf.whether_pq) {
         const Quantization* pq_quantization = _pq_quantization.get();
+
+        float* pq_dist_table = context->get_search_doc_data().pq_dist_table;
         pq_quantization->get_dist_table(feature, pq_dist_table);
 
-        for (uint32_t idx = 0; idx < filter_heap.get_heap_size(); ++idx) {
+        for (uint32_t idx = 0; idx < filter_topk; ++idx) {
             int point_id = _memory_to_local[result_tag[idx]];
             //int point_id = _memory_to_local[filer_vect[idx].second];
             const unsigned char* pq_feature = (unsigned char*)pq_quantization->get_quantized_feature(result_tag[idx]);
@@ -372,7 +389,7 @@ int PuckIndex::filter_topN_docs(SearchContext* context, const float* feature, co
             }
 
             if (temp_dist < true_result_distance[0]) {
-                gnoimi_heap.max_heap_update(temp_dist, point_id);
+                result_heap.max_heap_update(temp_dist, point_id);
             }
 
         }
@@ -380,7 +397,7 @@ int PuckIndex::filter_topN_docs(SearchContext* context, const float* feature, co
         size_t qty_16 = 16;
         _mm_prefetch((char*)(feature), _MM_HINT_T0);
 
-        for (uint32_t idx = 0; idx < filter_heap.get_heap_size(); ++idx) {
+        for (uint32_t idx = 0; idx < filter_topk; ++idx) {
             uint32_t m = 0;
             float PORTABLE_ALIGN32 TmpRes[8];
             const float* exhaustive_feature = _all_feature + (uint64_t)result_tag[idx] * _conf.feature_dim;
@@ -398,18 +415,18 @@ int PuckIndex::filter_topN_docs(SearchContext* context, const float* feature, co
                     temp_dist += similarity::L2SqrExt(exhaustive_feature + m, feature + m, left_dim, TmpRes);
                 }
 
-                gnoimi_heap.max_heap_update(temp_dist, _memory_to_local[result_tag[idx]]);
+                result_heap.max_heap_update(temp_dist, _memory_to_local[result_tag[idx]]);
             }
         }
     }
 
-    gnoimi_heap.reorder();
+    result_heap.reorder();
     return 0;
 }
 
-int PuckIndex::search(const float* query_feature, const int topk, float* distance, uint32_t* local_ids) {
-    if (topk > _conf.filter_topk) {
-        LOG(ERROR) << "topk should <= filter_topk, filter_topk = " << _conf.filter_topk;
+int PuckIndex::search(Request* request, Response* response) {
+    if (request->topk > _conf.topk || request->feature == nullptr) {
+        LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk << ", or feature is nullptr";
         return -1;
     }
 
@@ -419,23 +436,29 @@ int PuckIndex::search(const float* query_feature, const int topk, float* distanc
         return -1;
     }
 
-    const float* feature = normalization(context.get(), query_feature);
+    const float* feature = normalization(context.get(), request->feature);
+    if (feature == nullptr){
+        return -1;
+    }
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
-                                            _conf.gnoimi_search_cells);//, coarse_distance, coarse_tag);
+                                            _conf.search_coarse_count);//, coarse_distance, coarse_tag);
 
     if (ret != 0) {
+        LOG(INFO) << "search_nearest_coarse_cluster error " << ret;
         return ret;
     }
 
     //计算query与二级聚类中心的距离并排序
     int search_cell_cnt = search_nearest_fine_cluster(context.get(), feature);//, coarse_tag, coarse_distance);
 
-    MaxHeap gnoimi_heap(topk, distance, local_ids);
+    MaxHeap result_heap(request->topk, response->distance, response->local_idx);
 
-    return filter_topN_docs(context.get(), feature, search_cell_cnt, gnoimi_heap);
-
-    return 0;
+    ret = filter_topN_docs(context.get(), feature, search_cell_cnt, result_heap);
+    if(ret == 0){
+        response->result_num = result_heap.get_heap_size();
+    }
+    return ret;
 }
 
 int PuckIndex::puck_assign(const ThreadParams& thread_params, uint32_t* cell_assign) const {
@@ -470,8 +493,8 @@ int PuckIndex::puck_assign(const ThreadParams& thread_params, uint32_t* cell_ass
 
             int cell_id = cell_assign[true_doc_id];
 
-            coarse_assign = cell_id / _conf.gnoimi_fine_cells_count;
-            fine_assign = cell_id % _conf.gnoimi_fine_cells_count;
+            coarse_assign = cell_id / _conf.fine_cluster_count;
+            fine_assign = cell_id % _conf.fine_cluster_count;
 
             float* cur_residual = chunk_points.get() + point_id * _conf.feature_dim;
             cblas_saxpy(_conf.feature_dim, -1.0,
@@ -510,7 +533,6 @@ int PuckIndex::puck_assign(const ThreadParams& thread_params, uint32_t* cell_ass
                     auto* quantized_fea = quantized->get_quantized_feature(true_doc_id);
                     quantized_fea += quantized->get_fea_offset();
                     quantized_fea[k] = (unsigned char)pq_assign.get()[i];
-
                     int cur_assign = pq_assign.get()[i];
                     float* cur_doc_fea = chunk_points.get() + i * _conf.feature_dim;
                     cblas_saxpy(cur_lsq, -1.0,
@@ -527,8 +549,8 @@ int PuckIndex::puck_assign(const ThreadParams& thread_params, uint32_t* cell_ass
 
             int cell_id = cell_assign[true_doc_id];
 
-            coarse_assign = cell_id / _conf.gnoimi_fine_cells_count;
-            fine_assign = cell_id % _conf.gnoimi_fine_cells_count;
+            coarse_assign = cell_id / _conf.fine_cluster_count;
+            fine_assign = cell_id % _conf.fine_cluster_count;
 
             std::unique_ptr<float[]> cur_residual(new float[_conf.feature_dim]);
             memcpy(cur_residual.get(), _coarse_vocab + coarse_assign * _conf.feature_dim,
@@ -543,7 +565,8 @@ int PuckIndex::puck_assign(const ThreadParams& thread_params, uint32_t* cell_ass
             }
         }
     }
-
+    tm_cost.stop();
+    LOG(INFO)<<"puck assign from "<<thread_params.start_id <<" cost "<<tm_cost.m_elapsed()<<" ms.";
     return 0;
 }
 
@@ -579,7 +602,7 @@ void PuckIndex::batch_assign(const uint32_t total_cnt, const std::string& featur
                     thread_params.open_file(feature_file_name.c_str(), _conf.feature_dim);
 
                     try {
-                        LOG(NOTICE) << "puck_assign, thread_params.start_id = " << thread_params.start_id << " points_count = " <<
+                        LOG(INFO) << "puck_assign, thread_params.start_id = " << thread_params.start_id << " points_count = " <<
                                     thread_params.points_count << " feature_file_name = " << feature_file_name << " threadId = " << threadId;
                         puck_assign(thread_params, cell_assign);
                     } catch (...) {
@@ -599,7 +622,7 @@ void PuckIndex::batch_assign(const uint32_t total_cnt, const std::string& featur
         std::rethrow_exception(lastException);
     }
 
-    LOG(NOTICE) << "PuckIndex batch_assign Suc.";
+    LOG(INFO) << "PuckIndex batch_assign Suc.";
 
 }
 
@@ -624,7 +647,7 @@ int PuckIndex::train() {
     std::unique_ptr<float[]> kmeans_train_vocab(new float[train_vocab_len]);
     uint32_t pq_train_points_count = random_sampling(FLAGS_train_fea_file_name, FLAGS_train_points_count,
                                      FLAGS_pq_train_points_count, _conf.feature_dim, kmeans_train_vocab.get());
-    LOG(NOTICE) << "true doc cnt for puck train = " << pq_train_points_count;
+    LOG(INFO) << "true doc cnt for puck train = " << pq_train_points_count;
 
     //写文件，训练使用这批抽样数据
     write_fvec_format(train_pq_file_name.c_str(),
@@ -637,8 +660,8 @@ int PuckIndex::train() {
     //算残差
     for (uint32_t i = 0; i < pq_train_points_count; ++i) {
         float* residual = kmeans_train_vocab.get() + i * _conf.feature_dim;
-        int coarse_assign = cell_assign[i] / _conf.gnoimi_fine_cells_count;
-        int fine_assign = cell_assign[i] % _conf.gnoimi_fine_cells_count;
+        int coarse_assign = cell_assign[i] / _conf.fine_cluster_count;
+        int fine_assign = cell_assign[i] % _conf.fine_cluster_count;
 
         cblas_saxpy(_conf.feature_dim, -1.0,
                     _coarse_vocab + coarse_assign * _conf.feature_dim, 1,
@@ -652,12 +675,12 @@ int PuckIndex::train() {
 
 
     auto& cur_params = _filter_quantization->get_quantization_params();
-    LOG(NOTICE) << cur_params.nsq << " " << cur_params.lsq << " " << cur_params.ks << " " << cur_params.lsq;
+    LOG(INFO) << cur_params.nsq << " " << cur_params.lsq << " " << cur_params.ks << " " << cur_params.lsq;
     quantizations.push_back(_filter_quantization.get());
 
     if (_conf.whether_pq) {
         auto& cur_params = _pq_quantization->get_quantization_params();
-        LOG(NOTICE) << cur_params.nsq << " " << cur_params.lsq << " " << cur_params.ks << " " << cur_params.lsq;
+        LOG(INFO) << cur_params.nsq << " " << cur_params.lsq << " " << cur_params.ks << " " << cur_params.lsq;
         quantizations.push_back(_pq_quantization.get());
     }
 
@@ -666,7 +689,7 @@ int PuckIndex::train() {
 
     for (auto quantized : quantizations) {
         auto& cur_params = quantized->get_quantization_params();
-        LOG(NOTICE) << cur_params.nsq << " " << cur_params.lsq;
+        LOG(INFO) << cur_params.nsq << " " << cur_params.lsq;
         std::unique_ptr<float[]> sub_resudial(new float[pq_train_points_count * cur_params.lsq]);
 
         for (uint32_t k = 0; k < (uint32_t)cur_params.nsq; k++) {
@@ -687,7 +710,7 @@ int PuckIndex::train() {
             float err = kmeans(cur_params.lsq, pq_train_points_count, cur_params.ks, params.niter,
                                sub_resudial.get(), params.flags, params.seed, params.redo,
                                cur_pq_centroids, nullptr, pq_assign.get(), nullptr);
-            LOG(NOTICE) << "deviation error of init sub " << k << " pq codebook clusters is " << err;
+            LOG(INFO) << "deviation error of init sub " << k << " pq codebook clusters is " << err;
 
             for (uint32_t i = 0; i < pq_train_points_count; ++i) {
                 float* cur_train_point = kmeans_train_vocab.get() + i * _conf.feature_dim;
@@ -698,7 +721,7 @@ int PuckIndex::train() {
             }
         }
 
-        LOG(NOTICE) << idx << " suc.";
+        LOG(INFO) << idx << " suc.";
     }
 
     save_coodbooks();
@@ -711,16 +734,30 @@ int PuckIndex::init_single_build() {
         return -1;
     }
 
-    if (_filter_quantization->init_quantized_feature_memory() == false) {
-        LOG(NOTICE) << "get_filter_quantization init_quantized_feature_memory error";
+    if (_filter_quantization->init_quantized_feature_memory() != 0) {
+        LOG(INFO) << "get_filter_quantization init_quantized_feature_memory error";
         return -1;
     }
 
     if (_conf.whether_pq) {
-        if (_pq_quantization->init_quantized_feature_memory() == false) {
-            LOG(NOTICE) << "pq_quantization init_quantized_feature_memory error";
+        if (_pq_quantization->init_quantized_feature_memory() != 0) {
+            LOG(INFO) << "pq_quantization init_quantized_feature_memory error";
             return -1;
         }
+    } else   {
+        void* memb = nullptr;
+        int32_t pagesize = getpagesize();
+        size_t all_feature_length = (size_t)_conf.total_point_count * _conf.feature_dim * sizeof(float);
+        size_t size = all_feature_length + (pagesize - all_feature_length % pagesize);
+
+        int err = posix_memalign(&memb, pagesize, size);
+
+        if (err != 0) {
+            std::runtime_error("alloc_aligned_mem_failed errno=" + errno);
+            return -1;
+        }
+
+        _all_feature = reinterpret_cast<float*>(memb);
     }
 
     return 0;
@@ -771,8 +808,8 @@ int PuckIndex::puck_single_assign(BuildInfo* build_info, std::vector<Quantizatio
 
     memcpy(residual.get(), chunk_points, sizeof(float) * _conf.feature_dim);
 
-    int coarse_assign = build_info->nearest_cell.cell_id / _conf.gnoimi_fine_cells_count;
-    int fine_assign = build_info->nearest_cell.cell_id % _conf.gnoimi_fine_cells_count;
+    int coarse_assign = build_info->nearest_cell.cell_id / _conf.fine_cluster_count;
+    int fine_assign = build_info->nearest_cell.cell_id % _conf.fine_cluster_count;
 
     cblas_saxpy(_conf.feature_dim, -1.0,
                 _coarse_vocab + coarse_assign * _conf.feature_dim, 1,
@@ -787,7 +824,7 @@ int PuckIndex::puck_single_assign(BuildInfo* build_info, std::vector<Quantizatio
 
     for (auto* quantization : quantizations) {
         auto& param = quantization->get_quantization_params();
-        //LOG(NOTICE)<<param.nsq<<" "<<param.ks<<" "<<param.lsq;
+        LOG(INFO) << param.nsq << " " << param.ks << " " << param.lsq;
 
         for (u_int32_t k = 0; k < param.nsq; ++k) {
             float* sub_residual = residual.get() + k * param.lsq;
@@ -820,7 +857,7 @@ int PuckIndex::puck_single_assign(BuildInfo* build_info, std::vector<Quantizatio
 
     return 0;
 }
-} //namesapce gnoimi
+} //namesapce puck
 
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
 
