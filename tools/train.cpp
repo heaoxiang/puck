@@ -24,6 +24,7 @@
 #include "gflags/puck_gflags.h"
 #include "puck/puck_index.h"
 
+DEFINE_bool(using_tinker, false, "");
 //获取文件行数，index初始化时候通过key file确定样本总个数
 int getFileLineCnt(const char* fileName) {
     struct stat st;
@@ -57,34 +58,25 @@ int getFileLineCnt(const char* fileName) {
 }
 
 int main(int argc, char** argv) {
-    //com_loadlog("./conf", "puck_log.conf");
     google::ParseCommandLineFlags(&argc, &argv, true);
-   // google::InitGoogleLogging("train");
     std::cout << "start to train\n";
     LOG(INFO)<<"FLAGS_log_dir = "<<FLAGS_log_dir;
-    puck::IndexConf conf;
 
-    std::unique_ptr<puck::HierarchicalCluster> cluster;
-
-    if (conf.index_version == 2) {
-        cluster.reset(new puck::TinkerIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == true) {
-        cluster.reset(new puck::PuckIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == false) {
-        cluster.reset(new puck::HierarchicalCluster());
+    std::unique_ptr<puck::Index> index;
+    if (FLAGS_using_tinker) {
+        index.reset(new puck::TinkerIndex());
+    } else if (puck::FLAGS_whether_filter == true) {
+        index.reset(new puck::PuckIndex());
+    } else if (puck::FLAGS_whether_filter == false) {
+        index.reset(new puck::HierarchicalClusterIndex());
     }
 
-    //uint32_t total_cnt = getFileLineCnt(conf.label_file_name.c_str());
-    //cluster->_conf.total_point_count = total_cnt;
-    cluster->train();
-    //cluster->save_coodbooks();
+    if(index->train() != 0){
+        LOG(ERROR)<<"train Fail.\n";
+        return -1;
+    }
 
-    std::cout << "train Suc.\n";
-
-    //std::cout << "start to build\n";
-
-    //cluster->build();
-    //cluster->save_index();
+    LOG(ERROR) << "train Suc.\n";
     return 0;
 }
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */

@@ -77,24 +77,19 @@ IndexConf::IndexConf() {
 
     pq_data_file_name = index_path + "/" + FLAGS_pq_data_file_name;
 
-    if (FLAGS_using_tinker == true) {
-        index_version = 2;
-    } else {
-        index_version = 1;
-    }
-
+    index_type = 1;
     tinker_search_range = FLAGS_tinker_search_range;
 }
 
 void IndexConf::adaptive_train_param() {
     //tinker
-    if (index_version == 2) {
+    if (index_type == 2) {
         whether_filter = false;
         whether_pq = false;
         return;
     }
 
-    if (index_version == 1) {
+    if (index_type == 1) {
 
         google::CommandLineFlagInfo info;
         bool unset_whether_filter = google::GetCommandLineFlagInfo("whether_filter", &info) && info.is_default;
@@ -141,7 +136,7 @@ void IndexConf::adaptive_train_param() {
 }
 int IndexConf::adaptive_search_param() {
     //检索参数检查
-    if (index_version == 2) {
+    if (index_type == 2) {
         tinker_search_range = FLAGS_tinker_search_range;
         google::CommandLineFlagInfo info;
 
@@ -180,7 +175,7 @@ int IndexConf::adaptive_search_param() {
 void IndexConf::show() {
     LOG(INFO) << "feature_dim = " << feature_dim;
     LOG(INFO) << "whether_norm = " << whether_norm;
-    LOG(INFO) << "index_version = " << index_version;
+    LOG(INFO) << "index_type = " << index_type;
 
     //filer
     if (whether_filter) {
@@ -201,7 +196,7 @@ void IndexConf::show() {
 
     LOG(INFO) << "search_coarse_count = " << search_coarse_count;
 
-    if (index_version == 2) {
+    if (index_type == 2) {
         LOG(INFO) << "tinker_neighborhood = " << FLAGS_tinker_neighborhood;
         LOG(INFO) << "tinker_construction = " << FLAGS_tinker_construction;
         LOG(INFO) << "tinker_search_range = " << tinker_search_range;

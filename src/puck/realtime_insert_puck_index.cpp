@@ -255,7 +255,7 @@ int RealtimeInsertPuckIndex::insert(InsertRequest* request) {
     memcpy(build_info.feature.data(), request->feature, sizeof(float) * _conf.feature_dim);
 
     //特征归一 + 计算最近的cell
-    if (this->HierarchicalCluster::single_build(&build_info) != 0) {
+    if (this->HierarchicalClusterIndex::single_build(&build_info) != 0) {
         return -1;
     }
 

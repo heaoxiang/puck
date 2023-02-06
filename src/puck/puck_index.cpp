@@ -26,6 +26,7 @@ DEFINE_int32(pq_train_points_count, 1000000, "used for puck train pq codebooks")
 DEFINE_string(train_pq_file_name, "mid-data/train_pq.dat", "random sampling for puck train pq codebooks");
 
 PuckIndex::PuckIndex() {
+    _conf.index_type = 1;
 
 }
 
@@ -42,7 +43,7 @@ void write_sequential_format(const char* file_name, const void* wrt_vocab, const
 }
 
 int PuckIndex::save_coodbooks() const {
-    this->HierarchicalCluster::save_coodbooks();
+    this->HierarchicalClusterIndex::save_coodbooks();
     LOG(INFO) << "PuckIndex save coodbooks";
     std::vector<std::thread> writers;
 
@@ -68,7 +69,7 @@ int PuckIndex::save_coodbooks() const {
 }
 
 int PuckIndex::save_index() {
-    //this->HierarchicalCluster::save_index();
+    //this->HierarchicalClusterIndex::save_index();
     std::vector<std::thread> writers;
 
     if (_conf.whether_pq) {
@@ -95,8 +96,8 @@ int PuckIndex::save_index() {
 int PuckIndex::read_coodbooks() {
     LOG(INFO) << "PuckIndex read_coodbooks Start.";
 
-    if (this->HierarchicalCluster::read_coodbooks() != 0) {
-        LOG(ERROR) << "read HierarchicalCluster codebook fail";
+    if (this->HierarchicalClusterIndex::read_coodbooks() != 0) {
+        LOG(ERROR) << "read HierarchicalClusterIndex codebook fail";
         return -1;
     }
 
@@ -139,12 +140,12 @@ int PuckIndex::read_feature_index(uint32_t* local_to_memory_idx) {
 
         LOG(INFO) << "read_feature_index PQ quantization Suc.";
     } else {
-        if (this->HierarchicalCluster::read_feature_index(local_to_memory_idx) != 0) {
-            LOG(ERROR) << "read_feature_index HierarchicalCluster Error.";
+        if (this->HierarchicalClusterIndex::read_feature_index(local_to_memory_idx) != 0) {
+            LOG(ERROR) << "read_feature_index HierarchicalClusterIndex Error.";
             return -1;
         }
 
-        LOG(INFO) << "read_feature_index HierarchicalCluster Suc";
+        LOG(INFO) << "read_feature_index HierarchicalClusterIndex Suc";
     }
 
     LOG(INFO) << "PuckIndex::read_quantization_index Suc.";
@@ -237,7 +238,7 @@ int PuckIndex::convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint
 }
 
 int PuckIndex::init_model_memory() {
-    this->HierarchicalCluster::init_model_memory();
+    this->HierarchicalClusterIndex::init_model_memory();
 
     QuantizationParams q_param;
 
@@ -572,8 +573,8 @@ int PuckIndex::puck_assign(const ThreadParams& thread_params, uint32_t* cell_ass
 
 void PuckIndex::batch_assign(const uint32_t total_cnt, const std::string& feature_file_name,
                              uint32_t* cell_assign) {
-    this->HierarchicalCluster::batch_assign(total_cnt, feature_file_name, cell_assign);
-    this->HierarchicalCluster::save_index();
+    this->HierarchicalClusterIndex::batch_assign(total_cnt, feature_file_name, cell_assign);
+    this->HierarchicalClusterIndex::save_index();
     std::vector<std::thread> threads;
     std::exception_ptr lastException = nullptr;
     std::mutex lastExceptMutex;
@@ -634,8 +635,8 @@ int PuckIndex::train() {
         return -1;
     }
 
-    this->HierarchicalCluster::train();
-    this->HierarchicalCluster::read_coodbooks();
+    this->HierarchicalClusterIndex::train();
+    this->HierarchicalClusterIndex::read_coodbooks();
 
     std::string train_pq_file_name = FLAGS_train_pq_file_name;
 
@@ -656,7 +657,7 @@ int PuckIndex::train() {
 
 
     std::unique_ptr<uint32_t[]> cell_assign(new uint32_t[pq_train_points_count]);
-    this->HierarchicalCluster::batch_assign(pq_train_points_count, train_pq_file_name, cell_assign.get());
+    this->HierarchicalClusterIndex::batch_assign(pq_train_points_count, train_pq_file_name, cell_assign.get());
 
     //算残差
     for (uint32_t i = 0; i < pq_train_points_count; ++i) {
@@ -729,7 +730,7 @@ int PuckIndex::train() {
     return 0;
 }
 int PuckIndex::init_single_build() {
-    this->HierarchicalCluster::init_single_build();
+    this->HierarchicalClusterIndex::init_single_build();
 
     if (_conf.whether_filter == false) {
         return -1;
@@ -771,7 +772,7 @@ int PuckIndex::single_build(BuildInfo* build_info) {
         return -1;
     }
 
-    if (this->HierarchicalCluster::single_build(build_info) != 0) {
+    if (this->HierarchicalClusterIndex::single_build(build_info) != 0) {
         return 1;
     }
 

@@ -21,34 +21,27 @@
 #include "gflags/puck_gflags.h"
 #include "puck/puck_index.h"
 
+DEFINE_bool(using_tinker, false, "");
 int main(int argc, char** argv) {
     //com_loadlog("./conf", "puck_log.conf");
     google::ParseCommandLineFlags(&argc, &argv, true);
     //google::InitGoogleLogging("build");
     LOG(INFO)<<"FLAGS_log_dir = "<<FLAGS_log_dir;
-    std::unique_ptr<puck::HierarchicalCluster> cluster;
+    std::unique_ptr<puck::Index> index;
     
-    //cluster->read_model_file();
-    auto conf = puck::load_index_conf_file();
-    
-    if (conf.index_version == 2) { //Tinker
-        LOG(INFO) << "init index of Tinker";
-        cluster.reset(new puck::TinkerIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == true) { //PUCK
-        LOG(INFO) << "init index of Puck";
-        cluster.reset(new puck::PuckIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == false) {
-        //Flat
-        cluster.reset(new puck::HierarchicalCluster());
-        LOG(INFO) << "init index of Flat";
-    } else {
-        LOG(INFO) << "init index of Error, Nan type";
-        return -1;
+    if (FLAGS_using_tinker) {
+        index.reset(new puck::TinkerIndex());
+    } else if (puck::FLAGS_whether_filter == true) {
+        index.reset(new puck::PuckIndex());
+    } else if (puck::FLAGS_whether_filter == false) {
+        index.reset(new puck::HierarchicalClusterIndex());
     }
 
-    cluster->build();
-    //cluster->save_index();
-
+    if(index->build() != 0){
+        LOG(ERROR)<<"build Fail.\n";
+        return -1;
+    }
+    LOG(ERROR) << "build Suc.\n";
     return 0;
 }
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */

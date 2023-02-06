@@ -51,10 +51,8 @@ struct IndexConf {
     ///ip2cos
     uint32_t ip2cos;
     std::string index_file_name;
-    //索引版本号，根据索引文件和配置自动更新
-    //1 - puck , 2022年2月正式发布，当前默认的算法
-    //2 - tinker，2022年6月正式发布，适合小规模数据集（1kw以下），FLAGS_using_tinker=true时使用tinker
-    uint32_t index_version;
+    
+    uint32_t index_type;
     std::string pq_data_file_name;
     std::string index_path;
     //tinker的检索参数

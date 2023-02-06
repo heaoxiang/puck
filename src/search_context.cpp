@@ -55,7 +55,7 @@ int SearchContext::reset(const IndexConf& conf) {
     //二级聚类中心最多需要top-neighbors_count个cell，空间多申请一些可避免频繁更新tag idx
     unsigned int all_cells_cnt = 1;
 
-    if (conf.index_version == 1) {
+    if (conf.index_type == 1) {
         all_cells_cnt = conf.neighbors_count * 1.1;
     }
 

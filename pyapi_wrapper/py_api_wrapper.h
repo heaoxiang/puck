@@ -8,8 +8,7 @@
 #pragma once
 
 #include <iostream>
-#include "hierarchical_cluster/hierarchical_cluster.h"
-
+#include "hierarchical_cluster/hierarchical_cluster_index.h"
 namespace py_puck_api {
 
 void update_gflag(const char* gflag_key, const char* gflag_val);
@@ -24,7 +23,7 @@ public:
     void update_params(uint32_t topk, uint32_t search_cells, uint32_t neighbors, uint32_t filter_topk);
     ~PySearcher();
 private:
-    std::unique_ptr<puck::HierarchicalCluster> _index;
+    std::unique_ptr<puck::Index> _index;
     uint32_t _dim;
 };
 };//namespace py_puck_api

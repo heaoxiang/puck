@@ -13,14 +13,14 @@
 #include <mutex>
 #include <fstream>
 #include "quantization.h"
-#include "hierarchical_cluster/hierarchical_cluster.h"
+#include "hierarchical_cluster/hierarchical_cluster_index.h"
 #include <stdlib.h>
 //#define _aligned_malloc(size, alignment) aligned_alloc(alignment, size)
 namespace puck {
 
 
 //内存索引结构
-class PuckIndex : public puck::HierarchicalCluster {
+class PuckIndex : public puck::HierarchicalClusterIndex {
 public:
     /*
      * @brief 默认构造函数，检索配置根据gflag参数确定(推荐使用)

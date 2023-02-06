@@ -8,14 +8,14 @@
 #pragma once
 
 #include <vector>
-#include "hierarchical_cluster/hierarchical_cluster.h"
+#include "hierarchical_cluster/hierarchical_cluster_index.h"
 #include "tinker/method/hnsw.h"
 #include "tinker/space/space_lp.h"
 
 namespace puck {
 
 //内存索引结构
-class TinkerIndex : public puck::HierarchicalCluster {
+class TinkerIndex : public puck::HierarchicalClusterIndex {
 public:
     /*
      * @brief 默认构造函数，检索配置根据gflag参数确定(推荐使用)

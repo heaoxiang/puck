@@ -20,7 +20,7 @@
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 #include "gflags/puck_gflags.h"
-#include "hierarchical_cluster/hierarchical_cluster.h"
+#include "hierarchical_cluster/hierarchical_cluster_index.h"
 #include "string_split.h"
 DEFINE_string(hadoop_ugi, "your ugi", "hadoop_ugi");
 

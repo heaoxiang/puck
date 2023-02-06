@@ -59,7 +59,6 @@ DEFINE_string(filter_data_file_name, "filter_data.dat", "filter data of points")
 DEFINE_int32(ip2cos, 0, "Convert ip to cos, 0-NA, 1-directly，2-need transform");
 
 //tinker
-DEFINE_bool(using_tinker, false, "");
 DEFINE_string(tinker_file_name, "tinker_relations.dat", "tinker_file_name");
 DEFINE_int32(tinker_neighborhood, 16, "neighborhood conut");
 DEFINE_int32(tinker_construction, 600, "tinker_construction");

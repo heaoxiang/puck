@@ -28,14 +28,14 @@ int PySearcher::build(uint32_t total_cnt) {
 
     puck::IndexConf conf;
 
-    std::unique_ptr<puck::HierarchicalCluster> cluster;
+    std::unique_ptr<puck::HierarchicalClusterIndex> cluster;
 
-    if (conf.index_version == 2) {
+    if (conf.index_type == 2) {
         cluster.reset(new puck::TinkerIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == true) {
+    } else if (conf.index_type == 1 && conf.whether_filter == true) {
         cluster.reset(new puck::PuckIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == false) {
-        cluster.reset(new puck::HierarchicalCluster());
+    } else if (conf.index_type == 1 && conf.whether_filter == false) {
+        cluster.reset(new puck::HierarchicalClusterIndex());
     }
 
     cluster->train();
@@ -52,14 +52,14 @@ int PySearcher::init() {
 
     puck::IndexConf conf = puck::load_index_conf_file();
 
-    if (conf.index_version == 2) { //Tinker
+    if (conf.index_type == 2) { //Tinker
         LOG(INFO) << "init index of Tinker";
         _index.reset(new puck::TinkerIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == true) { //PUCK
+    } else if (conf.index_type == 1 && conf.whether_filter == true) { //PUCK
         LOG(INFO) << "init index of Puck";
         _index.reset(new puck::PuckIndex());
-    } else if (conf.index_version == 1 && conf.whether_filter == false) {
-        _index.reset(new puck::HierarchicalCluster());
+    } else if (conf.index_type == 1 && conf.whether_filter == false) {
+        _index.reset(new puck::HierarchicalClusterIndex());
         LOG(INFO) << "init index of Flat";
     } else {
         LOG(INFO) << "init index of Error, Nan type";

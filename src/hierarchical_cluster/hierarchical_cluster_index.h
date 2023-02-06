@@ -92,16 +92,16 @@ struct KmeansParams;
 struct NearestCell;
 struct BuildInfo;
 
-class HierarchicalCluster : public Index {
+class HierarchicalClusterIndex : public Index {
 public:
     /*
      * @brief 默认构造函数
      **/
-    HierarchicalCluster();
+    HierarchicalClusterIndex();
     /*
      * @brief 默认析构函数
      **/
-    virtual ~HierarchicalCluster();
+    virtual ~HierarchicalClusterIndex();
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、加载索引文件，检索前需要先调用该函数
     * @@return (int) : 正常返回0，错误返回值<0
@@ -328,7 +328,7 @@ protected:
     **/
     const float* normalization(SearchContext* context, const float* feature);
     int check_feature_dim();
-    DISALLOW_COPY_AND_ASSIGN(HierarchicalCluster);
+    DISALLOW_COPY_AND_ASSIGN(HierarchicalClusterIndex);
 protected:
     IndexConf  _conf;
     DataHandlerPool<SearchContext> _context_pool;       //context pool

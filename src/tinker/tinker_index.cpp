@@ -24,6 +24,7 @@ extern "C" {
 namespace puck {
 
 TinkerIndex::TinkerIndex() {
+    _conf.index_type = 2;
     std::vector<std::string> buildParams;
     int tinker_neighborhood = puck::FLAGS_tinker_neighborhood;
     std::string m_str = "M=" + std::to_string(tinker_neighborhood);
@@ -163,7 +164,7 @@ int TinkerIndex::read_feature_index(uint32_t* local_to_memory_idx) {
     return 0;
 }
 int TinkerIndex::build() {
-    this->HierarchicalCluster::build();
+    this->HierarchicalClusterIndex::build();
 
     uint32_t cell_cnt = _conf.coarse_cluster_count * _conf.fine_cluster_count;
     std::vector<uint32_t> cell_start_memory_idx(cell_cnt + 1, _conf.total_point_count);
