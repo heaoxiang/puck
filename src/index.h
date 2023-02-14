@@ -63,5 +63,11 @@ struct Response {
     }
 };
 
+enum class IndexType {
+    HIERARCHICAL_CLUSTER = 0,
+    PUCK,
+    TINKER,
+};
+
 }//namespace puck
 

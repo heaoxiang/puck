@@ -39,6 +39,5 @@ Application('build', Sources(build_source))
 Application('distribute_build_puck', Sources(mr_build_source))
 Application('distribute_merge_puck', Sources(mr_merge_source))
 
-OUTPUT(GLOB('./conf/*'), '$OUT/build_tools/conf/')
 OUTPUT(GLOB('./script/*'), '$OUT/build_tools/script/')
 OUTPUT(GLOB('./MR_script/*'), '$OUT/MR_build_tools/')

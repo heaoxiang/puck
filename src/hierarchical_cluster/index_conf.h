@@ -52,7 +52,7 @@ struct IndexConf {
     uint32_t ip2cos;
     std::string index_file_name;
     
-    uint32_t index_type;
+    uint32_t index_type; //0 hcluster, 1 puck, 2 tinker
     std::string pq_data_file_name;
     std::string index_path;
     //tinker的检索参数

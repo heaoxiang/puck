@@ -18,13 +18,12 @@
 #include <glog/logging.h>
 #include <fcntl.h>
 #include <sys/types.h> 
-//#include <base/md5.h>
 #include <sys/stat.h>
 #include "tinker/tinker_index.h"
 #include "gflags/puck_gflags.h"
 #include "puck/puck_index.h"
 
-DEFINE_bool(using_tinker, false, "");
+DEFINE_int32(index_type, 1, "");
 //获取文件行数，index初始化时候通过key file确定样本总个数
 int getFileLineCnt(const char* fileName) {
     struct stat st;
@@ -63,20 +62,24 @@ int main(int argc, char** argv) {
     LOG(INFO)<<"FLAGS_log_dir = "<<FLAGS_log_dir;
 
     std::unique_ptr<puck::Index> index;
-    if (FLAGS_using_tinker) {
-        index.reset(new puck::TinkerIndex());
-    } else if (puck::FLAGS_whether_filter == true) {
-        index.reset(new puck::PuckIndex());
-    } else if (puck::FLAGS_whether_filter == false) {
-        index.reset(new puck::HierarchicalClusterIndex());
-    }
 
-    if(index->train() != 0){
-        LOG(ERROR)<<"train Fail.\n";
+    if (FLAGS_index_type == int(puck::IndexType::TINKER)) {
+        index.reset(new puck::TinkerIndex());
+    } else if (FLAGS_index_type == int(puck::IndexType::PUCK)) {
+        index.reset(new puck::PuckIndex());
+    } else if (FLAGS_index_type == int(puck::IndexType::HIERARCHICAL_CLUSTER)) { 
+        index.reset(new puck::HierarchicalClusterIndex());
+    } else {
+        LOG(ERROR) << "index type error.\n";
         return -1;
     }
 
-    LOG(ERROR) << "train Suc.\n";
+    if(index->train() != 0){
+        LOG(ERROR) << "train Fail.\n";
+        return -1;
+    }
+
+    LOG(INFO) << "train Suc.\n";
     return 0;
 }
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */

@@ -17,10 +17,8 @@
 #include <gflags/gflags.h>
 
 namespace puck {
-//检索时，初始化内存池的size
-DECLARE_int32(context_initial_pool_size);
-
-//索引文件，默认不需要修改
+/*****训练&建库参数******/
+//通用参数
 DECLARE_string(index_path);
 DECLARE_string(index_file_name);
 DECLARE_string(feature_file_name);
@@ -28,42 +26,44 @@ DECLARE_string(coarse_codebook_file_name);
 DECLARE_string(fine_codebook_file_name);
 
 DECLARE_string(cell_assign_file_name);
-DECLARE_string(pq_codebook_file_name);
-DECLARE_string(pq_data_file_name);
 DECLARE_string(label_file_name);
 
-//检索相关参数
-//数据集相关,需要配置
-DECLARE_int32(nsq);
 DECLARE_int32(feature_dim);
-DECLARE_bool(whether_pq);
 DECLARE_bool(whether_norm);
 
-//检索相关
-DECLARE_int32(search_coarse_count);
-DECLARE_int32(neighbors_count);
-DECLARE_int32(topk);
-
-//加载文件相关参数
 DECLARE_int32(coarse_cluster_count);
 DECLARE_int32(fine_cluster_count);
 DECLARE_int32(threads_count);
 
-//一些功能开关
 DECLARE_int32(ip2cos);
 
-//filter
+//puck 
+DECLARE_bool(whether_pq);
+DECLARE_int32(nsq);
+DECLARE_string(pq_codebook_file_name);
+DECLARE_string(pq_data_file_name);
 DECLARE_bool(whether_filter);
 DECLARE_int32(filter_nsq);
-DECLARE_int32(filter_topk);
 DECLARE_string(filter_codebook_file_name);
 DECLARE_string(filter_data_file_name);
 
 //tinker
-DECLARE_bool(using_tinker);
 DECLARE_string(tinker_file_name);
 DECLARE_int32(tinker_neighborhood);
 DECLARE_int32(tinker_construction);
+
+/***********检索参数*********/
+//检索时，初始化内存池的size
+DECLARE_int32(context_initial_pool_size);
+//检索通用参数
+DECLARE_int32(search_coarse_count);
+DECLARE_int32(topk);
+
+//puck 
+DECLARE_int32(filter_topk);
+DECLARE_int32(neighbors_count);
+
+//tinker
 DECLARE_int32(tinker_search_range);
 
 }

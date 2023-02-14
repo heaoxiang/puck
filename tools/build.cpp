@@ -21,7 +21,7 @@
 #include "gflags/puck_gflags.h"
 #include "puck/puck_index.h"
 
-DEFINE_bool(using_tinker, false, "");
+DEFINE_int32(index_type, 1, "");
 int main(int argc, char** argv) {
     //com_loadlog("./conf", "puck_log.conf");
     google::ParseCommandLineFlags(&argc, &argv, true);
@@ -29,19 +29,22 @@ int main(int argc, char** argv) {
     LOG(INFO)<<"FLAGS_log_dir = "<<FLAGS_log_dir;
     std::unique_ptr<puck::Index> index;
     
-    if (FLAGS_using_tinker) {
+    if (FLAGS_index_type == int(puck::IndexType::TINKER)) {
         index.reset(new puck::TinkerIndex());
-    } else if (puck::FLAGS_whether_filter == true) {
+    } else if (FLAGS_index_type == int(puck::IndexType::PUCK)) {
         index.reset(new puck::PuckIndex());
-    } else if (puck::FLAGS_whether_filter == false) {
+    } else if (FLAGS_index_type == int(puck::IndexType::HIERARCHICAL_CLUSTER)) {
         index.reset(new puck::HierarchicalClusterIndex());
+    } else {
+        LOG(ERROR) << "index type error.\n";
+        return -1;
     }
 
     if(index->build() != 0){
-        LOG(ERROR)<<"build Fail.\n";
+        LOG(ERROR) << "build Fail.\n";
         return -1;
     }
-    LOG(ERROR) << "build Suc.\n";
+    LOG(INFO) << "build Suc.\n";
     return 0;
 }
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
