@@ -30,26 +30,27 @@ CONFIGS('baidu/third-party/glog@0.6.0@git_branch')
 LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
 
 #-I path
-INCPATHS('./src ./pyapi_wrapper ./include src/tinker/method ')
+#INCPATHS('./puck ./pyapi_wrapper ./include puck/tinker/method ')
+INCPATHS('./puck ./pyapi_wrapper ')
 
 INCPATHS('$OUT_ROOT/baidu/third-party/cpython/output/include/python3.6m/ ')
 
 GenSources('./swig_run.sh', ' ', './pyapi_wrapper/py_puck_api.i ./pyapi_wrapper/numpy.i ./swig_run.sh ../../../baidu/third-party/swig')
 
-tinker_sources=' src/tinker/method/hnsw.cc src/tinker/method/hnsw_distfunc_opt.cc src/tinker/tinker_index.cpp '
-puck_source=' src/puck/puck_index.cpp src/puck/quantization.cpp src/puck/utils_simd.cpp '
-user_sources=GLOB('./src/*.cpp ./src/base/*.cpp ./src/gflags/*.cpp ./src/hierarchical_cluster/*.cpp ') + tinker_sources + puck_source
+tinker_sources=' puck/tinker/method/hnsw.cc puck/tinker/method/hnsw_distfunc_opt.cc puck/tinker/tinker_index.cpp '
+puck_source=' puck/puck/puck_index.cpp puck/puck/quantization.cpp puck/puck/utils_simd.cpp '
+user_sources=GLOB('./puck/*.cpp ./puck/base/*.cpp ./puck/gflags/*.cpp ./puck/hierarchical_cluster/*.cpp ') + tinker_sources + puck_source
 
 #release headers  move result to output
-HEADERS('src/*.h', '$INC')
-HEADERS('src/base/*.h ', '$INC/base')
-HEADERS('src/base/synchronization/*.h ', '$INC/base/synchronization')
-HEADERS('src/tinker/*.h ', '$INC/tinker')
-HEADERS('src/gflags/*.h ', '$INC/gflags')
-HEADERS('src/tinker/space/*.h ', '$INC/tinker/space')
-HEADERS('src/tinker/method/*.h ', '$INC/tinker/method')
-HEADERS('src/puck/*.h ', '$INC/puck')
-HEADERS('src/hierarchical_cluster/*.h ', '$INC/hierarchical_cluster')
+HEADERS('puck/*.h', '$INC')
+HEADERS('puck/base/*.h ', '$INC/base')
+HEADERS('puck/base/synchronization/*.h ', '$INC/base/synchronization')
+HEADERS('puck/tinker/*.h ', '$INC/tinker')
+HEADERS('puck/gflags/*.h ', '$INC/gflags')
+HEADERS('puck/tinker/space/*.h ', '$INC/tinker/space')
+HEADERS('puck/tinker/method/*.h ', '$INC/tinker/method')
+HEADERS('puck/puck/*.h ', '$INC/puck')
+HEADERS('puck/hierarchical_cluster/*.h ', '$INC/hierarchical_cluster')
 HEADERS('tools/*.h ', '$INC/tools')
 
 
@@ -60,7 +61,7 @@ OUTPUT(GLOB_GEN_SRCS("py_puck_api/py_puck_api.py"), "$OUT/lib")
 StaticLibrary('puck', Sources(user_sources, UseUbrpcgen(False)))
 
 #py. so
-py_lib_sources=GLOB(' ./src/*.cpp ./src/base/*.cpp ./src/gflags/*.cpp  ./src/hierarchical_cluster/*.cpp src/puck/puck_index.cpp src/puck/quantization.cpp src/puck/utils_simd.cpp') + tinker_sources
+py_lib_sources=GLOB(' ./puck/*.cpp ./puck/base/*.cpp ./puck/gflags/*.cpp  ./puck/hierarchical_cluster/*.cpp puck/puck/puck_index.cpp puck/puck/quantization.cpp puck/puck/utils_simd.cpp') + tinker_sources
 py_lib_sources+= ' pyapi_wrapper/py_api_wrapper.cpp '
 SharedLibrary('_py_puck_api', LinkDeps(True), Sources(py_lib_sources + GLOB_GEN_SRCS(' py_puck_api/py_puck_api.cpp ')))
 

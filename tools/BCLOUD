@@ -23,11 +23,11 @@ CPPFLAGS('-std=c++11 -Wall -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -
 LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
 
 #-I path
-INCPATHS('../src src/tinker/method ')
+INCPATHS('../puck ')
 
-tinker_sources=' ../src/tinker/method/hnsw.cc ../src/tinker/method/hnsw_distfunc_opt.cc ../src/tinker/tinker_index.cpp '
-puck_source=' ../src/puck/puck_index.cpp ../src/puck/quantization.cpp ../src/puck/utils_simd.cpp '
-user_sources=GLOB(' ../src/search_context.cpp ../src/base/*.cpp ../src/gflags/*.cpp ../src/hierarchical_cluster/*.cpp ')
+tinker_sources=' ../puck/tinker/method/hnsw.cc ../puck/tinker/method/hnsw_distfunc_opt.cc ../puck/tinker/tinker_index.cpp '
+puck_source=' ../puck/puck/puck_index.cpp ../puck/puck/quantization.cpp ../puck/puck/utils_simd.cpp '
+user_sources=GLOB(' ../puck/search_context.cpp ../puck/base/*.cpp ../puck/gflags/*.cpp ../puck/hierarchical_cluster/*.cpp ')
 train_source=" train.cpp " + user_sources + puck_source + tinker_sources
 build_source=" build.cpp " + user_sources + puck_source + tinker_sources
 mr_build_source=' distribute_build_puck.cpp ' + user_sources + puck_source
