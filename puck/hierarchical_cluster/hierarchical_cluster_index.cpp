@@ -79,6 +79,7 @@ void HierarchicalClusterIndex::init_params_value() {
 }
 
 HierarchicalClusterIndex::HierarchicalClusterIndex() {
+    _conf.index_type = int(puck::IndexType::HIERARCHICAL_CLUSTER);
     init_params_value();
     omp_set_num_threads(4);
 }

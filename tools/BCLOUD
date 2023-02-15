@@ -30,14 +30,10 @@ puck_source=' ../puck/puck/puck_index.cpp ../puck/puck/quantization.cpp ../puck/
 user_sources=GLOB(' ../puck/search_context.cpp ../puck/base/*.cpp ../puck/gflags/*.cpp ../puck/hierarchical_cluster/*.cpp ')
 train_source=" train.cpp " + user_sources + puck_source + tinker_sources
 build_source=" build.cpp " + user_sources + puck_source + tinker_sources
-mr_build_source=' distribute_build_puck.cpp ' + user_sources + puck_source
-mr_merge_source=' distribute_merge_index.cpp ' + user_sources
 
 #bin
 Application('train', Sources(train_source))
 Application('build', Sources(build_source))
-Application('distribute_build_puck', Sources(mr_build_source))
-Application('distribute_merge_puck', Sources(mr_merge_source))
 
 OUTPUT(GLOB('./script/*'), '$OUT/build_tools/script/')
-OUTPUT(GLOB('./MR_script/*'), '$OUT/MR_build_tools/')
+OUTPUT(GLOB('./demo/conf/*'), '$OUT/build_tools/conf/')

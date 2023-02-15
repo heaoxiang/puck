@@ -26,8 +26,7 @@ DEFINE_int32(pq_train_points_count, 1000000, "used for puck train pq codebooks")
 DEFINE_string(train_pq_file_name, "mid-data/train_pq.dat", "random sampling for puck train pq codebooks");
 
 PuckIndex::PuckIndex() {
-    _conf.index_type = 1;
-
+    _conf.index_type = int(puck::IndexType::PUCK);
 }
 
 PuckIndex::~PuckIndex() {

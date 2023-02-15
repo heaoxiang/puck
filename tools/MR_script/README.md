@@ -1,1 +1,0 @@
-## HADOOP建库工具使用方法：http://wiki.baidu.com/pages/viewpage.action?pageId=717321453#id-%E5%9F%BA%E7%A1%80%E6%A3%80%E7%B4%A2%E5%BC%95%E6%93%8E--GNOIMI-%E5%88%86%E5%B8%83%E5%BC%8F%E5%BB%BA%E5%BA%93%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E
