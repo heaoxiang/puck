@@ -30,7 +30,7 @@ extern "C" {
 }
 #endif
 
-#include "hierarchical_cluster/index_conf.h"
+#include "index_conf.h"
 #include "puck_data_pool.h"
 #include "index.h"
 #include "base/time.h"

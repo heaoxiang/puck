@@ -13,7 +13,7 @@
 #include <numeric>
 #include <math.h>
 #include <vector>
-#include "hierarchical_cluster/index_conf.h"
+#include "index_conf.h"
 
 namespace puck {
 

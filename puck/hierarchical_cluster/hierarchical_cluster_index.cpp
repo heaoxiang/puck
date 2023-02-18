@@ -79,7 +79,7 @@ void HierarchicalClusterIndex::init_params_value() {
 }
 
 HierarchicalClusterIndex::HierarchicalClusterIndex() {
-    _conf.index_type = int(puck::IndexType::HIERARCHICAL_CLUSTER);
+    _conf.index_type = IndexType::HIERARCHICAL_CLUSTER;
     init_params_value();
     omp_set_num_threads(4);
 }
@@ -388,7 +388,7 @@ char* SetValueAndIncPtr(char* ptr, const T& val) {
 size_t HierarchicalClusterIndex::save_model_config(char* ptr) const {
     char* temp_ptr = ptr;
     //索引数据相关
-    temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.index_type);
+    temp_ptr = SetValueAndIncPtr<IndexType>(temp_ptr, _conf.index_type);
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.feature_dim);
     temp_ptr = SetValueAndIncPtr<bool>(temp_ptr, _conf.whether_norm);
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.total_point_count);
@@ -421,7 +421,7 @@ char* GetValueAndIncPtr(char* ptr, T& val) {
 
 char* HierarchicalClusterIndex::load_model_config(char* ptr) {
     char* temp_ptr = ptr;
-    temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.index_type);
+    temp_ptr = GetValueAndIncPtr<IndexType>(temp_ptr, _conf.index_type);
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.feature_dim);
     temp_ptr = GetValueAndIncPtr<bool>(temp_ptr, _conf.whether_norm);
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.total_point_count);

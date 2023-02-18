@@ -7,7 +7,7 @@
  ***********************************************************************/
 #include <math.h>
 #include <glog/logging.h>
-#include "hierarchical_cluster/index_conf.h"
+#include "index_conf.h"
 #include "gflags/puck_gflags.h"
 namespace puck {
 
@@ -77,19 +77,19 @@ IndexConf::IndexConf() {
 
     pq_data_file_name = index_path + "/" + FLAGS_pq_data_file_name;
 
-    index_type = 1;
+    index_type = IndexType::PUCK;
     tinker_search_range = FLAGS_tinker_search_range;
 }
 
 void IndexConf::adaptive_train_param() {
     //tinker
-    if (index_type == 2) {
+    if (index_type == IndexType::TINKER) {
         whether_filter = false;
         whether_pq = false;
         return;
     }
 
-    if (index_type == 1) {
+    if (index_type == IndexType::PUCK) {
 
         google::CommandLineFlagInfo info;
         bool unset_whether_filter = google::GetCommandLineFlagInfo("whether_filter", &info) && info.is_default;
@@ -136,7 +136,7 @@ void IndexConf::adaptive_train_param() {
 }
 int IndexConf::adaptive_search_param() {
     //检索参数检查
-    if (index_type == 2) {
+    if (index_type == IndexType::TINKER) {
         tinker_search_range = FLAGS_tinker_search_range;
         google::CommandLineFlagInfo info;
 
@@ -175,7 +175,7 @@ int IndexConf::adaptive_search_param() {
 void IndexConf::show() {
     LOG(INFO) << "feature_dim = " << feature_dim;
     LOG(INFO) << "whether_norm = " << whether_norm;
-    LOG(INFO) << "index_type = " << index_type;
+    LOG(INFO) << "index_type = " << int(index_type);
 
     //filer
     if (whether_filter) {
@@ -196,7 +196,7 @@ void IndexConf::show() {
 
     LOG(INFO) << "search_coarse_count = " << search_coarse_count;
 
-    if (index_type == 2) {
+    if (index_type == IndexType::TINKER) {
         LOG(INFO) << "tinker_neighborhood = " << FLAGS_tinker_neighborhood;
         LOG(INFO) << "tinker_construction = " << FLAGS_tinker_construction;
         LOG(INFO) << "tinker_search_range = " << tinker_search_range;

@@ -11,7 +11,7 @@
 #pragma once
 //#include <base/string_printf.h>
 #include <vector>
-#include "hierarchical_cluster/index_conf.h"
+#include "index_conf.h"
 #include "index.h"
 namespace puck {
 class FineCluster;

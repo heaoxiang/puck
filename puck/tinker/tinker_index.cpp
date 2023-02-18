@@ -24,7 +24,7 @@ extern "C" {
 namespace puck {
 
 TinkerIndex::TinkerIndex() {
-    _conf.index_type = int(puck::IndexType::TINKER);
+    _conf.index_type = puck::IndexType::TINKER;
     std::vector<std::string> buildParams;
     int tinker_neighborhood = puck::FLAGS_tinker_neighborhood;
     std::string m_str = "M=" + std::to_string(tinker_neighborhood);
