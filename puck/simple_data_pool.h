@@ -18,6 +18,7 @@
 
 #include <pthread.h>
 #include <mutex>
+#include <atomic> 
 //#include "base/scoped_lock.h"
 
 namespace puck {
