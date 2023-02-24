@@ -17,10 +17,10 @@ extern "C" {
 }
 #endif
 
-#include "tinker/tinker_index.h"
-#include "gflags/puck_gflags.h"
-#include "search_context.h"
-#include "hierarchical_cluster/max_heap.h"
+#include "puck/tinker/tinker_index.h"
+#include "puck/gflags/puck_gflags.h"
+#include "puck/search_context.h"
+#include "puck/hierarchical_cluster/max_heap.h"
 namespace puck {
 
 TinkerIndex::TinkerIndex() {

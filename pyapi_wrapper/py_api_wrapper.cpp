@@ -6,11 +6,11 @@
  * @brief
  ***********************************************************************/
 #include <gflags/gflags.h>
-#include "index.h"
-#include "py_api_wrapper.h"
-#include "gflags/puck_gflags.h"
-#include "puck/puck_index.h"
-#include "tinker/tinker_index.h"
+#include "puck/index.h"
+#include "pyapi_wrapper/py_api_wrapper.h"
+#include "puck/gflags/puck_gflags.h"
+#include "puck/puck/puck_index.h"
+#include "puck/tinker/tinker_index.h"
 namespace py_puck_api {
 
 void update_gflag(const char* gflag_key, const char* gflag_val) {

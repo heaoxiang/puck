@@ -7,7 +7,7 @@
  ***********************************************************************/
 #pragma once
 #include <string>
-#include "index.h"
+#include "puck/index.h"
 namespace puck {
 
 struct IndexConf {

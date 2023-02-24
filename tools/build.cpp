@@ -15,18 +15,16 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-#include <glog/logging.h>
+#include "puck/logging.h"
 #include <gflags/gflags.h>
-#include "tinker/tinker_index.h"
-#include "gflags/puck_gflags.h"
-#include "puck/puck_index.h"
+#include "puck/tinker/tinker_index.h"
+#include "puck/gflags/puck_gflags.h"
+#include "puck/puck/puck_index.h"
 
 DEFINE_int32(index_type, 1, "");
 int main(int argc, char** argv) {
     //com_loadlog("./conf", "puck_log.conf");
     google::ParseCommandLineFlags(&argc, &argv, true);
-    //google::InitGoogleLogging("build");
-    LOG(INFO)<<"FLAGS_log_dir = "<<FLAGS_log_dir;
     std::unique_ptr<puck::Index> index;
     
     if (FLAGS_index_type == int(puck::IndexType::TINKER)) {

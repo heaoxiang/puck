@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "tinker/portable_simd.h"
-#include "tinker/portable_intrinsics.h"
-#include "tinker/portable_prefetch.h"
+#include "puck/tinker/portable_simd.h"
+#include "puck/tinker/portable_intrinsics.h"
+#include "puck/tinker/portable_prefetch.h"
 
 namespace similarity {
 

@@ -12,8 +12,8 @@
 
 #include <mutex>
 #include <fstream>
-#include "quantization.h"
-#include "hierarchical_cluster/hierarchical_cluster_index.h"
+#include "puck/puck/quantization.h"
+#include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
 #include <stdlib.h>
 //#define _aligned_malloc(size, alignment) aligned_alloc(alignment, size)
 namespace puck {

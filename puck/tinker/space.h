@@ -26,9 +26,9 @@
 
 #include <string.h>
 //#include "global.h"
-#include "tinker/object.h"
-#include "tinker/utils.h"
-#include <glog/logging.h>
+#include "puck/tinker/object.h"
+#include "puck/tinker/utils.h"
+#include "puck/logging.h"
 //#include "permutation_type.h"
 
 #define LABEL_PREFIX "label:"

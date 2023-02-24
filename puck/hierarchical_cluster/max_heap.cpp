@@ -8,7 +8,7 @@
 
 #include <memory>
 #include <iostream>
-#include "hierarchical_cluster/max_heap.h"
+#include "puck/hierarchical_cluster/max_heap.h"
 
 namespace puck {
 

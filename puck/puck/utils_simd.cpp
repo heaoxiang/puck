@@ -6,8 +6,15 @@
  * @brief
  ***********************************************************************/
 
+#include <cmath>
+#include <cassert>
+#ifdef __SSE__
+#include <immintrin.h>
+#endif
 
-#include "utils_simd.h"
+#ifdef __aarch64__
+#include  <arm_neon.h>
+#endif
 namespace puck {
 
 /// Squared L2 distance between two vectors
@@ -16,6 +23,15 @@ float fvec_L2sqr(
     const float* y,
     size_t d);
 
+void fvec_L2sqr_ny_ref(float* dis,
+                       const float* x,
+                       const float* y,
+                       size_t d, size_t ny) {
+    for (size_t i = 0; i < ny; i++) {
+        dis[i] = fvec_L2sqr(x, y, d);
+        y += d;
+    }
+}
 
 /*********************************************************
  * SSE and AVX implementations

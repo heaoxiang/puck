@@ -13,13 +13,13 @@
  *
  **/
 
-#include "tinker/method/hnsw.h"
-#include "tinker/method/hnsw_distfunc_opt_impl_inline.h"
+#include "puck/tinker/method/hnsw.h"
+#include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
 //#include "knnquery.h"
 //#include "rangequery.h"
 
-#include "tinker/portable_prefetch.h"
-#include "tinker/space.h"
+#include "puck/tinker/portable_prefetch.h"
+#include "puck/tinker/space.h"
 
 //#include "sort_arr_bi.h"
 #define MERGE_BUFFER_ALGO_SWITCH_THRESHOLD 100

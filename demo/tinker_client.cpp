@@ -6,10 +6,8 @@
  * @brief
  ***********************************************************************/
 
-//#include <boost/algorithm/string.hpp>
-//#include <boost/lexical_cast.hpp>
-#include "puck/puck_index.h"
-#include "tinker/tinker_index.h"
+#include "puck/puck/puck_index.h"
+#include "puck/tinker/tinker_index.h"
 #include "tools/string_split.h"
 
 

@@ -21,7 +21,7 @@
  * will fill a supplied 16-byte array with the digest.
  */
 #include <cstring>
-#include "base/md5.h"
+#include "puck/base/md5.h"
 
 namespace {
 

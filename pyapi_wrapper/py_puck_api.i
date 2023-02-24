@@ -4,12 +4,12 @@ using namespace std;
 
 %{
 #define SWIG_FILE_WITH_INIT
-#include "py_api_wrapper.h"
+#include "pyapi_wrapper/py_api_wrapper.h"
     using namespace py_puck_api;
     using namespace puck;
 %}
 
-%include "numpy.i"
+%include "pyapi_wrapper/numpy.i"
 
 %init %{
 import_array();

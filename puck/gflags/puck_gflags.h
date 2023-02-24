@@ -66,6 +66,8 @@ DECLARE_int32(neighbors_count);
 //tinker
 DECLARE_int32(tinker_search_range);
 
+//
+DECLARE_string(puck_log_file);
 }
 
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100 */

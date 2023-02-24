@@ -10,7 +10,7 @@
 #include <mutex>
 #include <memory>
 #include <vector>
-#include "puck/puck_index.h"
+#include "puck/puck/puck_index.h"
 namespace puck {
 struct InsertFineCluster;
 struct IndexFileHandle;

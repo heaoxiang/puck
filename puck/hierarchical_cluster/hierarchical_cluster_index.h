@@ -16,8 +16,8 @@
 #include <gflags/gflags.h>
 #include <fcntl.h>
 #include <math.h>
-//#include <glog/logging.h>
-#include <glog/logging.h>
+//#include "puck/logging.h"
+#include "puck/logging.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,10 +30,10 @@ extern "C" {
 }
 #endif
 
-#include "index_conf.h"
-#include "puck_data_pool.h"
-#include "index.h"
-#include "base/time.h"
+#include "puck/index_conf.h"
+#include "puck/puck_data_pool.h"
+#include "puck/index.h"
+#include "puck/base/time.h"
 namespace puck {
 
 //训练相关

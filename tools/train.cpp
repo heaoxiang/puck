@@ -15,13 +15,13 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-#include <glog/logging.h>
+#include "puck/logging.h"
 #include <fcntl.h>
 #include <sys/types.h> 
 #include <sys/stat.h>
-#include "tinker/tinker_index.h"
-#include "gflags/puck_gflags.h"
-#include "puck/puck_index.h"
+#include "puck/tinker/tinker_index.h"
+#include "puck/gflags/puck_gflags.h"
+#include "puck/puck/puck_index.h"
 
 DEFINE_int32(index_type, 1, "");
 //获取文件行数，index初始化时候通过key file确定样本总个数
@@ -59,7 +59,6 @@ int getFileLineCnt(const char* fileName) {
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, true);
     std::cout << "start to train\n";
-    LOG(INFO)<<"FLAGS_log_dir = "<<FLAGS_log_dir;
 
     std::unique_ptr<puck::Index> index;
 

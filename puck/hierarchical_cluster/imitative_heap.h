@@ -6,7 +6,7 @@
  * @brief
  ***********************************************************************/
 #pragma once
-#include "search_context.h"
+#include "puck/search_context.h"
 namespace puck {
 
 inline bool dist_cmp(const std::pair<float, FineCluster*>& x, const std::pair<float, FineCluster*>& y) {

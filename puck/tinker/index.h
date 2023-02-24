@@ -19,8 +19,8 @@
 #include <string>
 #include <vector>
 
-#include "tinker/params.h"
-#include "tinker/object.h"
+#include "puck/tinker/params.h"
+#include "puck/tinker/object.h"
 
 namespace similarity {
 

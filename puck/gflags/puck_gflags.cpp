@@ -12,7 +12,7 @@
  *
  **/
 
-#include "gflags/puck_gflags.h"
+#include "puck/gflags/puck_gflags.h"
 #include <thread>
 namespace puck {
 
@@ -68,6 +68,8 @@ DEFINE_int32(neighbors_count, 40000, "search docs count, default value is 4w");
 //tinker
 DEFINE_int32(tinker_search_range, FLAGS_topk * 5, "tinker search param, tinker_search_range");
 
+
+DEFINE_string(puck_log_file, "log/puck.log", "log file name");
 }
 
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100 */

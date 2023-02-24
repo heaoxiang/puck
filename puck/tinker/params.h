@@ -25,8 +25,8 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include <glog/logging.h>
-#include "tinker/utils.h"
+#include "puck/logging.h"
+#include "puck/tinker/utils.h"
 
 namespace similarity {
 

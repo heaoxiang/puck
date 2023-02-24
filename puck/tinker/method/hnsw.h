@@ -25,8 +25,8 @@
 */
 #pragma once
 
-#include "tinker/index.h"
-#include "tinker/params.h"
+#include "puck/tinker/index.h"
+#include "puck/tinker/params.h"
 
 #include <condition_variable>
 #include <iostream>

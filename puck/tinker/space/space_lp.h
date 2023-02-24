@@ -22,11 +22,11 @@
 
 #include <string.h>
 //#include "global.h"
-#include "tinker/object.h"
-#include "tinker/utils.h"
-#include "tinker/space.h"
+#include "puck/tinker/object.h"
+#include "puck/tinker/utils.h"
+#include "puck/tinker/space.h"
 //#include "space_vector.h"
-#include "tinker/method/hnsw_distfunc_opt_impl_inline.h"
+#include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
 
 //#define SPACE_L     "lp"
 //#define SPACE_LINF  "linf"

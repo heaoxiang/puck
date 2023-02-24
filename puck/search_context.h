@@ -11,8 +11,8 @@
 #pragma once
 //#include <base/string_printf.h>
 #include <vector>
-#include "index_conf.h"
-#include "index.h"
+#include "puck/index_conf.h"
+#include "puck/index.h"
 namespace puck {
 class FineCluster;
 //typedef std::vector<std::pair<float, FineCluster*>>

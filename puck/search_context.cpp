@@ -9,8 +9,9 @@
  *
  **/
 #include <malloc.h>
-#include <glog/logging.h>
-#include "search_context.h"
+#include <unistd.h>
+#include "puck/logging.h"
+#include "puck/search_context.h"
 //#define _aligned_malloc(size, alignment) aligned_alloc(alignment, size)
 
 namespace puck {

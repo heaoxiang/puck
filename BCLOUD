@@ -21,17 +21,16 @@ CPPFLAGS('-std=c++11 -Wall -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -
 
 CONFIGS('baidu/third-party/yael@yael_v438@git_branch')
 #CONFIGS('baidu/base/common@stable')
-#CONFIGS('third-64/gflags@gflags_2-0-0-100_PD_BL')
+CONFIGS('third-64/gflags@gflags_2-0-0-100_PD_BL')
 #CONFIGS('third-64/boost@boost_1-56-0-100_PD_BL', Libraries(''))
 CONFIGS('baidu/third-party/swig@master@git_branch')
 CONFIGS("baidu/third-party/cpython@cpython_3.6_3-6-0-0_GEN_PD_BL@git_tag")
-CONFIGS('baidu/third-party/glog@0.6.0@git_branch')
+#CONFIGS('baidu/third-party/glog@0.6.0@git_branch')
 #link flags
 LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
 
 #-I path
-#INCPATHS('./puck ./pyapi_wrapper ./include puck/tinker/method ')
-INCPATHS('./puck ./pyapi_wrapper ')
+INCPATHS('. ')
 
 INCPATHS('$OUT_ROOT/baidu/third-party/cpython/output/include/python3.6m/ ')
 
@@ -42,16 +41,15 @@ puck_source=' puck/puck/puck_index.cpp puck/puck/quantization.cpp puck/puck/util
 user_sources=GLOB('./puck/*.cpp ./puck/base/*.cpp ./puck/gflags/*.cpp ./puck/hierarchical_cluster/*.cpp ') + tinker_sources + puck_source
 
 #release headers  move result to output
-HEADERS('puck/*.h', '$INC')
-HEADERS('puck/base/*.h ', '$INC/base')
-HEADERS('puck/base/synchronization/*.h ', '$INC/base/synchronization')
-HEADERS('puck/tinker/*.h ', '$INC/tinker')
-HEADERS('puck/gflags/*.h ', '$INC/gflags')
-HEADERS('puck/tinker/space/*.h ', '$INC/tinker/space')
-HEADERS('puck/tinker/method/*.h ', '$INC/tinker/method')
-HEADERS('puck/puck/*.h ', '$INC/puck')
-HEADERS('puck/hierarchical_cluster/*.h ', '$INC/hierarchical_cluster')
-HEADERS('tools/*.h ', '$INC/tools')
+HEADERS('puck/*.h', '$INC/puck/')
+HEADERS('puck/base/*.h ', '$INC/puck/base')
+HEADERS('puck/tinker/*.h ', '$INC/puck/tinker')
+HEADERS('puck/gflags/*.h ', '$INC/puck/gflags')
+HEADERS('puck/tinker/space/*.h ', '$INC/puck/tinker/space')
+HEADERS('puck/tinker/method/*.h ', '$INC/puck/tinker/method')
+HEADERS('puck/puck/*.h ', '$INC/puck/puck')
+HEADERS('puck/hierarchical_cluster/*.h ', '$INC/puck/hierarchical_cluster')
+HEADERS('tools/*.h ', '$INC/puck/tools')
 
 
 #release files except headers

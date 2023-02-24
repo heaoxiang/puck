@@ -23,7 +23,7 @@ CPPFLAGS('-std=c++11 -Wall -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -
 LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
 
 #-I path
-INCPATHS('../ ../puck ')
+INCPATHS('../')
 
 tinker_sources=' ../puck/tinker/method/hnsw.cc ../puck/tinker/method/hnsw_distfunc_opt.cc ../puck/tinker/tinker_index.cpp '
 puck_source=' ../puck/puck/puck_index.cpp ../puck/puck/quantization.cpp ../puck/puck/utils_simd.cpp ../puck/puck/realtime_insert_puck_index.cpp '

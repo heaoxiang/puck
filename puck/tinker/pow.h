@@ -27,7 +27,7 @@
 #include <cmath>
 #include <limits>
 
-#include <glog/logging.h>
+#include "puck/logging.h"
 
 namespace similarity {
 

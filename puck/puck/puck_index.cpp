@@ -13,13 +13,13 @@
 #include <numeric>
 #include <unistd.h>
 #include <memory>
-#include "gflags/puck_gflags.h"
-#include "hierarchical_cluster/max_heap.h"
-#include "search_context.h"
+#include "puck/gflags/puck_gflags.h"
+#include "puck/hierarchical_cluster/max_heap.h"
+#include "puck/search_context.h"
 
 //#include "imitative_heap.h"
-#include "tinker/method/hnsw_distfunc_opt_impl_inline.h"
-#include "puck/puck_index.h"
+#include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
+#include "puck/puck/puck_index.h"
 namespace puck {
 
 DEFINE_int32(pq_train_points_count, 1000000, "used for puck train pq codebooks");

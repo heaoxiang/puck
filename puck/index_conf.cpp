@@ -6,9 +6,9 @@
  * @brief
  ***********************************************************************/
 #include <math.h>
-#include <glog/logging.h>
-#include "index_conf.h"
-#include "gflags/puck_gflags.h"
+#include "puck/logging.h"
+#include "puck/index_conf.h"
+#include "puck/gflags/puck_gflags.h"
 namespace puck {
 
 IndexConf::IndexConf() {

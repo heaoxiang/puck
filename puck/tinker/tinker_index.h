@@ -8,9 +8,9 @@
 #pragma once
 
 #include <vector>
-#include "hierarchical_cluster/hierarchical_cluster_index.h"
-#include "tinker/method/hnsw.h"
-#include "tinker/space/space_lp.h"
+#include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
+#include "puck/tinker/method/hnsw.h"
+#include "puck/tinker/space/space_lp.h"
 
 namespace puck {
 

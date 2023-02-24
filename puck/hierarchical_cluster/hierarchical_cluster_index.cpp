@@ -8,22 +8,22 @@
 #include <fstream>
 #include <thread>
 #include <functional>
-#include<random>
+#include <random>
 #include <memory>
 #include <set>
 #include <omp.h>
 #include <sys/types.h> 
-//#include <base/md5.h>
+#include <unistd.h>
 #include <sys/stat.h>
-#include <glog/logging.h>
-#include "search_context.h"
-#include "hierarchical_cluster/imitative_heap.h"
-#include "hierarchical_cluster/max_heap.h"
-#include "hierarchical_cluster/hierarchical_cluster_index.h"
-#include "tinker/method/hnsw_distfunc_opt_impl_inline.h"
-#include "gflags/puck_gflags.h"
-#include "search_context.h"
-#include "base/md5.h"
+#include "puck/logging.h"
+#include "puck/search_context.h"
+#include "puck/hierarchical_cluster/imitative_heap.h"
+#include "puck/hierarchical_cluster/max_heap.h"
+#include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
+#include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
+#include "puck/gflags/puck_gflags.h"
+#include "puck/search_context.h"
+#include "puck/base/md5.h"
 namespace puck {
 
 DEFINE_bool(kmeans_init_berkeley, true, "using kmeans_init_berkeley");
@@ -1159,7 +1159,7 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
         std::string md5_str = base::MD5DigestToBase16(md5_digest);
 
         if (md5_str_set.find(md5_str) != md5_str_set.end()) {
-            LOG(INFO)<<"duplicate:"<<available_sample<<"\t"<<md5_str;
+            //LOG(INFO)<<"duplicate:"<<available_sample<<"\t"<<md5_str;
             continue;
         }
 

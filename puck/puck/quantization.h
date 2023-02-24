@@ -7,13 +7,13 @@
  ***********************************************************************/
 #pragma once
 #include <string>
-#include <glog/logging.h>
+#include "puck/logging.h"
 #include <memory>
 #include <functional>
 #include <numeric>
 #include <math.h>
 #include <vector>
-#include "index_conf.h"
+#include "puck/index_conf.h"
 
 namespace puck {
 

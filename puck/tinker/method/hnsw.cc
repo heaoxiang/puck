@@ -27,18 +27,18 @@
 #include <iostream>
 #include <memory>
 
-#include "tinker/portable_prefetch.h"
-#include "tinker/portable_simd.h"
+#include "puck/tinker/portable_prefetch.h"
+#include "puck/tinker/portable_simd.h"
 //#include "knnquery.h"
-#include "tinker/method/hnsw.h"
-#include "tinker/method/hnsw_distfunc_opt_impl_inline.h"
+#include "puck/tinker/method/hnsw.h"
+#include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
 //#include "ported_boost_progress.h"
 //#include "rangequery.h"
-#include "tinker/space.h"
-#include "tinker/space/space_lp.h"
+#include "puck/tinker/space.h"
+#include "puck/tinker/space/space_lp.h"
 //#include "space/space_scalar.h"
-#include "tinker/thread_pool.h"
-#include "tinker/utils.h"
+#include "puck/tinker/thread_pool.h"
+#include "puck/tinker/utils.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <iomanip>

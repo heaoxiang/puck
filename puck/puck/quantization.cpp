@@ -5,11 +5,12 @@
  * @date    2021-07-20 11:17
  * @brief
  ***********************************************************************/
-#include <glog/logging.h>
+
 #include<thread>
 #include <numeric>
 #include <fstream>
 #include <functional>
+#include <unistd.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -19,7 +20,8 @@ int fvecs_read(const char* fname, int d, int n, float* v);
 #ifdef __cplusplus
 }
 #endif
-#include "puck/quantization.h"
+#include "puck/puck/quantization.h"
+#include "puck/logging.h"
 namespace puck {
 
 Quantization::Quantization(const QuantizationParams& params,

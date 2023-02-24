@@ -7,11 +7,11 @@
  ***********************************************************************/
 
 #include <algorithm>
-#include "hierarchical_cluster/imitative_heap.h"
-#include "hierarchical_cluster/max_heap.h"
-#include "puck/realtime_insert_puck_index.h"
+#include "puck/hierarchical_cluster/imitative_heap.h"
+#include "puck/hierarchical_cluster/max_heap.h"
+#include "puck/puck/realtime_insert_puck_index.h"
 
-#include "tinker/method/hnsw_distfunc_opt_impl_inline.h"
+#include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
 namespace puck {
 
 InsertFineCluster::~InsertFineCluster(){

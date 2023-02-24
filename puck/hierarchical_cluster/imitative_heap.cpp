@@ -7,8 +7,8 @@
  ***********************************************************************/
 #include <algorithm>
 #include <cmath>
-#include "imitative_heap.h"
-#include "hierarchical_cluster/hierarchical_cluster_index.h"
+#include "puck/hierarchical_cluster/imitative_heap.h"
+#include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
 namespace puck {
 
 ImitativeHeap::ImitativeHeap(const uint32_t neighbors_count, DistanceInfo& cell_distance) :
