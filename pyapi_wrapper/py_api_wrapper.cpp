@@ -13,6 +13,7 @@
 #include "puck/tinker/tinker_index.h"
 namespace py_puck_api {
 
+DEFINE_int32(index_type, 1, "");
 void update_gflag(const char* gflag_key, const char* gflag_val) {
     google::SetCommandLineOption(gflag_key, gflag_val);
 }
@@ -26,17 +27,15 @@ PySearcher::PySearcher() {};
 int PySearcher::build(uint32_t total_cnt) {
     std::cout << "start to train\n";
 
-    puck::IndexConf conf;
-
     std::unique_ptr<puck::HierarchicalClusterIndex> cluster;
 
-    if (conf.index_type == puck::IndexType::TINKER) { //Tinker
+    if (FLAGS_index_type == int(puck::IndexType::TINKER)) { //Tinker
         LOG(INFO) << "init index of Tinker";
         _index.reset(new puck::TinkerIndex());
-    } else if (conf.index_type == puck::IndexType::PUCK) { //PUCK
+    } else if (FLAGS_index_type == int(puck::IndexType::PUCK)) { //PUCK
         LOG(INFO) << "init index of Puck";
         _index.reset(new puck::PuckIndex());
-    } else if (conf.index_type == puck::IndexType::HIERARCHICAL_CLUSTER) {
+    } else if (FLAGS_index_type == int(puck::IndexType::HIERARCHICAL_CLUSTER)) {
         _index.reset(new puck::HierarchicalClusterIndex());
         LOG(INFO) << "init index of Flat";
     } else {
@@ -44,27 +43,35 @@ int PySearcher::build(uint32_t total_cnt) {
         return -1;
     }
 
-    cluster->train();
+    if (cluster->train() != 0) {
+        LOG(ERROR) << "train Faild";
+        return -1;
+    }
 
-    std::cout << "train Suc.\n";
-    std::cout << "start to build\n";
+    LOG(INFO) << "train Suc.\n";
 
-    cluster->build();
+    LOG(INFO) << "start to build\n";
+
+    if (cluster->build() != 0) {
+        LOG(ERROR) << "build Faild";
+        return -1;
+
+    }
 
     return 0;
 }
 
 int PySearcher::init() {
 
-    puck::IndexConf conf = puck::load_index_conf_file();
+    puck::IndexType index_type = puck::load_index_type();
 
-    if (conf.index_type == puck::IndexType::TINKER) { //Tinker
+    if (index_type == puck::IndexType::TINKER) { //Tinker
         LOG(INFO) << "init index of Tinker";
         _index.reset(new puck::TinkerIndex());
-    } else if (conf.index_type == puck::IndexType::PUCK) { //PUCK
+    } else if (index_type == puck::IndexType::PUCK) { //PUCK
         LOG(INFO) << "init index of Puck";
         _index.reset(new puck::PuckIndex());
-    } else if (conf.index_type == puck::IndexType::HIERARCHICAL_CLUSTER) {
+    } else if (index_type == puck::IndexType::HIERARCHICAL_CLUSTER) {
         _index.reset(new puck::HierarchicalClusterIndex());
         LOG(INFO) << "init index of Flat";
     } else {
@@ -72,14 +79,18 @@ int PySearcher::init() {
         return -1;
     }
 
-    int ret = _index->init();
+    if (_index->init() != 0) {
+        LOG(ERROR) << "load index Faild";
+        return -1;
+    }
+
+    puck::IndexConf conf = puck::load_index_conf_file();
     _dim = conf.feature_dim;
 
     if (conf.ip2cos) {
         --_dim;
     }
-
-    return ret;
+    return 0;
 }
 
 template <class Function>
