@@ -15,8 +15,7 @@
 extern "C" {
 #endif
 #include <mkl_cblas.h>
-#include <vector.h>
-int fvecs_read(const char* fname, int d, int n, float* v);
+#include "puck/base/yael/vector.h"
 #ifdef __cplusplus
 }
 #endif

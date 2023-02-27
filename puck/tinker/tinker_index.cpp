@@ -11,8 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <vector.h>
-#include <matrix.h>
+#include "puck/base/yael/vector.h"
 #ifdef __cplusplus
 }
 #endif

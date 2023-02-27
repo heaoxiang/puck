@@ -16,16 +16,14 @@
 #include <gflags/gflags.h>
 #include <fcntl.h>
 #include <math.h>
-//#include "puck/logging.h"
-#include "puck/logging.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <vector.h>
-#include <matrix.h>
-#include <kmeans.h>
 #include <mkl_cblas.h>
-#include <nn.h>
+#include "puck/base/yael/vector.h"
+#include "puck/base/yael/matrix.h"
+#include "puck/base/yael/kmeans.h"
+#include "puck/base/yael/nn.h"
 #ifdef __cplusplus
 }
 #endif
@@ -34,6 +32,7 @@ extern "C" {
 #include "puck/puck_data_pool.h"
 #include "puck/index.h"
 #include "puck/base/time.h"
+#include "puck/logging.h"
 namespace puck {
 
 //训练相关
