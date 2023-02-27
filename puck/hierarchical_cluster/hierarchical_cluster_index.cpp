@@ -700,7 +700,7 @@ int HierarchicalClusterIndex::search_nearest_fine_cluster(SearchContext* context
     return cell_cnt;
 }
 
-int HierarchicalClusterIndex::search(Request* request, Response* response) {
+int HierarchicalClusterIndex::search(const Request* request, Response* response) {
     if (request->topk > _conf.topk || request->feature == nullptr) {
         LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk << ", or feature is nullptr";
         return -1;
@@ -1309,13 +1309,13 @@ void HierarchicalClusterIndex::init_context_pool() {
     //初始化cpu逻辑内核数个context
     std::vector<SearchContext*> init_pool_vect(FLAGS_context_initial_pool_size, nullptr);
 
-    for (int i = 0; i < init_pool_vect.size(); ++i) {
+    for (size_t i = 0; i < init_pool_vect.size(); ++i) {
         init_pool_vect[i] = _context_pool.Borrow();
 
         while (init_pool_vect[i]->reset(_conf) != 0) {}
     }
 
-    for (int i = 0; i < init_pool_vect.size(); ++i) {
+    for (size_t i = 0; i < init_pool_vect.size(); ++i) {
         if (init_pool_vect[i]) {
             _context_pool.Return(init_pool_vect[i]);
         }
@@ -1344,6 +1344,14 @@ IndexConf load_index_conf_file() {
     index.read_model_file();
     return index._conf;
 }
+
+IndexType load_index_type() {
+    //此处实现后续应该改成索引无关的,不论是不是基于hcluster都应该能从固定为主比如前4字节读到索引类型
+    HierarchicalClusterIndex index;
+    index.read_model_file();
+    return index._conf.index_type;
+}
+
 
 //获取文件行数，index初始化时候通过key file确定样本总个数
 int getFileLineCnt(const char* fileName) {

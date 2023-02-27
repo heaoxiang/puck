@@ -449,7 +449,7 @@ int RealtimeInsertPuckIndex::search_nearest_fine_cluster(SearchContext* context,
     return cell_cnt;
 }
 
-int RealtimeInsertPuckIndex::search(Request* request, Response* response) {
+int RealtimeInsertPuckIndex::search(const Request* request, Response* response) {
     if (request->topk > _conf.topk || request->feature == nullptr) {
         LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk << ", or feature is nullptr";
         return -1;

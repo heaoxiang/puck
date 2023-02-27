@@ -59,16 +59,29 @@ int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     //1. load index
-    //std::unique_ptr<puck::Searcher> searcher(new puck::Searcher());
-    std::unique_ptr<puck::PuckIndex> searcher;
-    searcher.reset(new puck::PuckIndex());
+    std::unique_ptr<puck::Index> index;
+    puck::IndexType index_type = puck::load_index_type();
 
-    if (searcher == nullptr) {
+    if (index_type == puck::IndexType::TINKER) { //Tinker
+        LOG(INFO) << "init index of Tinker";
+        index.reset(new puck::TinkerIndex());
+    } else if (index_type == puck::IndexType::PUCK) {
+        LOG(INFO) << "init index of Puck";
+        index.reset(new puck::PuckIndex());
+    } else if (index_type == puck::IndexType::HIERARCHICAL_CLUSTER) {
+        LOG(INFO) << "init index of Flat";
+        index.reset(new puck::HierarchicalClusterIndex());
+    } else {
+        LOG(INFO) << "init index of Error, Nan type";
+        return -1;
+    }
+
+    if (index == nullptr) {
         LOG(ERROR) << "create new SearchInterface error.";
         return -2;
     }
 
-    int ret = searcher->init();
+    int ret = index->init();
 
     if (ret != 0) {
         LOG(ERROR) << "SearchInterface init error " << ret;
@@ -109,7 +122,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < item_count; ++i) {
         request.feature = in_data[i].data();
 
-        ret = searcher->search(&request, &response);
+        ret = index->search(&request, &response);
 
         if (ret != 0) {
             LOG(ERROR) << "search item " << i << " error" << ret;
@@ -118,7 +131,7 @@ int main(int argc, char** argv) {
 
         for (int j = 0; j < (int)response.result_num; j ++) {
             char* p = buff;
-            //std::string lable = searcher->get_label(response.local_idx[j]);
+            //std::string lable = index->get_label(response.local_idx[j]);
             snprintf(p, 1024, "%s\t%d\t%f", pic_name[i].c_str(),
                      //lable.c_str(),
                      response.local_idx[j],

@@ -70,10 +70,10 @@ public:
     uint64_t set_logid(uint64_t logid) {
         return _logid = logid;
     }
-    void set_request(Request* request) {
+    void set_request(const Request* request) {
         _request = request;
     }
-    Request* get_request() {
+    const Request* get_request() {
         return _request;
     }
     /**
@@ -110,7 +110,7 @@ public:
 
 private:
     uint64_t _logid;
-    Request* _request;
+    const Request* _request;
     bool _debug;
     bool _inited;
     char* _model;

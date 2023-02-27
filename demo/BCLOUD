@@ -27,13 +27,13 @@ INCPATHS('../')
 
 tinker_sources=' ../puck/tinker/method/hnsw.cc ../puck/tinker/method/hnsw_distfunc_opt.cc ../puck/tinker/tinker_index.cpp '
 puck_source=' ../puck/puck/puck_index.cpp ../puck/puck/quantization.cpp ../puck/puck/utils_simd.cpp ../puck/puck/realtime_insert_puck_index.cpp '
-puck_client=GLOB('puck_client.cpp ../puck/gflags/*.cpp ../puck/base/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/*.cpp ') + puck_source + tinker_sources
-tinker_client=GLOB('tinker_client.cpp ../puck/gflags/*.cpp ../puck/base/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/*.cpp ') + puck_source + tinker_sources
+search_client=GLOB('search_client.cpp ../puck/gflags/*.cpp ../puck/base/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/*.cpp ') + puck_source + tinker_sources
+#tinker_client=GLOB('tinker_client.cpp ../puck/gflags/*.cpp ../puck/base/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/*.cpp ') + puck_source + tinker_sources
 
 insert_demo=GLOB('insert_demo.cpp ../puck/gflags/*.cpp ../puck/base/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/*.cpp ') + puck_source + tinker_sources
 #bin
-Application('puck_client', Sources(puck_client))
-Application('tinker_client', Sources(tinker_client))
+Application('search_client', Sources(search_client))
+#Application('tinker_client', Sources(tinker_client))
 Application('insert_demo', Sources(insert_demo))
 
 OUTPUT(GLOB('./conf/*'), '$OUT/conf/')

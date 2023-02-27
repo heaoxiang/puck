@@ -29,7 +29,7 @@ public:
      * @@param [out] response : response
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    virtual int search(Request* request, Response* response);
+    virtual int search(const Request* request, Response* response);
 
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、建库（计算样本最近的1个聚类中心）、写索引文件

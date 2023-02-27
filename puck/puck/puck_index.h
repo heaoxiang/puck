@@ -34,7 +34,7 @@ public:
      * @@param [out] response : response
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    virtual int search(Request* request, Response* response);
+    virtual int search(const Request* request, Response* response);
 
     /*
     * @brief 初始化内存、训练码本（计算一二级聚类中心）、写码本文件

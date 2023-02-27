@@ -424,7 +424,7 @@ int PuckIndex::rank_topN_docs(SearchContext* context, const float* feature, cons
     return 0;
 }
 
-int PuckIndex::search(Request* request, Response* response) {
+int PuckIndex::search(const Request* request, Response* response) {
     if (request->topk > _conf.topk || request->feature == nullptr) {
         LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk << ", or feature is nullptr";
         return -1;

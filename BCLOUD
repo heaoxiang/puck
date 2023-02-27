@@ -37,7 +37,7 @@ INCPATHS('$OUT_ROOT/baidu/third-party/cpython/output/include/python3.6m/ ')
 GenSources('./swig_run.sh', ' ', './pyapi_wrapper/py_puck_api.i ./pyapi_wrapper/numpy.i ./swig_run.sh ../../../baidu/third-party/swig')
 
 tinker_sources=' puck/tinker/method/hnsw.cc puck/tinker/method/hnsw_distfunc_opt.cc puck/tinker/tinker_index.cpp '
-puck_source=' puck/puck/puck_index.cpp puck/puck/quantization.cpp puck/puck/utils_simd.cpp '
+puck_source=' puck/puck/puck_index.cpp puck/puck/quantization.cpp puck/puck/utils_simd.cpp puck/puck/realtime_insert_puck_index.cpp '
 user_sources=GLOB('./puck/*.cpp ./puck/base/*.cpp ./puck/gflags/*.cpp ./puck/hierarchical_cluster/*.cpp ') + tinker_sources + puck_source
 
 #release headers  move result to output

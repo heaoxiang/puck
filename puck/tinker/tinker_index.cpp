@@ -100,7 +100,7 @@ int TinkerIndex::search_top1_fine_cluster(puck::SearchContext* context, const fl
     return nearest_cell.second;
 }
 
-int TinkerIndex::search(Request* request, Response* response) {
+int TinkerIndex::search(const Request* request, Response* response) {
     if (request->topk > _conf.topk || request->feature == nullptr) {
         LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk <<", or feature is nullptr";
         return -1;

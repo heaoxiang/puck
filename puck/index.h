@@ -32,7 +32,7 @@ public:
      * @@param [out] response : response
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    virtual int search(Request* request, Response* response) = 0;
+    virtual int search(const Request* request, Response* response) = 0;
 
     /*
     * @brief 训练
@@ -74,6 +74,8 @@ enum class IndexType {
     PUCK,
     TINKER,
 };
+
+IndexType load_index_type();
 
 }//namespace puck
 

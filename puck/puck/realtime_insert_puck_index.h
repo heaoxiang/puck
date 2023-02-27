@@ -39,7 +39,7 @@ public:
      * @@param [in] response : 返回结果
      * @@return 0 => 正常 非0 => 错误
      **/
-    int search(Request* request, Response* response);
+    int search(const Request* request, Response* response);
     const IndexConf get_conf() {
         return _conf;
     }
