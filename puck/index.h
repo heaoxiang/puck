@@ -16,8 +16,13 @@ struct Response;
 class Index {
 public:
     Index() {
-        std::string puck_log_file = FLAGS_puck_log_file;
-        InitializeLogger(LogChoice::LIB_LOGFILE, puck_log_file.c_str());
+        bool need_log_file = FLAGS_need_log_file;
+        if (!need_log_file) {
+            InitializeLogger(LogChoice::LIB_LOGSTDERR, nullptr);
+        } else {
+            std::string puck_log_file = FLAGS_puck_log_file;
+            InitializeLogger(LogChoice::LIB_LOGFILE, puck_log_file.c_str());
+        }
     }
     virtual ~Index() {}
     /*

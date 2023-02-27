@@ -16,6 +16,9 @@
 #include <thread>
 namespace puck {
 
+DEFINE_bool(need_log_file, false, "need log file");
+DEFINE_string(puck_log_file, "log/puck.log", "log file name");
+
 /*****训练&建库参数******/
 //通用参数
 DEFINE_string(index_path, "puck_index", "lib of index files");
@@ -68,8 +71,6 @@ DEFINE_int32(neighbors_count, 40000, "search docs count, default value is 4w");
 //tinker
 DEFINE_int32(tinker_search_range, FLAGS_topk * 5, "tinker search param, tinker_search_range");
 
-
-DEFINE_string(puck_log_file, "log/puck.log", "log file name");
 }
 
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100 */

@@ -17,6 +17,10 @@
 #include <gflags/gflags.h>
 
 namespace puck {
+
+DECLARE_bool(need_log_file);
+DECLARE_string(puck_log_file);
+
 /*****训练&建库参数******/
 //通用参数
 DECLARE_string(index_path);
@@ -66,8 +70,6 @@ DECLARE_int32(neighbors_count);
 //tinker
 DECLARE_int32(tinker_search_range);
 
-//
-DECLARE_string(puck_log_file);
 }
 
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100 */
