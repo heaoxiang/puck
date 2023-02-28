@@ -128,8 +128,15 @@ int main(int argc, char** argv) {
 
         for (int j = 0; j < (int)request.topk; j ++) {
             char* p = buff;
-            std::string lable = searcher->get_label(response.local_idx[j]);
-            //std::string lable = std::to_string(response.local_idx[j]);
+            std::string lable;
+
+            if (searcher->get_label(response.local_idx[j], lable) != 0) {
+                fclose(pf);
+                LOG(ERROR) << "get label error, query id = " << i << ", result id = " << j << ", error loacl idx = " <<
+                           response.local_idx[j];
+                return -1;
+            }
+
             snprintf(p, 1024, "%s\t%s\t%f", pic_name[i].c_str(),
                      lable.c_str(),
                      response.distance[j]);
@@ -144,7 +151,7 @@ int main(int argc, char** argv) {
 
     for (int i = 0; i < (int)in_data.size(); ++i) {
         insert_request.feature = in_data[i].data();
-       
+
         insert_request.label = pic_name[i];
         int ret = searcher->insert(&insert_request);
 
@@ -177,8 +184,15 @@ int main(int argc, char** argv) {
 
         for (int j = 0; j < (int)request.topk; j ++) {
             char* p = buff;
-            std::string lable = searcher->get_label(response.local_idx[j]);
-            //std::string lable = std::to_string(response.local_idx[j]);
+            std::string lable;
+
+            if (searcher->get_label(response.local_idx[j], lable) != 0) {
+                fclose(pf);
+                LOG(ERROR) << "get label error, query id = " << i << ", result id = " << j << ", error loacl idx = " <<
+                           response.local_idx[j];
+                return -1;
+            }
+            
             snprintf(p, 1024, "%s\t%s\t%d\t%f", pic_name[i].c_str(),
                      lable.c_str(),
                      response.local_idx[j],

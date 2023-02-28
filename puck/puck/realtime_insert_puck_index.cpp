@@ -634,23 +634,24 @@ int RealtimeInsertPuckIndex::rank_topN_docs(SearchContext* context, const float*
     return 0;
 }
 
-std::string RealtimeInsertPuckIndex::get_label(uint32_t local_id) {
-    if (local_id < _labels.size()) {
-        LOG(INFO) << "local_id = " << local_id << ", " << _labels[local_id];
-
-        return _labels[local_id];
+int RealtimeInsertPuckIndex::get_label(const uint32_t label_id, std::string& label) {
+    if (label_id < _labels.size()) {
+        LOG(INFO) << "label_id = " << label_id << ", " << _labels[label_id];
+        label = _labels[label_id];
+        return 0;
     }
 
-    uint32_t true_local_id = local_id - _labels.size();
-    uint32_t group_id = true_local_id / _max_insert_point;
+    uint32_t true_label_id = label_id - _labels.size();
+    uint32_t group_id = true_label_id / _max_insert_point;
 
     if (group_id >= _insert_labels.size()) {
-        return "local_id error";
+        return -1;
     }
 
-    LOG(INFO) << "local_id = " << local_id << ", " << _insert_labels[group_id]->data()[true_local_id %
+    LOG(INFO) << "label_id = " << label_id << ", " << _insert_labels[group_id]->data()[true_label_id %
                 _max_insert_point];
-    return _insert_labels[group_id]->data()[true_local_id % _max_insert_point];
+    label = _insert_labels[group_id]->data()[true_label_id % _max_insert_point];
+    return 0;
 }
 
 IndexFileHandle::~IndexFileHandle() {

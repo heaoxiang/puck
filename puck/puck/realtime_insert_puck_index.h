@@ -43,8 +43,11 @@ public:
     const IndexConf get_conf() {
         return _conf;
     }
-    //实时入库需要提供每个样本的lable
-    std::string get_label(uint32_t local_id);
+    /*
+     * @brief local idx 获取对应的lable
+     **/
+    int get_label(const uint32_t label_id, std::string& label);
+
 protected:
 
     /*

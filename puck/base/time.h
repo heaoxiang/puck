@@ -252,13 +252,12 @@ inline int64_t cpuwide_time_ns() {
         // Lack of necessary features, return system-wide monotonic time instead.
         return monotonic_time_ns();
     } 
-    //else {
-    //    // Use a thread-unsafe method(OK to us) to initialize the freq
-    //    // to save a "if" test comparing to using a local static variable
-    //    //detail::invariant_cpu_freq = detail::read_invariant_cpu_frequency();
-    //    return //cpuwide_time_ns();
-    //}
-    return 0;
+    else {
+        // Use a thread-unsafe method(OK to us) to initialize the freq
+        // to save a "if" test comparing to using a local static variable
+        detail::invariant_cpu_freq = detail::read_invariant_cpu_frequency();
+        return cpuwide_time_ns();
+    }
 #endif // defined(BAIDU_EXTERNAL)
 }
 

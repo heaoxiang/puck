@@ -19,7 +19,9 @@
 #include <sys/types.h>                       // open
 #include <sys/stat.h>                        // ^
 #include <fcntl.h>                           // ^
-
+#include <sstream>
+#include <string>
+#include <limits>
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -109,30 +111,53 @@ int64_t read_cpu_frequency(bool* invariant_tsc) {
     close (fd);
     return result;
 }
+bool stringToUINT64(const std::string& s, int64_t& ret)
+{
+    std::stringstream a;
+    a << s;
+    a >> ret;
+    return true;
+}
 
-//static bool read_int64_from_file(const char* filename, int64_t* value) {
-//    std::string contents;
-//    if (!ReadFileToString(FilePath(filename), &contents)) {
-//        return false;
-//    }
-//    base::TrimWhitespaceASCII(contents, base::TRIM_ALL, &contents);
-//    return !contents.empty() && base::StringToInt64(contents, value);
-//}
+static bool read_int64_from_file(const char* filename, int64_t* value) {
+    std::string contents;
+    //if (!ReadFileToString(FilePath(filename), &contents)) {
+    //    return false;
+    //}
+    int fd = -1;
+    fd = open(filename, O_RDONLY);
+    if (fd == -1){
+        return false;
+    }  
+
+    char buf[1 << 16];
+    size_t len;
+    size_t size = 0;
+    bool read_status = true;
+    // Many files supplied in |path| have incorrect size (proc files etc).
+    // Hence, the file is read sequentially as opposed to a one-shot read.
+    while ((len = read(fd, buf, 1)) > 0) {
+      contents.append(buf, len);
+      size += len;
+    }
+    close(fd);
+    return !contents.empty() && stringToUINT64(contents, *value);
+}
 
 // Return value must be >= 0
-//int64_t read_invariant_cpu_frequency() {
-//    bool invariant_tsc = false;
-//    int64_t cpuinfo_freq = read_cpu_frequency(&invariant_tsc);
-//    if (!invariant_tsc || cpuinfo_freq < 0) {
-//        return 0;
-//    }
-//    const char* tsc_freq_khz_file = "/sys/devices/system/cpu/cpu0/cpufreq/tsc_freq_khz";
-//    int64_t freq = 0;
-//    if (read_int64_from_file(tsc_freq_khz_file, &freq) && freq > 0) {
-//        return freq * 1000;
-//    }
-//    return cpuinfo_freq;
-//}
+int64_t read_invariant_cpu_frequency() {
+    bool invariant_tsc = false;
+    int64_t cpuinfo_freq = read_cpu_frequency(&invariant_tsc);
+    if (!invariant_tsc || cpuinfo_freq < 0) {
+        return 0;
+    }
+    const char* tsc_freq_khz_file = "/sys/devices/system/cpu/cpu0/cpufreq/tsc_freq_khz";
+    int64_t freq = 0;
+    if (read_int64_from_file(tsc_freq_khz_file, &freq) && freq > 0) {
+        return freq * 1000;
+    }
+    return cpuinfo_freq;
+}
 
 int64_t invariant_cpu_freq = -1;
 }  // namespace detail
