@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 
     puck::InsertRequest insert_request;
 
-    for (int i = 0; i < in_data.size(); ++i) {
+    for (int i = 0; i < (int)in_data.size(); ++i) {
         insert_request.feature = in_data[i].data();
        
         insert_request.label = pic_name[i];
