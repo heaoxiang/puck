@@ -510,7 +510,7 @@ int RealtimeInsertPuckIndex::compute_quantized_distance(SearchContext* context, 
         auto* data_memory = _insert_data_memorys[insert_id / _max_insert_point];
         uint32_t offset_id = insert_id % _max_insert_point;
 
-        uint32_t local_id = data_memory->memory_to_local[offset_id];
+//        uint32_t local_id = data_memory->memory_to_local[offset_id];
 
         auto* filter_quantization = data_memory->quantizations.front();
         const unsigned char* feature = filter_quantization->get_quantized_feature(offset_id);

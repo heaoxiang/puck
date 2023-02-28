@@ -259,6 +259,7 @@ inline int64_t cpuwide_time_ns() {
     //    //detail::invariant_cpu_freq = detail::read_invariant_cpu_frequency();
     //    return //cpuwide_time_ns();
     //}
+    return 0;
 #endif // defined(BAIDU_EXTERNAL)
 }
 

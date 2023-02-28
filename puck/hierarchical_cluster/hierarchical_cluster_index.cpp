@@ -1309,13 +1309,13 @@ void HierarchicalClusterIndex::init_context_pool() {
     //初始化cpu逻辑内核数个context
     std::vector<SearchContext*> init_pool_vect(FLAGS_context_initial_pool_size, nullptr);
 
-    for (int i = 0; i < init_pool_vect.size(); ++i) {
+    for (int i = 0; i < (int)init_pool_vect.size(); ++i) {
         init_pool_vect[i] = _context_pool.Borrow();
 
         while (init_pool_vect[i]->reset(_conf) != 0) {}
     }
 
-    for (int i = 0; i < init_pool_vect.size(); ++i) {
+    for (int i = 0; i < (int)init_pool_vect.size(); ++i) {
         if (init_pool_vect[i]) {
             _context_pool.Return(init_pool_vect[i]);
         }
