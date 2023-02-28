@@ -1,5 +1,5 @@
 
-include_directories(../puck)
+include_directories(../)
 file(
     GLOB PUCK_CPP_FILES
     "../puck/base/*.cpp"

@@ -27,7 +27,7 @@ set(PUCK_SRC
 set(PUCK_HEADERS
     ${PUCK_HEAD_FILES}
 )
-include_directories(./)
+include_directories(../)
 add_library(puck ${PUCK_SRC})
 
 # Handle `#include <faiss/foo.h>`.

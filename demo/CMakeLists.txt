@@ -10,42 +10,23 @@ file(
     "../puck/*.cpp"
 )
 
-
-add_executable(puck_client)
-target_sources(puck_client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/puck_client.cpp)
-target_sources(puck_client PUBLIC ${PUCK_CPP_FILES})
-target_compile_definitions(puck_client PUBLIC)
+add_executable(search_client)
+target_sources(search_client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/search_client.cpp)
+target_sources(search_client PUBLIC ${PUCK_CPP_FILES})
+target_compile_definitions(search_client PUBLIC)
 
 find_package(OpenMP REQUIRED)
-target_link_libraries(puck_client  OpenMP::OpenMP_CXX)
+target_link_libraries(search_client  OpenMP::OpenMP_CXX)
 
 find_package(MKL)
 if(MKL_FOUND)
-target_link_libraries(puck_client  ${MKL_LIBRARIES})
+target_link_libraries(search_client  ${MKL_LIBRARIES})
 else()
 find_package(BLAS REQUIRED)
-target_link_libraries(puck_client  ${BLAS_LIBRARIES})
+target_link_libraries(search_client  ${BLAS_LIBRARIES})
 
 find_package(LAPACK REQUIRED)
-target_link_libraries(puck_client  ${LAPACK_LIBRARIES})
-endif()
-
-add_executable(tinker_client)
-target_sources(tinker_client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tinker_client.cpp)
-target_sources(tinker_client PUBLIC ${PUCK_CPP_FILES})
-target_compile_definitions(tinker_client PUBLIC)
-find_package(OpenMP REQUIRED)
-target_link_libraries(tinker_client  OpenMP::OpenMP_CXX)
-
-find_package(MKL)
-if(MKL_FOUND)
-target_link_libraries(tinker_client  ${MKL_LIBRARIES})
-else()
-find_package(BLAS REQUIRED)
-target_link_libraries(tinker_client  ${BLAS_LIBRARIES})
-
-find_package(LAPACK REQUIRED)
-target_link_libraries(tinker_client  ${LAPACK_LIBRARIES})
+target_link_libraries(search_client  ${LAPACK_LIBRARIES})
 endif()
 
 add_executable(insert_demo)
@@ -53,7 +34,7 @@ target_sources(insert_demo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/insert_demo.cpp)
 target_sources(insert_demo PUBLIC ${PUCK_CPP_FILES})
 target_compile_definitions(insert_demo PUBLIC)
 find_package(OpenMP REQUIRED)
-target_link_libraries(tinker_client  OpenMP::OpenMP_CXX)
+target_link_libraries(insert_demo  OpenMP::OpenMP_CXX)
 
 find_package(MKL)
 if(MKL_FOUND)
