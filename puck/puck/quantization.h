@@ -7,7 +7,6 @@
  ***********************************************************************/
 #pragma once
 #include <string>
-#include "puck/logging.h"
 #include <memory>
 #include <functional>
 #include <numeric>
@@ -22,6 +21,7 @@ struct QuantizationParams {
     uint32_t dim;
     uint32_t nsq;
     uint32_t lsq;
+    void show();
     int init(const IndexConf& conf, bool is_filter = false) {
         if (conf.ks != 256 || conf.feature_dim < conf.nsq) {
             return -1;
@@ -31,8 +31,9 @@ struct QuantizationParams {
         dim = conf.feature_dim;
         nsq = (is_filter == false) ? conf.nsq : conf.filter_nsq;
         lsq = std::ceil(1.0 * dim / nsq);
-        LOG(INFO) << "QuantizationParams.dim = " << dim << ", QuantizationParams.ks = " << ks <<
-                    ", QuantizationParams.lsq = " << lsq << ", QuantizationParams.nsq = " << nsq;
+        show();
+        //LOG(INFO) << "QuantizationParams.dim = " << dim << ", QuantizationParams.ks = " << ks <<
+        //            ", QuantizationParams.lsq = " << lsq << ", QuantizationParams.nsq = " << nsq;
         return 0;
     }
 };
@@ -117,7 +118,7 @@ private:
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     size_t get_coodbook_length() {
-        LOG(INFO) << "get_coodbook_length = " << _params.nsq* _params.ks* _params.lsq* sizeof(float);
+        //LOG(INFO) << "get_coodbook_length = " << _params.nsq* _params.ks* _params.lsq* sizeof(float);
         return _params.nsq * _params.ks * _params.lsq * sizeof(float);
     }
     /*

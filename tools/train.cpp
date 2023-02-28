@@ -15,7 +15,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-#include "puck/logging.h"
+#include <glog/logging.h>
 #include <fcntl.h>
 #include <sys/types.h> 
 #include <sys/stat.h>
@@ -59,7 +59,7 @@ int getFileLineCnt(const char* fileName) {
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, true);
     std::cout << "start to train\n";
-
+    puck::InitializeLogger(0);
     std::unique_ptr<puck::Index> index;
 
     if (FLAGS_index_type == int(puck::IndexType::TINKER)) {

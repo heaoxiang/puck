@@ -146,6 +146,7 @@ void MD5Transform(uint32_t buf[4], const uint32_t in[16]) {
 
 }  // namespace
 
+namespace puck {
 namespace base {
 
 /*
@@ -317,3 +318,4 @@ std::string MD5String(const std::string& str) {
 }
 
 }  // namespace base
+}  // namespace puck

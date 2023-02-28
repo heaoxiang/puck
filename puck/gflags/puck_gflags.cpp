@@ -11,9 +11,9 @@
  * @brief
  *
  **/
-
-#include "puck/gflags/puck_gflags.h"
 #include <thread>
+#include "puck/gflags/puck_gflags.h"
+
 namespace puck {
 
 DEFINE_bool(need_log_file, false, "need log file");

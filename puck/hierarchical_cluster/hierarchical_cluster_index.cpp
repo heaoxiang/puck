@@ -12,10 +12,10 @@
 #include <memory>
 #include <set>
 #include <omp.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include "puck/logging.h"
+#include <glog/logging.h>
 #include "puck/search_context.h"
 #include "puck/hierarchical_cluster/imitative_heap.h"
 #include "puck/hierarchical_cluster/max_heap.h"
@@ -24,6 +24,8 @@
 #include "puck/gflags/puck_gflags.h"
 #include "puck/search_context.h"
 #include "puck/base/md5.h"
+
+
 namespace puck {
 
 DEFINE_bool(kmeans_init_berkeley, true, "using kmeans_init_berkeley");
@@ -57,7 +59,7 @@ void write_fvec_format(const char* file_name, const float* fea_vocab, const uint
     std::ofstream out_fvec_init(file_name,
                                 std::ios::binary | std::ios::out);
     LOG(INFO) << file_name << "\t" << fea_cnt << " " << dim << " " << fea_cnt * (sizeof(int) + dim * sizeof(
-                    float));
+                  float));
 
     for (uint64_t i = 0; i < fea_cnt; ++i) {
         out_fvec_init.write((char*)&dim, sizeof(int));
@@ -65,6 +67,15 @@ void write_fvec_format(const char* file_name, const float* fea_vocab, const uint
     }
 
     out_fvec_init.close();
+}
+
+void InitializeLogger(int choice) {
+    google::InitGoogleLogging("puck");
+
+    if (FLAGS_need_log_file) {
+        std::string log_file_name = puck::FLAGS_puck_log_file;
+        google::SetLogDestination(choice, log_file_name.c_str());
+    }
 }
 
 void HierarchicalClusterIndex::init_params_value() {
@@ -551,16 +562,18 @@ int HierarchicalClusterIndex::read_model_file() {
 
     temp_buffer = GetValueAndIncPtr<size_t>(temp_buffer, part_size);
     LOG(INFO) << "part_size=" << part_size << " st.st_size= " << st.st_size << " sizeof(size_t) = " << sizeof(
-                    size_t);
+                  size_t);
     {
         //realtime insert和分布式建库的索引必须有label file，search返回的local_id是该样本label在label_file的行数
         struct stat buffer;
-        if(stat(_conf.label_file_name.c_str(), &buffer) == 0){
+
+        if (stat(_conf.label_file_name.c_str(), &buffer) == 0) {
             _conf.total_point_count = getFileLineCnt(_conf.label_file_name.c_str());
-            LOG(INFO)<<"Index has label("<<_conf.label_file_name<<"), total_point_count = "<<_conf.total_point_count;
+            LOG(INFO) << "Index has label(" << _conf.label_file_name << "), total_point_count = " <<
+                      _conf.total_point_count;
         }
     }
-    
+
     uint32_t total_point_count = _conf.total_point_count;
     temp_buffer = load_model_config(temp_buffer);
 
@@ -715,9 +728,11 @@ int HierarchicalClusterIndex::search(const Request* request, Response* response)
     context->set_request(request);
 
     const float* feature = normalization(context.get(), request->feature);
-    if (feature == nullptr){
+
+    if (feature == nullptr) {
         return -1;
     }
+
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
                                             _conf.search_coarse_count);//, coarse_distance, coarse_tag);
@@ -732,13 +747,16 @@ int HierarchicalClusterIndex::search(const Request* request, Response* response)
     MaxHeap max_heap(request->topk, response->distance, response->local_idx);
 
     ret = flat_topN_docs(context.get(), feature, search_cell_cnt, max_heap);
-    if (ret == 0){
+
+    if (ret == 0) {
         response->result_num = max_heap.get_heap_size();
     }
+
     return ret;
 }
 
-int HierarchicalClusterIndex::compute_exhaustive_distance_with_docs(SearchContext* context, const int cell_idx,
+int HierarchicalClusterIndex::compute_exhaustive_distance_with_docs(SearchContext* context,
+        const int cell_idx,
         const float* feature, MaxHeap& result_heap) {
     const SearchCellData& search_cell_data = context->get_search_cell_data();
     const FineCluster* cur_fine_cluster = search_cell_data.cell_distance[cell_idx].second.first;
@@ -779,8 +797,8 @@ int HierarchicalClusterIndex::compute_exhaustive_distance_with_docs(SearchContex
 }
 
 int HierarchicalClusterIndex::flat_topN_docs(SearchContext* context, const float* feature,
-                                        const int search_cell_cnt,
-                                        MaxHeap& result_heap) {
+        const int search_cell_cnt,
+        MaxHeap& result_heap) {
     uint32_t found = 0;
 
     for (int idx = 0; idx < search_cell_cnt && found < _conf.neighbors_count; idx++) {
@@ -847,7 +865,7 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_doc_cnt, float* kmean
             min_err = err;
         } else { //大于等于最小值，开始出现抖动
             LOG(INFO) << "current deviation error > min deviation error : " << err << " / " << min_err <<
-                        ", params.niter = " << params.niter;
+                      ", params.niter = " << params.niter;
 
             //params.niter初值为30，大于80跳出
             if (params.niter > 80) {
@@ -896,9 +914,11 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_doc_cnt, float* kmean
 
 int HierarchicalClusterIndex::build() {
     LOG(INFO) << "build";
-    if(check_feature_dim() != 0){
+
+    if (check_feature_dim() != 0) {
         return -1;
     }
+
     //从文件获取配置信息
     if (read_model_file() != 0) {
         LOG(INFO) << "read_model_file error";
@@ -980,8 +1000,8 @@ int HierarchicalClusterIndex::nearest_cell_assign(const float* coarse_distance,
 }
 
 int HierarchicalClusterIndex::assign(const ThreadParams& thread_params, uint32_t* cell_assign,
-                                float* error_distance,
-                                float* pruning_computation) const {
+                                     float* error_distance,
+                                     float* pruning_computation) const {
 
     std::unique_ptr<float[]> points_coarse_terms(new
             float[FLAGS_thread_chunk_size * _conf.coarse_cluster_count]);
@@ -995,7 +1015,7 @@ int HierarchicalClusterIndex::assign(const ThreadParams& thread_params, uint32_t
 
     for (uint32_t cid = 0; cid < thread_params.chunks_count; ++cid) {
         LOG(INFO) << "HierarchicalClusterIndex::assign nearest_cell_assign_batch processing " << cid << "/" <<
-                    thread_params.chunks_count;
+                  thread_params.chunks_count;
         int real_thread_chunk_size = std::min(FLAGS_thread_chunk_size,
                                               (int)(thread_params.points_count - cid * FLAGS_thread_chunk_size));
         fvecs_fread(thread_params.learn_stream, chunk_points.get(), real_thread_chunk_size,
@@ -1027,8 +1047,35 @@ int HierarchicalClusterIndex::assign(const ThreadParams& thread_params, uint32_t
     return 0;
 }
 
+//打开文件
+int ThreadParams::open_file(const char* train_fea_file_name, uint32_t feature_dim) {
+    close_file();
+    learn_stream = fopen(train_fea_file_name, "r");
+
+    if (!learn_stream) {
+        return -1;
+    }
+
+    u_int64_t offset = (u_int64_t)start_id * feature_dim * sizeof(float) +
+                       (u_int64_t)start_id * sizeof(int);
+
+    //文件句柄指向要处理的doc块初始地址
+    int ret = fseek(learn_stream, offset, SEEK_SET);
+
+    if (ret != 0) {
+        fpos_t ps;
+        fgetpos(learn_stream, &ps);
+        LOG(FATAL) << "seek file " << train_fea_file_name << " error, need offset = " << offset << " cur pos = " <<
+                   ps.__pos <<
+                   " when init thread params (start_id = " << start_id << ")";
+        return -1;
+    }
+
+    return 0;
+}
+
 void HierarchicalClusterIndex::batch_assign(const uint32_t total_cnt, const std::string& feature_file_name,
-                                       uint32_t* cell_assign) {
+        uint32_t* cell_assign) {
     LOG(INFO) << "HierarchicalClusterIndex::batch_assign";
     std::vector<std::thread> threads;
     std::exception_ptr lastException = nullptr;
@@ -1062,7 +1109,7 @@ void HierarchicalClusterIndex::batch_assign(const uint32_t total_cnt, const std:
 
                     try {
                         LOG(INFO) << "assign, thread_params.start_id = " << thread_params.start_id << " points_count = " <<
-                                    thread_params.points_count << " feature_file_name = " << feature_file_name << " threadId = " << threadId;
+                                  thread_params.points_count << " feature_file_name = " << feature_file_name << " threadId = " << threadId;
                         assign(thread_params, cell_assign, error_distance.data() + threadId,  pruning_computation.data() + threadId);
                     } catch (...) {
                         std::unique_lock<std::mutex> lastExcepLock(lastExceptMutex);
@@ -1092,7 +1139,7 @@ void HierarchicalClusterIndex::batch_assign(const uint32_t total_cnt, const std:
     delete [] _fine_norms;
     _fine_norms = nullptr;
     LOG(INFO) << "batch_assign succeeded, deviation error = " <<
-                total_error / total_cnt << ", pruning computation = " << total_pruning_computation / total_cnt;
+              total_error / total_cnt << ", pruning computation = " << total_pruning_computation / total_cnt;
 }
 
 
@@ -1180,7 +1227,7 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
     learn_stream.close();
     return available_sample;
 }
-int HierarchicalClusterIndex::check_feature_dim(){
+int HierarchicalClusterIndex::check_feature_dim() {
     int fd = -1;
     fd = open(_conf.feature_file_name.c_str(), O_RDONLY);
     struct stat st;
@@ -1190,22 +1237,28 @@ int HierarchicalClusterIndex::check_feature_dim(){
         LOG(ERROR) << "model file " << _conf.feature_file_name << " stat error";
         return -1;
     }
+
     uint32_t feature_dim;
-    if(read(fd, (char*)&feature_dim, sizeof(uint32_t)) < 0){
-        LOG(ERROR)<<"read file "<<_conf.feature_file_name<<" error.";
+
+    if (read(fd, (char*)&feature_dim, sizeof(uint32_t)) < 0) {
+        LOG(ERROR) << "read file " << _conf.feature_file_name << " error.";
         return -1;
     }
-    if (feature_dim != _conf.feature_dim){
-        LOG(ERROR)<<"feature_dim of file "<<_conf.feature_file_name<<" is "<<feature_dim<<", feature_dim in GFLAGS is  _conf.feature_dim";
+
+    if (feature_dim != _conf.feature_dim) {
+        LOG(ERROR) << "feature_dim of file " << _conf.feature_file_name << " is " << feature_dim <<
+                   ", feature_dim in GFLAGS is  _conf.feature_dim";
         return -1;
     }
+
     _conf.total_point_count = st.st_size / per_point_len;
     return 0;
 }
 int HierarchicalClusterIndex::train() {
-    if(check_feature_dim() != 0){
+    if (check_feature_dim() != 0) {
         return -1;
     }
+
     LOG(INFO) << "total_point_count for train is " << _conf.total_point_count;
 
     if (init_model_memory() != 0) {
@@ -1326,7 +1379,7 @@ const float* HierarchicalClusterIndex::normalization(SearchContext* context, con
     SearchCellData& search_cell_data = context->get_search_cell_data();
 
     if (_conf.ip2cos == 1) {
-        uint32_t dim = _conf.feature_dim -1;
+        uint32_t dim = _conf.feature_dim - 1;
         memset(search_cell_data.query_norm, 0, _conf.feature_dim);
         memcpy(search_cell_data.query_norm, feature, sizeof(float) * dim);
         return search_cell_data.query_norm;

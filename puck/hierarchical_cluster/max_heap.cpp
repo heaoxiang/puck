@@ -8,8 +8,8 @@
 
 #include <memory>
 #include <iostream>
+#include <glog/logging.h>
 #include "puck/hierarchical_cluster/max_heap.h"
-
 namespace puck {
 
 MaxHeap::MaxHeap(uint32_t size, float* val, uint32_t* tag) :

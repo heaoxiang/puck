@@ -5,11 +5,10 @@
  * @date    2022-10-09 15:24
  * @brief
  ***********************************************************************/
-
+#include <glog/logging.h>
 #include "puck/puck/puck_index.h"
 #include "puck/tinker/tinker_index.h"
 #include "tools/string_split.h"
-
 
 int read_feature_data(std::string& input_file, std::vector<std::string>& pic_name,
                       std::vector<std::vector<float> >& doc_feature) {

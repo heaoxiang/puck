@@ -15,7 +15,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-#include "puck/logging.h"
+#include <glog/logging.h>
 #include <gflags/gflags.h>
 #include "puck/tinker/tinker_index.h"
 #include "puck/gflags/puck_gflags.h"
@@ -25,6 +25,7 @@ DEFINE_int32(index_type, 1, "");
 int main(int argc, char** argv) {
     //com_loadlog("./conf", "puck_log.conf");
     google::ParseCommandLineFlags(&argc, &argv, true);
+    puck::InitializeLogger(0);
     std::unique_ptr<puck::Index> index;
     
     if (FLAGS_index_type == int(puck::IndexType::TINKER)) {

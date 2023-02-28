@@ -7,10 +7,10 @@
  ***********************************************************************/
 
 #include <algorithm>
+#include <glog/logging.h>
 #include "puck/hierarchical_cluster/imitative_heap.h"
 #include "puck/hierarchical_cluster/max_heap.h"
 #include "puck/puck/realtime_insert_puck_index.h"
-
 #include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
 namespace puck {
 

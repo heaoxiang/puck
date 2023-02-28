@@ -22,11 +22,11 @@ CPPFLAGS('-std=c++11 -Wall -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -
 #CONFIGS('baidu/third-party/yael@yael_v438@git_branch')
 CONFIGS('baidu/third-party/mkl@mkl_2019-3-199-1_PD_BL@git_tag')
 #CONFIGS('baidu/base/common@stable')
-CONFIGS('third-64/gflags@gflags_2-0-0-100_PD_BL')
+#CONFIGS('third-64/gflags@gflags_2-0-0-100_PD_BL')
 #CONFIGS('third-64/boost@boost_1-56-0-100_PD_BL', Libraries(''))
 CONFIGS('baidu/third-party/swig@master@git_branch')
 CONFIGS("baidu/third-party/cpython@cpython_3.6_3-6-0-0_GEN_PD_BL@git_tag")
-#CONFIGS('baidu/third-party/glog@0.6.0@git_branch')
+CONFIGS('baidu/third-party/glog@0.6.0@git_branch')
 #link flags
 LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
 

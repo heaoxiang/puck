@@ -13,6 +13,7 @@
 #include <numeric>
 #include <unistd.h>
 #include <memory>
+#include <glog/logging.h>
 #include "puck/gflags/puck_gflags.h"
 #include "puck/hierarchical_cluster/max_heap.h"
 #include "puck/search_context.h"

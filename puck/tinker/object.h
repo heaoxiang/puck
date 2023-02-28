@@ -28,7 +28,7 @@
 
 //#include "global.h"
 #include "puck/tinker/idtype.h"
-#include "puck/logging.h"
+#include <glog/logging.h>
 
 namespace similarity {
 

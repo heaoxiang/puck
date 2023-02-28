@@ -32,7 +32,6 @@ extern "C" {
 #include "puck/puck_data_pool.h"
 #include "puck/index.h"
 #include "puck/base/time.h"
-#include "puck/logging.h"
 namespace puck {
 
 //训练相关
@@ -40,9 +39,10 @@ DECLARE_int32(thread_chunk_size);
 DECLARE_int32(train_points_count);
 DECLARE_string(train_fea_file_name);
 
-#define DISALLOW_COPY_AND_ASSIGN(TypeName)                      \
+#define DISALLOW_COPY_AND_ASSIGN_AND_MOVE(TypeName)                      \
     TypeName(const TypeName&) = delete;            \
-    void operator=(const TypeName&) = delete
+    void operator=(const TypeName&) = delete;        \
+    TypeName(const TypeName&&) = delete       
 
 #ifdef __GNUC__
 # define BAIDU_CACHELINE_ALIGNMENT_8 __attribute__((aligned(8)))
@@ -328,7 +328,7 @@ protected:
     **/
     const float* normalization(SearchContext* context, const float* feature);
     int check_feature_dim();
-    DISALLOW_COPY_AND_ASSIGN(HierarchicalClusterIndex);
+    DISALLOW_COPY_AND_ASSIGN_AND_MOVE(HierarchicalClusterIndex);
 protected:
     IndexConf  _conf;
     DataHandlerPool<SearchContext> _context_pool;       //context pool
@@ -355,32 +355,9 @@ struct ThreadParams {
         start_id = -1;
         points_count = -1;
     }
+
     //打开文件
-    int open_file(const char* train_fea_file_name, uint32_t feature_dim) {
-        close_file();
-        learn_stream = fopen(train_fea_file_name, "r");
-
-        if (!learn_stream) {
-            return -1;
-        }
-
-        u_int64_t offset = (u_int64_t)start_id * feature_dim * sizeof(float) +
-                           (u_int64_t)start_id * sizeof(int);
-
-        //文件句柄指向要处理的doc块初始地址
-        int ret = fseek(learn_stream, offset, SEEK_SET);
-
-        if (ret != 0) {
-            fpos_t ps;
-            fgetpos(learn_stream, &ps);
-            LOG(FATAL) << "seek file " << train_fea_file_name << " error, need offset = " << offset << " cur pos = " <<
-                       ps.__pos <<
-                       " when init thread params (start_id = " << start_id << ")";
-            return -1;
-        }
-
-        return 0;
-    }
+    int open_file(const char* train_fea_file_name, uint32_t feature_dim);
     //关闭文件句柄
     int close_file() {
         if (learn_stream) {

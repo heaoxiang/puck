@@ -6,7 +6,7 @@
  * @brief
  ***********************************************************************/
 #include <math.h>
-#include "puck/logging.h"
+#include <glog/logging.h>
 #include "puck/index_conf.h"
 #include "puck/gflags/puck_gflags.h"
 namespace puck {

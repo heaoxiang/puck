@@ -62,7 +62,7 @@ private:
     **/
     int read_feature_index(uint32_t* local_to_memory_idx = nullptr);
 
-    DISALLOW_COPY_AND_ASSIGN(TinkerIndex);
+    DISALLOW_COPY_AND_ASSIGN_AND_MOVE(TinkerIndex);
     //Tinker _tinker;
     std::unique_ptr<similarity::AnyParams> _any_params;
     std::unique_ptr<similarity::Hnsw<float>> _tinker_index;

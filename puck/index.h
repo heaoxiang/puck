@@ -6,24 +6,16 @@
  * @brief
  ***********************************************************************/
 #pragma once
-#include "puck/logging.h"
 #include "puck/gflags/puck_gflags.h"
 namespace puck {
 
 struct Request;
 struct Response;
 
+void InitializeLogger(int choice = 0);
 class Index {
 public:
-    Index() {
-        bool need_log_file = FLAGS_need_log_file;
-        if (!need_log_file) {
-            InitializeLogger(LogChoice::LIB_LOGSTDERR, nullptr);
-        } else {
-            std::string puck_log_file = FLAGS_puck_log_file;
-            InitializeLogger(LogChoice::LIB_LOGFILE, puck_log_file.c_str());
-        }
-    }
+    Index() {}
     virtual ~Index() {}
     /*
     * @brief 根据配置文件修改conf、初始化内存、加载索引文件

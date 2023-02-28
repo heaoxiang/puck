@@ -7,6 +7,7 @@
  ***********************************************************************/
 #include <algorithm>
 #include <cmath>
+#include <glog/logging.h>
 #include "puck/hierarchical_cluster/imitative_heap.h"
 #include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
 namespace puck {

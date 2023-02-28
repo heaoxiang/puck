@@ -17,13 +17,12 @@
 
 // Measuring time
 
-#ifndef BAIDU_BASE_TIME_H
-#define BAIDU_BASE_TIME_H
+#pragma once
 
 #include <time.h>                            // timespec, clock_gettime
 #include <sys/time.h>                        // timeval, gettimeofday
 #include <stdint.h>                          // int64_t, uint64_t
-
+namespace puck {
 namespace base {
 
 // Get SVN revision of this copy.
@@ -368,5 +367,4 @@ private:
 };
 
 }  // namespace base
-
-#endif  // BAIDU_BASE_TIME_H
+}  // namespace puck

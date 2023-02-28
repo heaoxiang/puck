@@ -20,8 +20,12 @@ extern "C" {
 }
 #endif
 #include "puck/puck/quantization.h"
-#include "puck/logging.h"
+#include <glog/logging.h>
 namespace puck {
+void QuantizationParams::show(){
+    LOG(INFO) << "QuantizationParams.dim = " << dim << ", QuantizationParams.ks = " << ks 
+        <<", QuantizationParams.lsq = " << lsq << ", QuantizationParams.nsq = " << nsq;
+}
 
 Quantization::Quantization(const QuantizationParams& params,
                            uint32_t point_count) : _per_subspace_len(sizeof(char)),

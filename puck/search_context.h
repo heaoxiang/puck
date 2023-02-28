@@ -9,7 +9,6 @@
  *
  **/
 #pragma once
-//#include <base/string_printf.h>
 #include <vector>
 #include "puck/index_conf.h"
 #include "puck/index.h"

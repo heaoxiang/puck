@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "puck/logging.h"
+#include <glog/logging.h>
 #include "puck/tinker/utils.h"
 
 namespace similarity {

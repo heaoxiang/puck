@@ -4,6 +4,7 @@
 
 #pragma once
 #include <string>
+namespace puck {
 namespace base {
 
 // MD5 stands for Message Digest algorithm 5.
@@ -67,4 +68,4 @@ void MD5Init(MD5Context* context);
  std::string MD5String(const std::string& str);
 
 }  // namespace base
-
+}  // namespace puck

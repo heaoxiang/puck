@@ -6,8 +6,7 @@
  * @brief
  ***********************************************************************/
 
-//#include <boost/algorithm/string.hpp>
-//#include <boost/lexical_cast.hpp>
+#include <glog/logging.h>
 #include "puck/puck/puck_index.h"
 #include "puck/puck/realtime_insert_puck_index.h"
 #include "tools/string_split.h"

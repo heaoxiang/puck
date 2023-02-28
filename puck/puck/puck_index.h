@@ -12,9 +12,10 @@
 
 #include <mutex>
 #include <fstream>
+#include <stdlib.h>
 #include "puck/puck/quantization.h"
 #include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
-#include <stdlib.h>
+
 //#define _aligned_malloc(size, alignment) aligned_alloc(alignment, size)
 namespace puck {
 
@@ -135,7 +136,7 @@ protected:
     int puck_single_assign(BuildInfo* build_info, std::vector<Quantization*>& quantizations, uint32_t idx);
 
 protected:
-    DISALLOW_COPY_AND_ASSIGN(PuckIndex);
+    DISALLOW_COPY_AND_ASSIGN_AND_MOVE(PuckIndex);
     //通常取1/4量化，对过滤出的小规模样本重新排序时使用
     std::unique_ptr<Quantization> _pq_quantization;
     //大尺度量化，用来过滤

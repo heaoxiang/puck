@@ -29,7 +29,7 @@
 //#include "base/file_util.h"
 //#include "base/strings/string_number_conversions.h"
 //#include "base/strings/string_util.h"
-
+namespace puck {
 namespace base {
 
 const char* last_changed_revision() {
@@ -138,4 +138,4 @@ int64_t invariant_cpu_freq = -1;
 }  // namespace detail
 
 }  // namespace base
-
+}  // namespace puck

@@ -6,6 +6,7 @@
  * @brief
  ***********************************************************************/
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 #include "puck/index.h"
 #include "pyapi_wrapper/py_api_wrapper.h"
 #include "puck/gflags/puck_gflags.h"
