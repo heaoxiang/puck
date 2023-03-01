@@ -826,7 +826,7 @@ int PuckIndex::puck_single_assign(BuildInfo* build_info, std::vector<Quantizatio
 
     for (auto* quantization : quantizations) {
         auto& param = quantization->get_quantization_params();
-        LOG(INFO) << param.nsq << " " << param.ks << " " << param.lsq;
+        //LOG(INFO) << param.nsq << " " << param.ks << " " << param.lsq;
 
         for (u_int32_t k = 0; k < param.nsq; ++k) {
             float* sub_residual = residual.get() + k * param.lsq;

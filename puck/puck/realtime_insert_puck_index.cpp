@@ -15,6 +15,7 @@
 namespace puck {
 
 InsertFineCluster::~InsertFineCluster(){
+    std::lock_guard<std::mutex> fine_lock(update_mutex);
     while(insert_points != nullptr){
         auto* temp = insert_points;
         insert_points = insert_points->next;
@@ -22,10 +23,19 @@ InsertFineCluster::~InsertFineCluster(){
     }
 }
 
+InsertDataMemory::~InsertDataMemory(){
+    for(auto& data : quantizations){
+        delete data;
+        data = nullptr;
+    }
+}
 RealtimeInsertPuckIndex::RealtimeInsertPuckIndex(): _insert_id(0) {
 }
 RealtimeInsertPuckIndex::~RealtimeInsertPuckIndex() {
-    _index_file_handle.release();
+   for(auto& labels: _insert_labels){
+        delete labels;
+       labels = nullptr; 
+   } 
 }
 
 int RealtimeInsertPuckIndex::reorganize_inserted_index() {
@@ -170,7 +180,7 @@ int RealtimeInsertPuckIndex::append_insert_memory(uint32_t group_id) {
         }
 
         if (new_data->quantizations.back()->init_quantized_feature_memory() != 0) {
-            LOG(INFO) << "get_filter_quantization init_quantized_feature_memory error";
+            LOG(ERROR) << "get_filter_quantization init_quantized_feature_memory error";
             return -1;
         }
 
@@ -184,7 +194,7 @@ int RealtimeInsertPuckIndex::append_insert_memory(uint32_t group_id) {
             }
 
             if (new_data->quantizations.back()->init_quantized_feature_memory() != 0) {
-                LOG(INFO) << "get_filter_quantization init_quantized_feature_memory error";
+                LOG(ERROR) << "get_filter_quantization init_quantized_feature_memory error";
                 return -1;
             }
         } else {
@@ -251,7 +261,7 @@ int RealtimeInsertPuckIndex::insert(InsertRequest* request) {
 
     puck::BuildInfo build_info;
     build_info.feature.resize(_conf.feature_dim);
-    LOG(INFO) << "_conf.feature_dim = " << _conf.feature_dim;
+    //LOG(INFO) << "_conf.feature_dim = " << _conf.feature_dim;
     memcpy(build_info.feature.data(), request->feature, sizeof(float) * _conf.feature_dim);
 
     //特征归一 + 计算最近的cell
@@ -280,7 +290,7 @@ int RealtimeInsertPuckIndex::insert(InsertRequest* request) {
         return -1;
     }
 
-    LOG(INFO) << request->label << " " << build_info.nearest_cell.cell_id << " " <<build_info.nearest_cell.distance;
+    //LOG(INFO) << request->label << " " << build_info.nearest_cell.cell_id << " " <<build_info.nearest_cell.distance;
     InsertFineCluster* cur_fine_cluster = _insert_fine_cluster.get() + build_info.nearest_cell.cell_id;
     std::lock_guard<std::mutex> fine_lock(cur_fine_cluster->update_mutex);
     InsertPoint* point = new InsertPoint(cur_insert_id);
@@ -372,7 +382,7 @@ int RealtimeInsertPuckIndex::append_index(InsertRequest* request, puck::BuildInf
     data->memory_to_local[memory_idx] = _labels.size() + insert_id;
 
     ++_conf.total_point_count;
-    LOG(INFO) << "append index " << memory_idx << " Suc.";
+    //LOG(INFO) << "append index " << memory_idx << " Suc.";
     return 0;
 }
 
@@ -470,7 +480,7 @@ int RealtimeInsertPuckIndex::search(const Request* request, Response* response) 
                                             _conf.search_coarse_count);//, coarse_distance, coarse_tag);
 
     if (ret != 0) {
-        LOG(INFO) << "search_nearest_coarse_cluster error " << ret;
+        LOG(ERROR) << "search_nearest_coarse_cluster error " << ret;
         return ret;
     }
 
@@ -636,7 +646,7 @@ int RealtimeInsertPuckIndex::rank_topN_docs(SearchContext* context, const float*
 
 int RealtimeInsertPuckIndex::get_label(const uint32_t label_id, std::string& label) {
     if (label_id < _labels.size()) {
-        LOG(INFO) << "label_id = " << label_id << ", " << _labels[label_id];
+        //LOG(INFO) << "label_id = " << label_id << ", " << _labels[label_id];
         label = _labels[label_id];
         return 0;
     }
@@ -648,8 +658,8 @@ int RealtimeInsertPuckIndex::get_label(const uint32_t label_id, std::string& lab
         return -1;
     }
 
-    LOG(INFO) << "label_id = " << label_id << ", " << _insert_labels[group_id]->data()[true_label_id %
-                _max_insert_point];
+    //LOG(INFO) << "label_id = " << label_id << ", " << _insert_labels[group_id]->data()[true_label_id %
+    //            _max_insert_point];
     label = _insert_labels[group_id]->data()[true_label_id % _max_insert_point];
     return 0;
 }

@@ -90,7 +90,7 @@ protected:
                                MaxHeap& result_heap);
 protected:
     //Insert points of each cell
-    std::unique_ptr<InsertFineCluster> _insert_fine_cluster;
+    std::unique_ptr<InsertFineCluster[]> _insert_fine_cluster;
     //样本的Insert的顺序，递增
     std::atomic<size_t> _insert_id;
     //insert的数据分组存储，每个分组最大存储数量
@@ -114,6 +114,7 @@ struct InsertDataMemory {
     std::vector<float> init_feature;
     //insert的顺序与local idx的映射关系
     std::vector<uint32_t> memory_to_local;
+    ~InsertDataMemory();
 };
 
 struct InsertPoint {
