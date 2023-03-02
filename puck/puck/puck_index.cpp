@@ -438,9 +438,11 @@ int PuckIndex::search(const Request* request, Response* response) {
     }
 
     const float* feature = normalization(context.get(), request->feature);
-    if (feature == nullptr){
+
+    if (feature == nullptr) {
         return -1;
     }
+
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
                                             _conf.search_coarse_count);//, coarse_distance, coarse_tag);
@@ -456,9 +458,11 @@ int PuckIndex::search(const Request* request, Response* response) {
     MaxHeap result_heap(request->topk, response->distance, response->local_idx);
 
     ret = filter_topN_docs(context.get(), feature, search_cell_cnt, result_heap);
-    if(ret == 0){
+
+    if (ret == 0) {
         response->result_num = result_heap.get_heap_size();
     }
+
     return ret;
 }
 
@@ -566,8 +570,9 @@ int PuckIndex::puck_assign(const ThreadParams& thread_params, uint32_t* cell_ass
             }
         }
     }
+
     tm_cost.stop();
-    LOG(INFO)<<"puck assign from "<<thread_params.start_id <<" cost "<<tm_cost.m_elapsed()<<" ms.";
+    LOG(INFO) << "puck assign from " << thread_params.start_id << " cost " << tm_cost.m_elapsed() << " ms.";
     return 0;
 }
 
@@ -604,7 +609,7 @@ void PuckIndex::batch_assign(const uint32_t total_cnt, const std::string& featur
 
                     try {
                         LOG(INFO) << "puck_assign, thread_params.start_id = " << thread_params.start_id << " points_count = " <<
-                                    thread_params.points_count << " feature_file_name = " << feature_file_name << " threadId = " << threadId;
+                                  thread_params.points_count << " feature_file_name = " << feature_file_name << " threadId = " << threadId;
                         puck_assign(thread_params, cell_assign);
                     } catch (...) {
                         std::unique_lock<std::mutex> lastExcepLock(lastExceptMutex);
@@ -635,8 +640,15 @@ int PuckIndex::train() {
         return -1;
     }
 
-    this->HierarchicalClusterIndex::train();
-    this->HierarchicalClusterIndex::read_coodbooks();
+    if (this->HierarchicalClusterIndex::train() != 0) {
+        LOG(ERROR) << "HierarchicalClusterIndex train has error.";
+        return -1;
+    }
+
+    if (this->HierarchicalClusterIndex::read_coodbooks() != 0) {
+        LOG(ERROR) << "HierarchicalClusterIndex read_coodbooks has error.";
+        return -1;
+    }
 
     std::string train_pq_file_name = FLAGS_train_pq_file_name;
 
@@ -649,6 +661,12 @@ int PuckIndex::train() {
     std::unique_ptr<float[]> kmeans_train_vocab(new float[train_vocab_len]);
     uint32_t pq_train_points_count = random_sampling(FLAGS_train_fea_file_name, FLAGS_train_points_count,
                                      FLAGS_pq_train_points_count, _conf.feature_dim, kmeans_train_vocab.get());
+
+    if (pq_train_points_count <= 0) {
+        LOG(ERROR) << "sampling data has error.";
+        return -1;
+    }
+
     LOG(INFO) << "true doc cnt for puck train = " << pq_train_points_count;
 
     //写文件，训练使用这批抽样数据
@@ -726,11 +744,12 @@ int PuckIndex::train() {
         LOG(INFO) << idx << " suc.";
     }
 
-    save_coodbooks();
-    return 0;
+    return save_coodbooks();
 }
 int PuckIndex::init_single_build() {
-    this->HierarchicalClusterIndex::init_single_build();
+    if (this->HierarchicalClusterIndex::init_single_build() != 0) {
+        return -1;
+    }
 
     if (_conf.whether_filter == false) {
         return -1;

@@ -1256,6 +1256,7 @@ int HierarchicalClusterIndex::check_feature_dim() {
 }
 int HierarchicalClusterIndex::train() {
     if (check_feature_dim() != 0) {
+        LOG(ERROR) << "check " << _conf.feature_file_name << " has error.";
         return -1;
     }
 
@@ -1275,6 +1276,12 @@ int HierarchicalClusterIndex::train() {
     std::unique_ptr<float[]> kmeans_train_vocab(new float[train_vocab_len]);
     int train_points_count = random_sampling(_conf.feature_file_name, _conf.total_point_count,
                              FLAGS_train_points_count, _conf.feature_dim, kmeans_train_vocab.get());
+
+    if (train_points_count <= 0) {
+        LOG(ERROR) << "sampling data has error.";
+        return -1;
+    }
+
     LOG(INFO) << "true doc cnt for kmeans = " << train_points_count;
     std::string cur_index_path = FLAGS_train_fea_file_name;
     cur_index_path = cur_index_path.substr(0, cur_index_path.rfind('/'));

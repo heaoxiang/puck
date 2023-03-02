@@ -35,4 +35,4 @@ Application('train', Sources(train_source))
 Application('build', Sources(build_source))
 
 OUTPUT(GLOB('./script/*'), '$OUT/build_tools/script/')
-OUTPUT(GLOB('./demo/conf/*'), '$OUT/build_tools/conf/')
+OUTPUT(GLOB('./demo/*'), '$OUT/build_tools/')

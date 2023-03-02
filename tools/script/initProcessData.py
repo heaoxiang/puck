@@ -37,8 +37,8 @@ def _usage():
 class InitProcessData(object):
     """初始化."""
 
-    def __init__(self):
-        train_conf_file = './conf/puck_train.conf'
+    def __init__(self, conf_file):
+        train_conf_file = conf_file
         train_conf_info = open(train_conf_file, 'rb').read()
 
         # 默认输入路径: mid-data,puck_index，如果不存在则创建
@@ -135,7 +135,7 @@ class InitProcessData(object):
 
 if __name__ == '__main__':
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:h')
+        opts, args = getopt.getopt(sys.argv[1:], 'i:f:h')
         if len(opts) < 1:
             _usage()
             sys.exit(1)
@@ -144,18 +144,26 @@ if __name__ == '__main__':
         _usage()
         sys.exit(1)
     input_file = ''
+    conf_file = 'conf/puck_index.conf'
     ret = 0 
+
     for opt, val in opts:
         print opt
         if opt == '-h':
             _usage()
             sys.exit(0)
+        elif opt == '-i':
+            if not os.path.exists(val):
+                sys.exit(2)
+            input_file = val
         elif opt == '-f':
             if not os.path.exists(val):
                 sys.exit(2)
-            init = InitProcessData()
-            ret = init.init_process(val)
+            conf_file = val
         else:
             _usage()
             sys.exit(1)
+
+    init = InitProcessData(conf_file)
+    ret = init.init_process(input_file)
     sys.exit(ret)
