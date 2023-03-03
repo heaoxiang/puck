@@ -27,15 +27,17 @@ else ()
 endif ()
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-Wno-format -g0 -O3")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wunused-variable -Wno-format -g0 -O3")
+set(CMAKE_C_FLAGS "-Wno-missing-field-initializers -Wunused-variable -Wno-sign-compare")
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+add_definitions(-DFINTEGER=int)
 
-add_compile_options(-lpthread -lcrypto -lrt -lgfortran -ldl -lz -fPIC -rdynamic)
-add_compile_options(-std=c++11 -O2 -g -pipe -W -Wall -fPIC -march=native  -Wno-deprecated-declarations -Wno-unused-parameter -Wno-logical-not-parentheses)
+add_compile_options(-fopenmp -lpthread -lcrypto -lrt -lgfortran -ldl -lz -fPIC -rdynamic)
+add_compile_options(-O2 -g -pipe -W -Wall -fPIC -march=native  -Wno-deprecated-declarations -Wno-unused-parameter -Wno-logical-not-parentheses)
 
 include(${PROJECT_SOURCE_DIR}/cmake/gflags.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/glog.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/yael.cmake)
+#include(${PROJECT_SOURCE_DIR}/cmake/yael.cmake)
 add_subdirectory(puck)
 # Add block directories
 add_subdirectory(demo)

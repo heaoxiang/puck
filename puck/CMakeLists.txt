@@ -1,3 +1,11 @@
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wunused-variable -Wno-format -g0 -O3")
+set(CMAKE_C_FLAGS "-Wno-missing-field-initializers -Wno-unused-but-set-variable -Wunused-variable -Wno-sign-compare")
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+add_definitions(-DFINTEGER=int)
+
+add_compile_options(-fopenmp -lpthread -lcrypto -lrt -lgfortran -ldl -lz -fPIC -rdynamic)
+add_compile_options(-O2 -g -pipe -W -Wall -fPIC -Wno-unused-but-set-variable -march=native -Wno-deprecated-declarations -Wno-unused-parameter -Wunused-variable -Wno-logical-not-parentheses)
 
 file(
     GLOB PUCK_CPP_FILES
@@ -8,6 +16,7 @@ file(
     "./tinker/*.cpp"
     "./tinker/*/*.cc"
     "./*.cpp"
+    "./base/yael/*.c"
 )
 file(
     GLOB PUCK_HEAD_FILES
@@ -18,6 +27,18 @@ file(
     "./tinker/*.h"
     "./tinker/*/*.h"
     "./*.h"
+    "./base/yael/*.h"
+)
+
+file(
+    GLOB YAEL_SRC_FILES
+    "./base/yael/binheap.c"
+    "./base/yael/kmeans.c"
+    "./base/yael/machinedeps.c"
+    "./base/yael/matrix.c"
+    "./base/yael/nn.c"
+    "./base/yael/sorting.c"
+    "./base/yael/vector.c"
 )
 
 set(PUCK_SRC
@@ -27,7 +48,15 @@ set(PUCK_SRC
 set(PUCK_HEADERS
     ${PUCK_HEAD_FILES}
 )
-include_directories(../)
+
+set(YAEL_SRC
+    ${YAEL_SRC_FILES}
+)
+
+include_directories(../ ./base/yael)
+add_library(yael ${YAEL_SRC})
+target_link_libraries(yael PUBLIC ${BLAS_LIBRARIES})
+target_link_libraries(yael PUBLIC ${LAPACK_LIBRARIES})
 add_library(puck ${PUCK_SRC})
 
 # Handle `#include <faiss/foo.h>`.
@@ -47,15 +76,17 @@ target_link_libraries(puck PUBLIC ${GFLAGS_LIBRARIES})
 find_package(OpenMP REQUIRED)
 target_link_libraries(puck PUBLIC OpenMP::OpenMP_CXX)
 
-find_package(MKL)
+find_package(MKL REQUIRED)
 if(MKL_FOUND)
 target_link_libraries(puck PUBLIC ${MKL_LIBRARIES})
-else()
+
 find_package(BLAS REQUIRED)
 target_link_libraries(puck PUBLIC ${BLAS_LIBRARIES})
 
 find_package(LAPACK REQUIRED)
 target_link_libraries(puck PUBLIC ${LAPACK_LIBRARIES})
+else()
+MESSAGE(FATAL_ERROR "Could not find MKL!")
 endif()
 
 
@@ -80,23 +111,29 @@ install(FILES ${header}
 )
 endforeach()
 
-install(EXPORT puck-targets
-DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/puck
-)
+#install(EXPORT puck-targets
+#DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/puck
+#)
 
 # set output dir
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../output/lib)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/lib)
 
-#copy file
-file(
-    GLOB OUTPUT_HEAD_FILES
-    "./base"
-    "./gflags"
-    "./hierarchical_cluster"
-    "./puck"
-    "./tinker"
-    "./tinker/*/*.h"
-    "./*.h"
-    “../tools/*.h”
-)
-file(COPY ${OUTPUT_HEAD_FILES} DESTINATION ${PROJECT_SOURCE_DIR}/output/include)  
+file(GLOB PUCK_FOLDER "./*.h")
+file(GLOB BASE_FOLDER "./base/*.h")
+file(GLOB YAEL_FOLDER "./base/yael/*.h")
+file(GLOB GFLAGS_FOLDER "./gflags/*.h")
+file(GLOB PUCK_PUCK_FOLDER "./puck/*.h")
+file(GLOB TINKER_FOLDER "./tinker/*.h")
+file(GLOB METHOD_FOLDER "./tinker/method/*.h")
+file(GLOB SPACE_FOLDER "./tinker/space/*.h")
+file(GLOB HIERARCHICAL_FOLDER "./hierachical/*.h")
+
+file(COPY ${PUCK_FOLDER}  DESTINATION ${PROJECT_SOURCE_DIR}/output/include)  
+file(COPY ${BASE_FOLDER}  DESTINATION ${PROJECT_SOURCE_DIR}/output/include/base)  
+file(COPY ${YAEL_FOLDER}  DESTINATION ${PROJECT_SOURCE_DIR}/output/include/base/yael)  
+file(COPY ${GFLAGS_FOLDER}  DESTINATION ${PROJECT_SOURCE_DIR}/output/include/gflags)  
+file(COPY ${PUCK_PUCK_FOLDER}  DESTINATION ${PROJECT_SOURCE_DIR}/output/include/puck)  
+file(COPY ${TINKER_FOLDER}  DESTINATION ${PROJECT_SOURCE_DIR}/output/include/tinker)  
+file(COPY ${METHOD_FOLDER}  DESTINATION ${PROJECT_SOURCE_DIR}/output/include/tinker/method)  
+file(COPY ${SPACE_FOLDER}  DESTINATION ${PROJECT_SOURCE_DIR}/output/include/tinker/space)  
+file(COPY ${HIERARCHICAL_FOLDER}  DESTINATION ${PROJECT_SOURCE_DIR}/output/include/hierachical)  

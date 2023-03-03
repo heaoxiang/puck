@@ -20,10 +20,27 @@ The prerequisite is mkl.
 
 1.Clone this project. 
 
-2.Set up the environment variable MKLROOT
+git clone https://github.com/puck/puck.git
+
+cd puck
+
+2.Set up the environment variable MKL_ROOT
+
+MKL must be installed to compile puck, download the MKL installation package corresponding to the operating system from the official website, and configure the corresponding installation path after the installation is complete.
+
+https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html#gs.qt4aoj
+
+export MKL_ROOT = /opt/intel/oneapi/mkl/latest/
 
 3.Use cmake to build this project.
 
+mkdir build
+
+cd build
+
+cmake ..
+
+make
 
 ## How to use
 ### format vector dataset
