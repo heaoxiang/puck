@@ -237,6 +237,13 @@ int PuckIndex::convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint
     return 0;
 }
 
+int PuckIndex::check_index_type(){
+    if (_conf.index_type != IndexType::PUCK){
+        LOG(ERROR)<<"index_type is not PUCK";
+        return -1;
+    }
+    return 0;
+}
 int PuckIndex::init_model_memory() {
     this->HierarchicalClusterIndex::init_model_memory();
 

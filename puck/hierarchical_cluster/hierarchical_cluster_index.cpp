@@ -114,7 +114,7 @@ int HierarchicalClusterIndex::init() {
     if (read_model_file() != 0) {
         return -1;
     }
-
+    
     //初始化内存
     if (init_model_memory() != 0) {
         return -1;
@@ -584,9 +584,16 @@ int HierarchicalClusterIndex::read_model_file() {
 
     _conf.show();
 
-    return 0;
+    return check_index_type();
 }
 
+int HierarchicalClusterIndex::check_index_type(){
+    if (_conf.index_type != IndexType::HIERARCHICAL_CLUSTER){
+        LOG(ERROR)<<"index_type is not HIERARCHICAL_CLUSTER";
+        return -1;
+    }
+    return 0;
+}
 
 int HierarchicalClusterIndex::save_model_file() const {
     /// index_conf

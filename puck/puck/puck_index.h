@@ -55,6 +55,7 @@ public:
     virtual int single_build(BuildInfo* build_info);
 
 protected:
+    virtual int check_index_type();
     /*
      * @brief 写码本文件
      * @@return (int) : 正常返回0，错误返回值<0
