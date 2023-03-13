@@ -59,7 +59,7 @@ OUTPUT(GLOB_GEN_SRCS("py_puck_api/py_puck_api.py"), "$OUT/lib")
 StaticLibrary('puck', Sources(user_sources, UseUbrpcgen(False)))
 
 #py. so
-py_lib_sources=GLOB(' ./puck/*.cpp ./puck/base/*.cpp ./puck/base/yael/*.c ./puck/gflags/*.cpp  ./puck/hierarchical_cluster/*.cpp puck/puck/*.cpp puck/tinker/*.cpp puck/tinker/method/*.cc ')
+py_lib_sources=user_sources
 py_lib_sources+= ' pyapi_wrapper/py_api_wrapper.cpp '
 SharedLibrary('_py_puck_api', LinkDeps(True), Sources(py_lib_sources + GLOB_GEN_SRCS(' py_puck_api/py_puck_api.cpp ')))
 

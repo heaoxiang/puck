@@ -8,7 +8,8 @@
 #pragma once
 
 #include <iostream>
-#include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
+#include <memory>
+#include "puck/index.h"
 namespace py_puck_api {
 
 void update_gflag(const char* gflag_key, const char* gflag_val);

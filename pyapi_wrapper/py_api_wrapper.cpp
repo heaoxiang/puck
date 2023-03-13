@@ -7,11 +7,11 @@
  ***********************************************************************/
 #include <gflags/gflags.h>
 #include <glog/logging.h>
-#include "puck/index.h"
 #include "pyapi_wrapper/py_api_wrapper.h"
 #include "puck/gflags/puck_gflags.h"
 #include "puck/puck/puck_index.h"
 #include "puck/tinker/tinker_index.h"
+#include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
 namespace py_puck_api {
 
 DEFINE_int32(index_type, 1, "");
@@ -28,8 +28,6 @@ PySearcher::PySearcher() {};
 int PySearcher::build(uint32_t total_cnt) {
     std::cout << "start to train\n";
 
-    std::unique_ptr<puck::HierarchicalClusterIndex> cluster;
-
     if (FLAGS_index_type == int(puck::IndexType::TINKER)) { //Tinker
         LOG(INFO) << "init index of Tinker";
         _index.reset(new puck::TinkerIndex());
@@ -43,8 +41,8 @@ int PySearcher::build(uint32_t total_cnt) {
         LOG(INFO) << "init index of Error, Nan type";
         return -1;
     }
-
-    if (cluster->train() != 0) {
+    LOG(INFO) << "start to train";
+    if (_index->train() != 0) {
         LOG(ERROR) << "train Faild";
         return -1;
     }
@@ -53,7 +51,7 @@ int PySearcher::build(uint32_t total_cnt) {
 
     LOG(INFO) << "start to build\n";
 
-    if (cluster->build() != 0) {
+    if (_index->build() != 0) {
         LOG(ERROR) << "build Faild";
         return -1;
 
