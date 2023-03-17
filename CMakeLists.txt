@@ -32,6 +32,12 @@ add_subdirectory(puck)
 add_subdirectory(demo)
 add_subdirectory(tools)
 
+# 是否编译gtest
+option (WITH_TESTING "Use gtest" OFF)
+if (WITH_TESTING)
+    add_subdirectory(test)
+endif (WITH_TESTING)
+
 # 是否编译python接口
 option (USE_PYTHON "Use python of puck" OFF)
 if (USE_PYTHON)

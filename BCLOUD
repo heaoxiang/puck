@@ -27,6 +27,7 @@ CONFIGS('baidu/third-party/mkl@mkl_2019-3-199-1_PD_BL@git_tag')
 CONFIGS('baidu/third-party/swig@master@git_branch')
 CONFIGS("baidu/third-party/cpython@cpython_3.6_3-6-0-0_GEN_PD_BL@git_tag")
 CONFIGS('baidu/third-party/glog@0.6.0@git_branch')
+CONFIGS("baidu/third-party/gtest@gtest_1-7-2-0_PD_BL@git_tag")
 #link flags
 LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
 
@@ -66,3 +67,4 @@ SharedLibrary('_py_puck_api', LinkDeps(True), Sources(py_lib_sources + GLOB_GEN_
 
 Directory("tools")
 Directory("demo")
+Directory("test")

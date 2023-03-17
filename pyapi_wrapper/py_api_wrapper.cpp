@@ -154,7 +154,7 @@ inline void ParallelFor(size_t start, size_t end, size_t numThreads, Function fn
 int PySearcher::search(uint32_t n, const float* query_fea, const uint32_t topk, float* distance,
                        uint32_t* labels) {
 
-    ParallelFor(0, n, puck::FLAGS_threads_count, [&](int id, int threadId) {
+    ParallelFor(0, n, puck::FLAGS_context_initial_pool_size, [&](int id, int threadId) {
         (void)threadId;
         puck::Request request;
         puck::Response response;
