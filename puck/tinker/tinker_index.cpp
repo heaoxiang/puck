@@ -38,6 +38,13 @@ TinkerIndex::TinkerIndex() {
     _space.reset(new similarity::SpaceLp<float>(2));
 }
 
+int TinkerIndex::check_index_type(){
+    if (_conf.index_type != IndexType::TINKER){
+        LOG(ERROR)<<"index_type is not TINKER";
+        return -1;
+    }
+    return 0;
+}
 int TinkerIndex::search_top1_fine_cluster(puck::SearchContext* context, const float* feature) {
 
     auto& search_cell_data = context->get_search_cell_data();

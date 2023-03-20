@@ -153,6 +153,7 @@ protected:
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     int read_model_file();
+    virtual int check_index_type();
 
     /*
      * @brief 初始化内存

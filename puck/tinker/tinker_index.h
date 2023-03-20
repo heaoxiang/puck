@@ -37,6 +37,7 @@ public:
     **/
     int build();
 protected:
+    virtual int check_index_type();
     /*
     * @brief 计算query与一级聚类中心的距离并排序，返回top-1
     * @@param [in\out] context : context由内存池管理
