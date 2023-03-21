@@ -114,6 +114,9 @@ int HierarchicalClusterIndex::init() {
     if (read_model_file() != 0) {
         return -1;
     }
+    if (check_index_type() != 0){
+        return -1;
+    }
     
     //初始化内存
     if (init_model_memory() != 0) {
@@ -583,8 +586,7 @@ int HierarchicalClusterIndex::read_model_file() {
     }
 
     _conf.show();
-
-    return check_index_type();
+    return 0;
 }
 
 int HierarchicalClusterIndex::check_index_type(){
@@ -931,7 +933,7 @@ int HierarchicalClusterIndex::build() {
         LOG(INFO) << "read_model_file error";
         return -1;
     }
-
+    
     //从文件获取配置信息
     if (init_model_memory() != 0) {
         LOG(INFO) << "init_model_memory error";
