@@ -105,26 +105,26 @@ public:
     * @brief 读取索引配置文件（index.dat）、初始化内存、加载索引文件，检索前需要先调用该函数
     * @@return (int) : 正常返回0，错误返回值<0
     **/
-    virtual int init();
+    virtual int init() override;
     /*
      * @brief 检索最近的topk个样本
      * @@param [in] request : request
      * @@param [out] response : response
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    virtual int search(const Request* request, Response* response);
+    virtual int search(const Request* request, Response* response) override;
 
     /*
     * @brief 初始化内存、训练码本（计算一二级聚类中心）、写码本文件
     * @@return (int) : 正常返回0，错误返回值<0
     **/
-    virtual int train();
+    virtual int train() override;
 
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、建库（计算样本最近的1个聚类中心）、写索引文件
     * @@return (int) : 正常返回0，错误返回值<0
     **/
-    virtual int build();
+    virtual int build() override;
 
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、1个样本建库（MR建库和实时入库时会调用该函数）

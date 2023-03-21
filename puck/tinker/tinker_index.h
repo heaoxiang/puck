@@ -21,7 +21,7 @@ public:
      * @brief 默认构造函数，检索配置根据gflag参数确定(推荐使用)
      **/
     TinkerIndex();
-    ~TinkerIndex() {}
+    virtual ~TinkerIndex() {}
     
     /*
      * @brief 检索最近的topk个样本
@@ -29,15 +29,15 @@ public:
      * @@param [out] response : response
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    virtual int search(const Request* request, Response* response);
+    virtual int search(const Request* request, Response* response) override;
 
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、建库（计算样本最近的1个聚类中心）、写索引文件
     * @@return (int) : 正常返回0，错误返回值<0
     **/
-    int build();
+    virtual int build() override;
 protected:
-    virtual int check_index_type();
+    virtual int check_index_type() override;
     /*
     * @brief 计算query与一级聚类中心的距离并排序，返回top-1
     * @@param [in\out] context : context由内存池管理

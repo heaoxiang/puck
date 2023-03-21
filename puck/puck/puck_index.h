@@ -35,27 +35,27 @@ public:
      * @@param [out] response : response
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    virtual int search(const Request* request, Response* response);
+    virtual int search(const Request* request, Response* response) override;
 
     /*
     * @brief 初始化内存、训练码本（计算一二级聚类中心）、写码本文件
     * @@return (int) : 正常返回0，错误返回值<0
     **/
-    virtual int train();
+    virtual int train() override;
     /*
      * @brief 读取索引配置文件（index.dat）、初始化内存、加载码本；第一次调研single_build时，用来初始化
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    virtual int init_single_build();
+    virtual int init_single_build() override;
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、1个样本建库（MR建库和实时入库时会调用该函数）
     * @@param [in/out] build_info : build_info包含样本建库所需的所有信息
     * @@return (int) : 正常返回0，错误返回值<0
     **/
-    virtual int single_build(BuildInfo* build_info);
+    virtual int single_build(BuildInfo* build_info) override;
 
 protected:
-    virtual int check_index_type();
+    virtual int check_index_type() override;
     /*
      * @brief 写码本文件
      * @@return (int) : 正常返回0，错误返回值<0
