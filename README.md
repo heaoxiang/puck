@@ -24,7 +24,6 @@ The prerequisite is mkl.
 
 1.Clone this project. 
 
-git clone https://github.com/puck/puck.git
 
 cd puck
 
