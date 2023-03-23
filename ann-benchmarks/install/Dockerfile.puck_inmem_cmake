@@ -1,0 +1,41 @@
+FROM billion-scale-benchmark 
+
+RUN apt update && apt install -y wget
+RUN wget https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh 
+RUN bash Anaconda3-2020.11-Linux-x86_64.sh -b
+
+ENV PATH /root/anaconda3/bin:$PATH
+#mkl
+RUN conda install -y mkl
+RUN conda install -y mkl-service
+RUN conda install -y mkl_fft
+RUN conda install -y mkl_random
+RUN conda install -y mkl-include
+RUN conda install -y swig
+#cmake
+RUN wget https://cmake.org/files/v3.22/cmake-3.22.0-linux-x86_64.sh
+RUN mkdir cmake && sh cmake-3.22.0-linux-x86_64.sh --skip-license --prefix=cmake && rm cmake-3.22.0-linux-x86_64.sh
+
+#
+COPY install/requirements_conda.txt ./
+# conda doesn't like some of our packages, use pip 
+RUN python3 -m pip install -r requirements_conda.txt 
+
+RUN git clone ssh://yinjie06@icode.baidu.com:8235/baidu/mirana/puck 
+RUN mv puck puck_build
+RUN export MKL_THREADING_LAYER=sequential
+RUN python3 -c "import sysconfig; print(sysconfig.get_path('include'))"
+RUN cd puck_build && ../cmake/bin/cmake \
+    -DCMAKE_BUILD_TYPE=Release -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_path('include'))")  \
+    -DPYTHON_LIBRARY=$(python3 -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))") \
+    -DMKL_ROOT=/root/anaconda3/ \   
+    -DUSE_PYTHON=ON \
+    -B build .
+
+RUN cd puck_build  && make -C build
+#RUN ls -al puck_build/build/pyapi_wrapper && sleep 1m
+RUN mkdir puck && cp ./puck_build/build/pyapi_wrapper/py_puck_api.py puck && cp ./puck_build/build/pyapi_wrapper/_PyPuck.so puck/
+
+RUN python3 -c 'from puck_build.build.pyapi_wrapper import py_puck_api'
+RUN python3 -c 'from puck import py_puck_api'
+
