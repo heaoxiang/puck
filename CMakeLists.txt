@@ -13,13 +13,13 @@ if(NOT GIT_URL)
 endif()
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-std=c++11 -w -g0 -O3")
-set(CMAKE_C_FLAGS "-w")
+set(CMAKE_CXX_FLAGS "-std=c++11 -w -g0 -Ofast -fPIC")
+set(CMAKE_C_FLAGS "-std=c++11 -w -g0 -Ofast -fPIC")
 #add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 add_definitions(-DFINTEGER=int)
 
 add_compile_options(-fopenmp -lpthread -lcrypto -lrt -lgfortran -ldl -lz -fPIC -rdynamic)
-add_compile_options(-O2 -g -pipe -fPIC -march=native -w)
+add_compile_options(-Ofast -g -pipe -fPIC -march=native -w)
 
 include(${PROJECT_SOURCE_DIR}/cmake/gflags.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/glog.cmake)

@@ -1,41 +1,47 @@
-FROM billion-scale-benchmark 
+FROM billion-scale-benchmark
 
-RUN apt update && apt install -y wget
-RUN wget https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh 
-RUN bash Anaconda3-2020.11-Linux-x86_64.sh -b
+RUN apt-get update
+RUN apt-get install -y wget git cmake g++ libaio-dev libgoogle-perftools-dev clang-format libboost-dev python3 python3-setuptools python3-pip
+RUN pip3 install pybind11 numpy
 
-ENV PATH /root/anaconda3/bin:$PATH
-#mkl
-RUN conda install -y mkl
-RUN conda install -y mkl-service
-RUN conda install -y mkl_fft
-RUN conda install -y mkl_random
-RUN conda install -y mkl-include
-RUN conda install -y swig
+RUN cd /tmp && wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+RUN cd /tmp && apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+RUN cd /tmp && rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+RUN cd /tmp && sh -c 'echo deb https://apt.repos.intel.com/mkl all main > /etc/apt/sources.list.d/intel-mkl.list'
+RUN apt-get update
+RUN apt-get install -y intel-mkl-64bit-2020.0-088
+
+RUN update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas.so     libblas.so-x86_64-linux-gnu      /opt/intel/mkl/lib/intel64/libmkl_rt.so 150
+RUN update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas.so.3   libblas.so.3-x86_64-linux-gnu    /opt/intel/mkl/lib/intel64/libmkl_rt.so 150
+RUN update-alternatives --install /usr/lib/x86_64-linux-gnu/liblapack.so   liblapack.so-x86_64-linux-gnu    /opt/intel/mkl/lib/intel64/libmkl_rt.so 150
+RUN update-alternatives --install /usr/lib/x86_64-linux-gnu/liblapack.so.3 liblapack.so.3-x86_64-linux-gnu  /opt/intel/mkl/lib/intel64/libmkl_rt.so 150
+
+RUN echo "/opt/intel/lib/intel64"     >  /etc/ld.so.conf.d/mkl.conf
+RUN echo "/opt/intel/mkl/lib/intel64" >> /etc/ld.so.conf.d/mkl.conf
+RUN ldconfig
+RUN echo "source /opt/intel/oneapi/setvars.sh -i_mpi_library_kind=release_mt" >> /etc/profile.d/intel.sh
+RUN chmod a+x /etc/profile.d/intel.sh
+
 #cmake
 RUN wget https://cmake.org/files/v3.22/cmake-3.22.0-linux-x86_64.sh
 RUN mkdir cmake && sh cmake-3.22.0-linux-x86_64.sh --skip-license --prefix=cmake && rm cmake-3.22.0-linux-x86_64.sh
-
-#
-COPY install/requirements_conda.txt ./
-# conda doesn't like some of our packages, use pip 
-RUN python3 -m pip install -r requirements_conda.txt 
+#swig
+RUN apt-get update && apt-get install -y swig
 
 RUN git clone ssh://yinjie06@icode.baidu.com:8235/baidu/mirana/puck 
 RUN mv puck puck_build
-RUN export MKL_THREADING_LAYER=sequential
 RUN python3 -c "import sysconfig; print(sysconfig.get_path('include'))"
 RUN cd puck_build && ../cmake/bin/cmake \
     -DCMAKE_BUILD_TYPE=Release -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_path('include'))")  \
     -DPYTHON_LIBRARY=$(python3 -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))") \
-    -DMKL_ROOT=/root/anaconda3/ \   
+    -DMKL_ROOT=/opt/intel/mkl/ \   
     -DUSE_PYTHON=ON \
+    -DBLA_VENDOR=Intel10_64lp_seq \
+    -DBLA_STATIC=ON  \
     -B build .
+RUN cd puck_build  && make -C build 
+RUN cd puck_build/build && make install
+RUN cp -a puck_build/output/puck .
 
-RUN cd puck_build  && make -C build
-#RUN ls -al puck_build/build/pyapi_wrapper && sleep 1m
-RUN mkdir puck && cp ./puck_build/build/pyapi_wrapper/py_puck_api.py puck && cp ./puck_build/build/pyapi_wrapper/_PyPuck.so puck/
-
-RUN python3 -c 'from puck_build.build.pyapi_wrapper import py_puck_api'
 RUN python3 -c 'from puck import py_puck_api'
 

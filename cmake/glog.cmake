@@ -51,7 +51,7 @@ ExternalProject_Add(
                     -DCMAKE_INSTALL_PREFIX=${GLOG_INSTALL_DIR}
                     -DCMAKE_INSTALL_LIBDIR=${GLOG_INSTALL_DIR}/lib
                     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-                    -DWITH_GFLAGS=OFF
+                    -DWITH_GFLAGS=ON
                     -DBUILD_TESTING=OFF
                     -DCMAKE_BUILD_TYPE=${THIRD_PARTY_BUILD_TYPE}
                     ${EXTERNAL_OPTIONAL_ARGS}

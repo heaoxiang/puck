@@ -20,6 +20,7 @@
 extern "C" {
 #endif
 #include <mkl_cblas.h>
+#include <mkl_service.h>
 #include "puck/base/yael/vector.h"
 #include "puck/base/yael/matrix.h"
 #include "puck/base/yael/kmeans.h"
