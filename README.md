@@ -20,30 +20,28 @@ more details in benchmarks.
 
 ## install
 
-The prerequisite is mkl.
-
-1.Clone this project. 
-
-
-cd puck
-
-2.Set up the environment variable MKL_ROOT
+1.The prerequisite is mkl and python3.6+. 
 
 MKL must be installed to compile puck, download the MKL installation package corresponding to the operating system from the official website, and configure the corresponding installation path after the installation is complete.
 
 https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html#gs.qt4aoj
 
-export MKL_ROOT = /opt/intel/oneapi/mkl/latest/
+Set up the environment variable, eg. source /opt/intel/oneapi/setvars.sh
+
+2.Clone this project. 
+
+cd puck
+
 
 3.Use cmake to build this project.
 
-mkdir build
-
-cd build
-
-cmake ..
-
-make
+cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_path('include'))")  \
+    -DPYTHON_LIBRARY=$(python3 -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))") \
+    -DMKL_ROOT=/opt/intel/mkl/ \   
+    -DUSE_PYTHON=ON \
+    -DBLA_VENDOR=Intel10_64lp_seq \
+    -DBLA_STATIC=ON  \
+    -B build .
 
 ## How to use
 ### format vector dataset
@@ -62,4 +60,6 @@ see demo/puck_client.cpp
 see demo/tinker_client.cpp
 
 ## benchmark
+this ann-benchmark is forked from https://github.com/harsha-simhadri/big-ann-benchmarks. 
 
+How to run this benchmark is the same with it. We add support of faiss(IVF,IVF-Flat,HNSW) , nmslib（HNSW）,Puck and Tinker of T1 track. And We update algos.yaml of these method using recommended parameters of 4 datasets(bigann-10M, bigann-100M, deep-10M, deep-100M)
