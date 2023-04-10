@@ -43,8 +43,14 @@ cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysco
     -DBLA_STATIC=ON  \
     -B build .
 
+cd build && make && make install
+
+Output files are saved in output subdirectory by default.
+
 ## How to use
-### format vector dataset
+Train and build tools are in output/build_tools subdirectory.
+
+### format vector dataset for train and build
 The vectors are stored in raw little endian. 
 Each vector takes 4+d*4 bytes for .fvecs format, where d is the dimensionality of the vector.
 this formated dataset is named puck_index/all_data.feat.bin by default.
@@ -55,9 +61,12 @@ cd output/build_tools
 
 sh script/puck_train_control.sh -t -b 
 
+index files are saved in puck_index subdirectory by default.
+
 ### search
-see demo/puck_client.cpp
-see demo/tinker_client.cpp
+
+see demo/search_client.cpp
+see demo/insert_demo.cpp
 
 ## benchmark
 this ann-benchmark is forked from https://github.com/harsha-simhadri/big-ann-benchmarks. 
