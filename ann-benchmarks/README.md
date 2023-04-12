@@ -17,7 +17,7 @@
 
 ### 使用方法
 
-安装、使用和对比方法与https://github.com/NJU-yasuo/big-ann-benchmarks保持一致。
+安装、使用和对比方法与https://github.com/NJU-yasuo/big-ann-benchmarks 保持一致。
 
 ### benchmark
 以下对标数据的考量标准如下：
@@ -39,7 +39,7 @@
 
 QPS & 召回率
 
-![](result/bigann-100M.png)
+![bigann-100M](../ann-benchmarks/results/bigann-100M.png)
 
 
 #### DEEP-100M
@@ -55,7 +55,7 @@ QPS & 召回率
 
 QPS & 召回率
 
-![](result/deep-100M.png)
+![deep-100M](../ann-benchmarks/results/deep-100M.png)
 
 
 
@@ -72,7 +72,7 @@ QPS & 召回率
 
 QPS & 召回率
 
-![](result/bigann-10M.png)
+![bigann-10M](../ann-benchmarks/results/bigann-10M.png)
 
 
 
@@ -91,4 +91,4 @@ QPS & 召回率
 
 QPS & 召回率
 
-![](result/deep-10M.png)
+![deep-10M](../ann-benchmarks/results/deep-10M.png)
