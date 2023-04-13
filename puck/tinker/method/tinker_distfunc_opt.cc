@@ -1,34 +1,36 @@
-/***************************************************************************
- *
- * Copyright (c) 2017 Baidu.com, Inc. All Rights Reserved
- *
- **************************************************************************/
+//Copyright (c) 2023 Baidu, Inc.  All Rights Reserved.
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
 
 /**
- * @file   hnsw_distfunc_opt.cc
- * @author huangben(huangben@baidu.com)
- * @author yinjie06(yinjie06@baidu.com)
- * @date   2017年11月05日 星期一 20时17分38秒
+ * @file   tinker_distfunc_opt.cpp
+ * @author huangben@baidu.com
+ * @author yinjie06@baidu.com
+ * @date   2022/5/20 10:43
  * @brief
  *
  **/
 
 #include "puck/tinker/method/hnsw.h"
 #include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
-//#include "knnquery.h"
-//#include "rangequery.h"
 
 #include "puck/tinker/portable_prefetch.h"
 #include "puck/tinker/space.h"
-
-//#include "sort_arr_bi.h"
-#define MERGE_BUFFER_ALGO_SWITCH_THRESHOLD 100
 
 #include <algorithm> // std::min
 #include <limits>
 #include <vector>
 
-//#define DIST_CALC
 namespace similarity {
 
 template <typename dist_t>
@@ -45,7 +47,6 @@ Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, co
     std::priority_queue<EvaluatedMSWNodeInt<dist_t>>
             candidateQueuei; // the set of elements which we can use to evaluate
 
-    //priority_queue<EvaluatedMSWNodeInt<dist_t>> closestDistQueuei; // The set of closest found elements
     int distance_computations = 0;
 
     for (auto& enterpointId : enterpointIds) {
@@ -53,10 +54,7 @@ Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, co
         int curNodeNum = enterpointId;
         dist_t curdist = (fstdistfunc_(
                               pVectq, (float*)(data_level0_memory_ + curNodeNum * memoryPerObject_ + offsetData_ + objectDataOffset_), qty, TmpRes));
-        //LOG(INFO)<<curNodeNum<<"\t"<<curdist;
         ++distance_computations;
-        // EvaluatedMSWNodeInt<dist_t> evi(curdist, curNodeNum);
-        //closestDistQueuei.emplace(curdist, curNodeNum);
         massVisited[curNodeNum] = currentV;
         if (closestDistQueuei.size() < (size_t)topk || curdist < closestDistQueuei.top().first) {
             candidateQueuei.emplace(-curdist, curNodeNum);
@@ -71,21 +69,8 @@ Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, co
         EvaluatedMSWNodeInt<dist_t> currEv = candidateQueuei.top(); // This one was already compared to the query
 
         if (closestDistQueuei.size() >= (size_t)topk && (-currEv.getDistance()) > closestDistQueuei.top().first) {
-            //LOG(INFO)<<closestDistQueuei.size()<<" break";
             break;
         }
-        /*
-        if (!(massVisited[currEv.element] == currentV)) {
-            if (closestDistQueuei.size() < (size_t)topk || closestDistQueuei.top().first > -currEv.getDistance()) {
-                closestDistQueuei.emplace(-currEv.getDistance(), currEv.element);
-
-                if (closestDistQueuei.size() > (size_t)topk) {
-                    closestDistQueuei.pop();
-                }
-            }
-
-            massVisited[currEv.element] = currentV;
-        }*/
 
         candidateQueuei.pop();
         int curNodeNum = currEv.element;
@@ -109,9 +94,6 @@ Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, co
 
                 if (closestDistQueuei.top().first > d || closestDistQueuei.size() < (size_t)topk) {
                     candidateQueuei.emplace(-d, tnum);
-                    //PREFETCH(data_level0_memory_ + candidateQueuei.top().element * memoryPerObject_ + offsetLevel0_,
-                    //             _MM_HINT_T0);
-                    // query->CheckAndAddToResult(d, new Object(currObj1));
                     closestDistQueuei.emplace(d, tnum);
 
                     if (closestDistQueuei.size() > (size_t)topk) {
@@ -122,12 +104,9 @@ Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, co
         }
     }
 
-    //LOG(INFO)<<distance_computations<<" CMP TIMES";
-
     visitedlistpool->releaseVisitedList(vl);
 }
 
 
 template class Hnsw<float>;
-template class Hnsw<int>;
 }

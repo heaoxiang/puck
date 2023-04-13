@@ -1,11 +1,11 @@
-/***********************************************************************
- * Copyright (c) 2019 Baidu.com, Inc. All Rights Reserved
- * @file    utils_simd.h
- * @author  yinjie06(yinjie06@baidu.com)
- * @date    2019-11-21 13:41
- * @brief
- ***********************************************************************/
+/**
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
 
+// -*- c++ -*-
 #include <cmath>
 #include <cassert>
 #ifdef __SSE__
@@ -15,7 +15,7 @@
 #ifdef __aarch64__
 #include  <arm_neon.h>
 #endif
-namespace puck {
+namespace faiss {
 
 /// Squared L2 distance between two vectors
 float fvec_L2sqr(
@@ -252,4 +252,4 @@ void fvec_L2sqr_ny(float* dis, const float* x,
 
 #endif
 
-} // namespace puck
+} // namespace faiss

@@ -1,6 +1,4 @@
 #!/bin/bash
-
-
 function _usage(){
     usage_str="sh ${0} [-i init] [-b build] [-t train] [-f conf_file] [-h help]
     \n\t\t

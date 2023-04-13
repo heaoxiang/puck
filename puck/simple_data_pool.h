@@ -20,7 +20,6 @@
 #include <mutex>
 #include <atomic>
 #include <string.h>
-//#include "base/scoped_lock.h"
 
 namespace puck {
 
