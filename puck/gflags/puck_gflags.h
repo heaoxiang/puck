@@ -46,7 +46,7 @@ DECLARE_bool(whether_pq);
 DECLARE_int32(nsq);
 DECLARE_string(pq_codebook_file_name);
 DECLARE_string(pq_data_file_name);
-DECLARE_bool(whether_filter);
+
 DECLARE_int32(filter_nsq);
 DECLARE_string(filter_codebook_file_name);
 DECLARE_string(filter_data_file_name);

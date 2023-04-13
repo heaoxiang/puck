@@ -93,7 +93,6 @@ HierarchicalClusterIndex::HierarchicalClusterIndex() {
     _conf.index_type = IndexType::HIERARCHICAL_CLUSTER;
     init_params_value();
     omp_set_num_threads(FLAGS_threads_count);
-    //mkl_set_num_threads(FLAGS_threads_count);
     mkl_set_dynamic(true);
 }
 
@@ -343,46 +342,46 @@ int HierarchicalClusterIndex::convert_local_to_memory_idx(uint32_t* cell_start_m
 
     typedef std::pair<uint32_t, std::pair<float, uint32_t> > MemoryOrder;
 
-    std::vector<MemoryOrder> doc_reorder(_conf.total_point_count);
+    std::vector<MemoryOrder> point_reorder(_conf.total_point_count);
 
     for (uint32_t i = 0; i < _conf.total_point_count; ++i) {
-        doc_reorder[i].first = cell_assign[i];
-        doc_reorder[i].second.first = 0;
-        doc_reorder[i].second.second = i;
+        point_reorder[i].first = cell_assign[i];
+        point_reorder[i].second.first = 0;
+        point_reorder[i].second.second = i;
     }
 
-    std::stable_sort(doc_reorder.begin(), doc_reorder.end());
+    std::stable_sort(point_reorder.begin(), point_reorder.end());
 
     uint32_t cellcount = 0;
     cell_start_memory_idx[cellcount] = 0;
 
     for (uint32_t i = 0; i < _conf.total_point_count; ++i) {
-        uint32_t local_idx = doc_reorder[i].second.second;
+        uint32_t local_idx = point_reorder[i].second.second;
         local_to_memory_idx[local_idx] = i;
         _memory_to_local[i] = local_idx;
 
-        while (cellcount + 1 <= doc_reorder[i].first) {
+        while (cellcount + 1 <= point_reorder[i].first) {
             ++cellcount;
             cell_start_memory_idx[cellcount] = i;
         }
     }
 
     for (uint32_t i = 0; i < _conf.fine_cluster_count * _conf.coarse_cluster_count; ++i) {
-        int start_doc_id = cell_start_memory_idx[i];
-        int end_doc_id = cell_start_memory_idx[i + 1];
+        int start_point_id = cell_start_memory_idx[i];
+        int end_point_id = cell_start_memory_idx[i + 1];
 
         int coarse_id = i / _conf.fine_cluster_count;
         int fine_id = i % _conf.fine_cluster_count;
 
-        if (start_doc_id > end_doc_id) {
+        if (start_point_id > end_point_id) {
             LOG(INFO) << "load index error";
             return -1;
         }
 
         FineCluster& cur_fine_cluster = _coarse_clusters[coarse_id].fine_cell_list[fine_id];
-        cur_fine_cluster.memory_idx_start = start_doc_id;
+        cur_fine_cluster.memory_idx_start = start_point_id;
 
-        if (start_doc_id == end_doc_id) {
+        if (start_point_id == end_point_id) {
             cur_fine_cluster.stationary_cell_dist = std::sqrt(std::numeric_limits<float>::max());
         }
 
@@ -757,7 +756,7 @@ int HierarchicalClusterIndex::search(const Request* request, Response* response)
 
     MaxHeap max_heap(request->topk, response->distance, response->local_idx);
 
-    ret = flat_topN_docs(context.get(), feature, search_cell_cnt, max_heap);
+    ret = flat_topN_points(context.get(), feature, search_cell_cnt, max_heap);
 
     if (ret == 0) {
         response->result_num = max_heap.get_heap_size();
@@ -766,7 +765,7 @@ int HierarchicalClusterIndex::search(const Request* request, Response* response)
     return ret;
 }
 
-int HierarchicalClusterIndex::compute_exhaustive_distance_with_docs(SearchContext* context,
+int HierarchicalClusterIndex::compute_exhaustive_distance_with_points(SearchContext* context,
         const int cell_idx,
         const float* feature, MaxHeap& result_heap) {
     const SearchCellData& search_cell_data = context->get_search_cell_data();
@@ -779,9 +778,9 @@ int HierarchicalClusterIndex::compute_exhaustive_distance_with_docs(SearchContex
     //经验值，剪枝掉的比例通常在40%-60%+
     _mm_prefetch((char*)(feature), _MM_HINT_T0);
 
-    uint32_t doc_list_cnt = cur_fine_cluster->get_point_cnt();
+    uint32_t point_list_cnt = cur_fine_cluster->get_point_cnt();
 
-    for (uint32_t i = 0; i < doc_list_cnt; ++i) {
+    for (uint32_t i = 0; i < point_list_cnt; ++i) {
         const float* exhaustive_feature = _all_feature + (cur_fine_cluster->memory_idx_start + i) * _conf.feature_dim;
         float temp_dist = 0;
 
@@ -804,54 +803,54 @@ int HierarchicalClusterIndex::compute_exhaustive_distance_with_docs(SearchContex
         }
     }
 
-    return doc_list_cnt;
+    return point_list_cnt;
 }
 
-int HierarchicalClusterIndex::flat_topN_docs(SearchContext* context, const float* feature,
+int HierarchicalClusterIndex::flat_topN_points(SearchContext* context, const float* feature,
         const int search_cell_cnt,
         MaxHeap& result_heap) {
     uint32_t found = 0;
 
     for (int idx = 0; idx < search_cell_cnt && found < _conf.neighbors_count; idx++) {
-        found += compute_exhaustive_distance_with_docs(context, idx, feature, result_heap);
+        found += compute_exhaustive_distance_with_points(context, idx, feature, result_heap);
     }
 
     result_heap.reorder();
     return 0;
 }
 
-int HierarchicalClusterIndex::train(const u_int64_t kmenas_doc_cnt, float* kmeans_train_vocab) {
+int HierarchicalClusterIndex::train(const u_int64_t kmenas_point_cnt, float* kmeans_train_vocab) {
     LOG(INFO) << "HierarchicalClusterIndex start train";
     base::Timer tm_cost;
     tm_cost.start();
     //使用默认KMEANS参数
     KmeansParams params(FLAGS_kmeans_init_berkeley);
-    //doc属于的cluster id
-    std::unique_ptr<int[]> cluster_assign(new int[kmenas_doc_cnt]);
+    //point属于的cluster id
+    std::unique_ptr<int[]> cluster_assign(new int[kmenas_point_cnt]);
     //记录当前最小的deviation error
     float min_err = std::numeric_limits<float>::max();
     //每次kmeans的训练数据
-    std::unique_ptr<float[]> train_vocab(new float[kmenas_doc_cnt * _conf.feature_dim]);
-    memcpy(train_vocab.get(), kmeans_train_vocab, sizeof(float) * kmenas_doc_cnt * _conf.feature_dim);
+    std::unique_ptr<float[]> train_vocab(new float[kmenas_point_cnt * _conf.feature_dim]);
+    memcpy(train_vocab.get(), kmeans_train_vocab, sizeof(float) * kmenas_point_cnt * _conf.feature_dim);
     //记录每次kmeans产生的聚类中心
     std::unique_ptr<float[]> coarse_init_vocab(new float[_conf.coarse_cluster_count * _conf.feature_dim]);
-    //std::unique_ptr<int[]> coarse_vocab_assign(new int[kmenas_doc_cnt]);
+    //std::unique_ptr<int[]> coarse_vocab_assign(new int[kmenas_point_cnt]);
 
     std::unique_ptr<float[]> fine_init_vocab(new float[_conf.fine_cluster_count * _conf.feature_dim]);
-    std::unique_ptr<int[]> fine_vocab_assign(new int[kmenas_doc_cnt]);
+    std::unique_ptr<int[]> fine_vocab_assign(new int[kmenas_point_cnt]);
 
     for (int ite = 0; ite < FLAGS_kmeans_iterations_count; ++ite) {
         //kmeans聚类得到一级聚类中心
-        float err = kmeans(_conf.feature_dim, kmenas_doc_cnt, _conf.coarse_cluster_count, params.niter,
+        float err = kmeans(_conf.feature_dim, kmenas_point_cnt, _conf.coarse_cluster_count, params.niter,
                            train_vocab.get(), params.flags, params.seed, params.redo,
                            coarse_init_vocab.get(), nullptr, cluster_assign.get(), nullptr);
         LOG(INFO) << "deviation error of init coarse clusters is " << err << " when ite = " << ite;
 
 
         //计算残差
-        memcpy(train_vocab.get(), kmeans_train_vocab, sizeof(float) * kmenas_doc_cnt * _conf.feature_dim);
+        memcpy(train_vocab.get(), kmeans_train_vocab, sizeof(float) * kmenas_point_cnt * _conf.feature_dim);
 
-        for (uint32_t i = 0; i < kmenas_doc_cnt; ++i) {
+        for (uint32_t i = 0; i < kmenas_point_cnt; ++i) {
             //每次迭代计算T之后的值作为判断标准，所以每次S的值使用最新计算的
             int assign_id = cluster_assign.get()[i];
             cblas_saxpy(_conf.feature_dim, -1.0, coarse_init_vocab.get() + assign_id * _conf.feature_dim, 1,
@@ -859,7 +858,7 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_doc_cnt, float* kmean
         }
 
         //残差向量kmeans聚类得到二级聚类中心T
-        err = kmeans(_conf.feature_dim, kmenas_doc_cnt, _conf.fine_cluster_count, params.niter,
+        err = kmeans(_conf.feature_dim, kmenas_point_cnt, _conf.fine_cluster_count, params.niter,
                      train_vocab.get(), params.flags, params.seed, params.redo,
                      fine_init_vocab.get(), nullptr, cluster_assign.get(), nullptr);
         LOG(INFO) << ite << " deviation error of init fine clusters is " << err << " when ite = " << ite;
@@ -868,11 +867,11 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_doc_cnt, float* kmean
         if ((min_err - err) >= 1e-4) {
             memcpy(_coarse_vocab, coarse_init_vocab.get(),
                    sizeof(float) * _conf.coarse_cluster_count * _conf.feature_dim);
-            //memcpy(coarse_vocab_assign.get(), cluster_assign.get(), sizeof(float) * kmenas_doc_cnt);
+            //memcpy(coarse_vocab_assign.get(), cluster_assign.get(), sizeof(float) * kmenas_point_cnt);
 
             memcpy(_fine_vocab, fine_init_vocab.get(),
                    sizeof(float) * _conf.fine_cluster_count * _conf.feature_dim);
-            memcpy(fine_vocab_assign.get(), cluster_assign.get(), sizeof(int) * kmenas_doc_cnt);
+            memcpy(fine_vocab_assign.get(), cluster_assign.get(), sizeof(int) * kmenas_point_cnt);
             min_err = err;
         } else { //大于等于最小值，开始出现抖动
             LOG(INFO) << "current deviation error > min deviation error : " << err << " / " << min_err <<
@@ -887,9 +886,9 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_doc_cnt, float* kmean
         }
 
         //计算残差
-        memcpy(train_vocab.get(), kmeans_train_vocab, sizeof(float) * kmenas_doc_cnt * _conf.feature_dim);
+        memcpy(train_vocab.get(), kmeans_train_vocab, sizeof(float) * kmenas_point_cnt * _conf.feature_dim);
 
-        for (uint32_t i = 0; i < kmenas_doc_cnt; ++i) {
+        for (uint32_t i = 0; i < kmenas_point_cnt; ++i) {
             //计算最优情况下的q-T_best
             int assign_id = fine_vocab_assign.get()[i];
             cblas_saxpy(_conf.feature_dim, -1.0, _fine_vocab + assign_id * _conf.feature_dim, 1,
@@ -964,7 +963,7 @@ int HierarchicalClusterIndex::save_index() {
     return 0;
 }
 
-//doc距离最近的cell信息
+//point距离最近的cell信息
 int HierarchicalClusterIndex::nearest_cell_assign(const float* coarse_distance,
         const float* fine_distance,
         const float query_norm,
@@ -1070,7 +1069,7 @@ int ThreadParams::open_file(const char* train_fea_file_name, uint32_t feature_di
     u_int64_t offset = (u_int64_t)start_id * feature_dim * sizeof(float) +
                        (u_int64_t)start_id * sizeof(int);
 
-    //文件句柄指向要处理的doc块初始地址
+    //文件句柄指向要处理的point块初始地址
     int ret = fseek(learn_stream, offset, SEEK_SET);
 
     if (ret != 0) {
@@ -1180,7 +1179,6 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
     base::MD5Digest md5_digest;
 
     while (available_sample < sampling_cnt && filter.size() < total_cnt) {
-        //get_random_list(total_cnt, sampling_cnt - available_sample, filter, sampling_doc_idx);
         uint32_t temp_val = (uint32_t)rnd() % total_cnt;
 
         if (filter.find(temp_val) != filter.end()) {
@@ -1190,8 +1188,8 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
         filter.insert(temp_val);
 
 
-        int true_doc_idx = temp_val;
-        u_int64_t offset = (u_int64_t)true_doc_idx * feature_dim * sizeof(float) + (u_int64_t)true_doc_idx * sizeof(
+        int true_point_idx = temp_val;
+        u_int64_t offset = (u_int64_t)true_point_idx * feature_dim * sizeof(float) + (u_int64_t)true_point_idx * sizeof(
                                int);
         learn_stream.seekg(offset, std::ios::beg);
         uint32_t cur_dim = -1;
@@ -1199,7 +1197,7 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
         learn_stream.read((char*)&cur_dim, sizeof(int));
 
         if (cur_dim != feature_dim) {
-            LOG(FATAL) << true_doc_idx << " feature dim error, " << cur_dim << " != " << feature_dim;
+            LOG(FATAL) << true_point_idx << " feature dim error, " << cur_dim << " != " << feature_dim;
             learn_stream.close();
             return -1;
         }
@@ -1293,7 +1291,7 @@ int HierarchicalClusterIndex::train() {
         return -1;
     }
 
-    LOG(INFO) << "true doc cnt for kmeans = " << train_points_count;
+    LOG(INFO) << "true point cnt for kmeans = " << train_points_count;
     std::string cur_index_path = FLAGS_train_fea_file_name;
     cur_index_path = cur_index_path.substr(0, cur_index_path.rfind('/'));
     LOG(INFO) << "cur_index_path = " << cur_index_path;

@@ -45,16 +45,6 @@ protected:
     * @@return (int) : top1个cell的id
     **/
     int search_top1_fine_cluster(puck::SearchContext* context, const float* feature);
-    /*
-     * @brief 计算query与一级聚类中心的距离并排序
-     * @@param [in\out] context : context由内存池管理
-     * @@param [in] feature : query的特征向量
-     * @@param [out] distance : topk个样本的距离
-     * @@param [out] labels : topk个样本的idx
-     * @@return (int) : 正常返回0，错误返回值<0
-     **/
-    int tinker_topN_docs(puck::SearchContext* context, const float* feature, float* distance,
-                         uint32_t* labels_idx);
 private:
     /*
     * @brief 加载与样本相关的索引文件

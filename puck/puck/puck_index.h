@@ -103,9 +103,9 @@ protected:
      * @@param [in] result_heap : 堆结构，存储query与样本的topk
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    int filter_topN_docs(SearchContext* context, const float* feature, const int search_cell_cnt,
+    int filter_topN_points(SearchContext* context, const float* feature, const int search_cell_cnt,
                          MaxHeap& result_heap);
-    virtual int rank_topN_docs(SearchContext* context, const float* feature, const uint32_t filter_topk, MaxHeap& result_heap);
+    virtual int rank_topN_points(SearchContext* context, const float* feature, const uint32_t filter_topk, MaxHeap& result_heap);
     /*
     * @brief 检索过程中会按某种规则调整样本在内存的顺序（memory_idx），计算对应的信息
     * @@param [out] cell_start_memory_idx : 每个cell下样本中最小的memory_idx
@@ -142,6 +142,8 @@ protected:
     std::unique_ptr<Quantization> _pq_quantization;
     //大尺度量化，用来过滤
     std::unique_ptr<Quantization> _filter_quantization;
+    //大尺度量化，用来过滤
+    std::unique_ptr<Quantization> _subgroup_quantization;
 };
 
 struct PuckBuildInfo : public BuildInfo {

@@ -115,7 +115,7 @@ class Puck(BaseANN):
         if "F" in self._index_params:
             py_puck_api.update_gflag('fine_cluster_count', "%d"%(self._index_params['F']))
             self.indexkey += "_F%s"%(self._index_params['F'])
-        #filer
+        #filter
         if "FN" in self._index_params:
             py_puck_api.update_gflag('filter_nsq', "%d"%(self._index_params['FN']))
             self.indexkey += "_FN%s"%(self._index_params['FN'])

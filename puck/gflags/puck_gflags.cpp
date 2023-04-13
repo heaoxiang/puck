@@ -45,7 +45,7 @@ DEFINE_bool(whether_pq, true, "whether pq");
 DEFINE_int32(nsq, FLAGS_feature_dim, "the count of pq sub space, default valus is 1/4");
 DEFINE_string(pq_codebook_file_name, "learn_codebooks.dat", "pq codebook");
 DEFINE_string(pq_data_file_name, "pq_data.dat", "pq data of all points");
-DEFINE_bool(whether_filter, true, "whether filer");
+
 DEFINE_int32(filter_nsq, FLAGS_feature_dim / 4, "the count of pq sub space");
 DEFINE_string(filter_codebook_file_name, "filter_codebook.dat", "filter codebook");
 DEFINE_string(filter_data_file_name, "filter_data.dat", "filter data of points");
@@ -61,12 +61,12 @@ DEFINE_int32(tinker_construction, 600, "tinker_construction");
 //检索时，初始化内存池的size
 DEFINE_int32(context_initial_pool_size, std::thread::hardware_concurrency(), "search context pool size");
 //检索通用参数
-DEFINE_int32(search_coarse_count, 200, "search fine clusters in top-N coarse clusters");
-DEFINE_int32(topk, 100, "return top-k");
+DEFINE_int32(search_coarse_count, 200, "restrict the retrieval range in top-n nearest coarse clusters");
+DEFINE_int32(topk, 100, "return top-k nearest points");
 
 //puck
-DEFINE_int32(filter_topk, FLAGS_topk * 11, "filer top-k");
-DEFINE_int32(neighbors_count, 40000, "search docs count, default value is 4w");
+DEFINE_int32(filter_topk, FLAGS_topk * 11, "filter top-k");
+DEFINE_int32(neighbors_count, 40000, "search points count, default value is 4w");
 
 //tinker
 DEFINE_int32(tinker_search_range, FLAGS_topk * 5, "tinker search param, tinker_search_range");

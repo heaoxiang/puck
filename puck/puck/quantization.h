@@ -112,6 +112,17 @@ public:
     const QuantizationParams& get_quantization_params() const {
         return _params;
     }
+    /*
+     * @brief 写码本文件
+     * @@return (int) : 正常返回0，错误返回值<0
+     **/
+    int save_coodbooks(const std::string& file_name) const;
+
+    /*
+     * @brief 写索引文件(建库的产出，与建库样本相关)
+     * @@return (int) : 正常返回0，错误返回值<0
+     **/
+    int save_index(const std::string& file_name) const;
 private:
     /*
     * @brief 计算码本长度

@@ -488,7 +488,7 @@ int RealtimeInsertPuckIndex::search(const Request* request, Response* response) 
     int search_cell_cnt = search_nearest_fine_cluster(context.get(), feature);
     MaxHeap result_heap(request->topk, response->distance, response->local_idx);
 
-    ret = filter_topN_docs(context.get(), feature, search_cell_cnt, result_heap);
+    ret = filter_topN_points(context.get(), feature, search_cell_cnt, result_heap);
     if (ret == 0){
         response->result_num = result_heap.get_heap_size();
     }
@@ -509,9 +509,9 @@ int RealtimeInsertPuckIndex::compute_quantized_distance(SearchContext* context, 
     InsertFineCluster* cur_fine_cluster = _insert_fine_cluster.get() + cur_cell_id;
     auto* point = cur_fine_cluster->insert_points;
     float* result_distance = result_heap.get_top_addr();
-    ///docinfo存储的量化特征对应的参数
+    ///point info存储的量化特征对应的参数
 
-    uint32_t* query_sorted_tag = context->get_search_doc_data().query_sorted_tag;
+    uint32_t* query_sorted_tag = context->get_search_point_data().query_sorted_tag;
 
     while (point != nullptr) {
         uint32_t insert_id = point->insert_id;
@@ -546,15 +546,15 @@ int RealtimeInsertPuckIndex::compute_quantized_distance(SearchContext* context, 
     return point_cnt;
 }
 
-int RealtimeInsertPuckIndex::rank_topN_docs(SearchContext* context, const float* feature,
+int RealtimeInsertPuckIndex::rank_topN_points(SearchContext* context, const float* feature,
                                       const uint32_t filter_topk,
                                       MaxHeap& result_heap) {
-    //LOG(INFO) << "RealtimeInsertPuckIndex::rank_topN_docs";
+    //LOG(INFO) << "RealtimeInsertPuckIndex::rank_topN_points";
 
-    SearchDocData& search_doc_data = context->get_search_doc_data();
+    auto& search_point_data = context->get_search_point_data();
 
-    float* result_distance = search_doc_data.result_distance;
-    uint32_t* result_tag = search_doc_data.result_tag;
+    float* result_distance = search_point_data.result_distance;
+    uint32_t* result_tag = search_point_data.result_tag;
 
     float query_norm = cblas_sdot(_conf.feature_dim, feature, 1, feature, 1);
     ////真正会返回的结果存储的位置
@@ -563,7 +563,7 @@ int RealtimeInsertPuckIndex::rank_topN_docs(SearchContext* context, const float*
     if (_conf.whether_pq) {
         const Quantization* pq_quantization = _pq_quantization.get();
 
-        float* pq_dist_table = context->get_search_doc_data().pq_dist_table;
+        float* pq_dist_table = context->get_search_point_data().pq_dist_table;
         pq_quantization->get_dist_table(feature, pq_dist_table);
 
         for (uint32_t idx = 0; idx < filter_topk; ++idx) {

@@ -39,13 +39,13 @@ struct SearchCellData {
     }
 };
 
-struct SearchDocData {
-    float* result_distance;         //query与doc的距离,长度=topk
-    uint32_t* result_tag;          //doc的local index,通过local index查cnts,长度=topk
+struct SearchPointData {
+    float* result_distance;         //query与point的距离,长度=topk
+    uint32_t* result_tag;          //point的local index,通过local index查cnts,长度=topk
     float* pq_dist_table;
     uint32_t* query_sorted_tag;
     float* query_sorted_dist;
-    SearchDocData() {
+    SearchPointData() {
         init();
     }
     void init() {
@@ -96,8 +96,8 @@ public:
         return _search_cell_data;
     }
 
-    SearchDocData& get_search_doc_data() {
-        return _search_doc_data;
+    SearchPointData& get_search_point_data() {
+        return _search_point_data;
     }
 
     void set_debug_mode(bool debug) {
@@ -116,7 +116,7 @@ private:
     IndexConf _init_conf;
     std::string _log_string;
     SearchCellData _search_cell_data;
-    SearchDocData _search_doc_data;
+    SearchPointData _search_point_data;
     //DISALLOW_COPY_AND_ASSIGN(SearchContext);
 };
 /*

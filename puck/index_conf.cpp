@@ -65,11 +65,9 @@ IndexConf::IndexConf() {
     pq_codebook_file_name = index_path + "/" + FLAGS_pq_codebook_file_name;
     label_file_name = index_path + "/" + FLAGS_label_file_name;
 
-    cell_keep_ratio = 1;
-
     filter_nsq = FLAGS_filter_nsq;
     filter_topk = FLAGS_filter_topk;
-    whether_filter = FLAGS_whether_filter;
+    whether_filter = false;
     filter_data_file_name = index_path + "/" + FLAGS_filter_data_file_name;
     filter_codebook_file_name = index_path + "/" + FLAGS_filter_codebook_file_name;
 
@@ -81,31 +79,25 @@ IndexConf::IndexConf() {
     tinker_search_range = FLAGS_tinker_search_range;
 }
 
-void IndexConf::adaptive_train_param() {
+int IndexConf::adaptive_train_param() {
     //tinker
     if (index_type == IndexType::TINKER) {
         whether_filter = false;
         whether_pq = false;
-        return;
+        return 0;
     }
 
     if (index_type == IndexType::PUCK) {
 
         google::CommandLineFlagInfo info;
-        bool unset_whether_filter = google::GetCommandLineFlagInfo("whether_filter", &info) && info.is_default;
-
-        if (!unset_whether_filter) {
-            return;
-        }
-
         //filter_nsq 未设置
         whether_filter = true;
         bool unset_filter_nsq = google::GetCommandLineFlagInfo("filter_nsq", &info) && info.is_default;
-
+        //用户指定
         if (!unset_filter_nsq) {
-            return ;
+            return 0;
         }
-
+        
         if (unset_filter_nsq && ip2cos == 0) {
             uint32_t lsq = 4;
 
@@ -113,12 +105,10 @@ void IndexConf::adaptive_train_param() {
                 if (feature_dim % lsq == 0) {
                     filter_nsq = feature_dim / lsq;
                     show();
-                    return;
+                    return 0;
                 }
             } while (++lsq <= feature_dim / 2);
-        }
-
-        if (unset_filter_nsq) {
+        }else if (unset_filter_nsq) {
             uint32_t lsq = 4;
 
             do {
@@ -126,14 +116,19 @@ void IndexConf::adaptive_train_param() {
 
                 if (n * lsq - feature_dim < lsq) {
                     filter_nsq = n;
-                    return;
+                    return 0;
                 }
             } while (++lsq <= feature_dim / 2);
         }
-
-        whether_filter = false;
+        return -1;
     }
+    if (index_type == IndexType::HIERARCHICAL_CLUSTER) {
+        whether_filter = false;
+        whether_pq = false; 
+    }
+    return 0;
 }
+
 int IndexConf::adaptive_search_param() {
     //检索参数检查
     if (index_type == IndexType::TINKER) {
@@ -177,7 +172,7 @@ void IndexConf::show() {
     LOG(INFO) << "whether_norm = " << whether_norm;
     LOG(INFO) << "index_type = " << int(index_type);
 
-    //filer
+    //filter
     if (whether_filter) {
         LOG(INFO) << "whether_filter = " << whether_filter;
         LOG(INFO) << "filter_nsq = " << filter_nsq;

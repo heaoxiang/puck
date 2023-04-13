@@ -29,7 +29,7 @@ SearchContext::~SearchContext() {
     if (_model) {
         free(_model);
         _search_cell_data.init();
-        _search_doc_data.init();
+        _search_point_data.init();
     }
 
 }
@@ -48,7 +48,7 @@ int SearchContext::reset(const IndexConf& conf) {
         if (_model) {
             free(_model);
             _search_cell_data.init();
-            _search_doc_data.init();
+            _search_point_data.init();
         }
     }
 
@@ -140,19 +140,19 @@ int SearchContext::reset(const IndexConf& conf) {
     temp = _model + sizeof(float) * conf.feature_dim;
 
     if (conf.whether_filter) {
-        _search_doc_data.result_distance = (float*)temp;
+        _search_point_data.result_distance = (float*)temp;
         temp += sizeof(float) * conf.filter_topk;
 
-        _search_doc_data.result_tag = (uint32_t*)temp;
+        _search_point_data.result_tag = (uint32_t*)temp;
         temp += sizeof(uint32_t) * conf.filter_topk;
 
-        _search_doc_data.pq_dist_table = (float*)temp;
+        _search_point_data.pq_dist_table = (float*)temp;
         temp += sizeof(uint32_t) * conf.filter_nsq * conf.ks;
 
-        _search_doc_data.query_sorted_tag = (uint32_t*)temp;
+        _search_point_data.query_sorted_tag = (uint32_t*)temp;
         temp += sizeof(uint32_t) * conf.filter_nsq;
 
-        _search_doc_data.query_sorted_dist = (float*)temp;
+        _search_point_data.query_sorted_dist = (float*)temp;
     }
 
     _inited = true;

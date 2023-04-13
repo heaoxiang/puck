@@ -51,11 +51,9 @@ DECLARE_string(train_fea_file_name);
 
 //索引中二级聚类中心的信息
 struct BAIDU_CACHELINE_ALIGNMENT_8 FineCluster {
-    //uint32_t doc_cnt;
     float stationary_cell_dist;
     uint32_t memory_idx_start;
     FineCluster() {
-        //doc_cnt = 0;
         stationary_cell_dist = std::sqrt(std::numeric_limits<float>::max());
         memory_idx_start = 0;
     }
@@ -222,7 +220,7 @@ protected:
      * @@param [in] result_heap : 堆结构，存储query与样本的topk
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    int compute_exhaustive_distance_with_docs(SearchContext* context, const int cell_idx,
+    int compute_exhaustive_distance_with_points(SearchContext* context, const int cell_idx,
             const float* feature, MaxHeap& result_heap);
     /*
      * @brief 计算query与top-N个cell下所有样本的距离（样本的原始特征）
@@ -232,7 +230,7 @@ protected:
      * @@param [in] result_heap : 堆结构，存储query与样本的topk
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    int flat_topN_docs(SearchContext* context, const float* feature, const int search_cell_cnt,
+    int flat_topN_points(SearchContext* context, const float* feature, const int search_cell_cnt,
                        MaxHeap& result_heap);
 
     /*
@@ -284,11 +282,11 @@ protected:
 
     /*
     * @brief 训练一二级聚类中心
-    * @@param [in] kmenas_doc_cnt : 训练样本个数
+    * @@param [in] kmenas_point_cnt : 训练样本个数
     * @@param [in] kmeans_train_vocab : 训练样本的特征
     * @@return (int) : 正常返回0，错误返回值<0
     **/
-    int train(const u_int64_t kmenas_doc_cnt, float* kmeans_train_vocab);
+    int train(const u_int64_t kmenas_point_cnt, float* kmeans_train_vocab);
 
     /*
     * @brief 计算部分样本距离最近的cell
@@ -348,8 +346,8 @@ protected:
 
 //训练和建库过程中多线程中，记录线程需要处理的所有信息
 struct ThreadParams {
-    uint32_t start_id;       //当前线程处理的第一个doc的idx
-    int points_count;         //处理的doc总数
+    uint32_t start_id;       //当前线程处理的第一个point的idx
+    int points_count;         //处理的point总数
     uint32_t chunks_count;
     FILE* learn_stream;       //特征文件句柄
 

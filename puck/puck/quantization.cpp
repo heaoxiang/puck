@@ -22,9 +22,9 @@ extern "C" {
 #include "puck/puck/quantization.h"
 #include <glog/logging.h>
 namespace puck {
-void QuantizationParams::show(){
-    LOG(INFO) << "QuantizationParams.dim = " << dim << ", QuantizationParams.ks = " << ks 
-        <<", QuantizationParams.lsq = " << lsq << ", QuantizationParams.nsq = " << nsq;
+void QuantizationParams::show() {
+    LOG(INFO) << "QuantizationParams.dim = " << dim << ", QuantizationParams.ks = " << ks
+              << ", QuantizationParams.lsq = " << lsq << ", QuantizationParams.nsq = " << nsq;
 }
 
 Quantization::Quantization(const QuantizationParams& params,
@@ -79,7 +79,7 @@ void load_bytes_array_thread(const ThreadReaderParam reader, unsigned char* code
 
         if ((i + 1) % 1000000 == 0) {
             LOG(INFO) << "loading index file " << reader.file_name << " thread " << reader.thread_idx << " processed "
-                        << 1.0 * i / reader.count;
+                      << 1.0 * i / reader.count;
         }
     }
 
@@ -148,7 +148,7 @@ int Quantization::load_quantized_feature(const std::string& quantization_file,
     }
 
     LOG(INFO) << "load quantized feature " << quantization_file << "; _total_point_count = " <<
-                _total_point_count;
+              _total_point_count;
     //文件长度检查
     u_int64_t pq_feature_length = (u_int64_t)_total_point_count * _per_fea_len;
     bool is_ok = check_file_length_info(quantization_file, pq_feature_length);
@@ -172,7 +172,7 @@ int Quantization::load_quantized_feature(const std::string& quantization_file,
     params.file_offset = 0;
     params.read_offset = 0;
     LOG(INFO) << "params.read_len = " << params.read_len << " " << params.read_offset << " " <<
-                (local_2memory_idx == nullptr);
+              (local_2memory_idx == nullptr);
 
     for (uint32_t thread_id = 0; thread_id < threads_count; ++thread_id) {
         params.start_id = thread_id * per_thread_count;
@@ -263,6 +263,27 @@ int Quantization::get_dist_table(const float*  feature, float* dist_table) const
                       _params.ks);
     }
 
+    return 0;
+}
+
+void write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
+                       const int dim);
+
+int Quantization::save_coodbooks(const std::string& file_name) const {
+    write_fvec_format(file_name.c_str(), get_coodbooks(), _params.nsq * _params.ks, _params.lsq);
+    return 0;
+}
+
+void write_sequential_format(const char* file_name, const void* wrt_vocab, const size_t vocab_len) {
+    std::ofstream out_fvec_init;
+    out_fvec_init.open(file_name, std::ios::binary | std::ios::out);
+
+    out_fvec_init.write((char*)wrt_vocab, vocab_len);
+    out_fvec_init.close();
+}
+
+int Quantization::save_index(const std::string& file_name) const {
+    write_sequential_format(file_name.c_str(), get_quantized_feature(0), _total_point_count * get_per_fea_len());
     return 0;
 }
 

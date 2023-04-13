@@ -23,14 +23,13 @@ struct IndexConf {
 
     uint32_t total_point_count;                  //索引包含的样本数据总数
 
-    uint32_t neighbors_count;                    //检索的doc个数
+    uint32_t neighbors_count;                    //检索的point个数
     uint32_t topk;                               //取topK个检索结果
 
     bool whether_pq;
     bool whether_norm;
 
     uint32_t threads_count;             //建库并发线程数
-    float cell_keep_ratio;              //根据平均cell内包含doc个数，获得二级聚类中心检索时保留cell个数的比例
     std::string feature_file_name;          //whether_pq = 0的时候存储全部原始特征
 
     std::string coarse_codebook_file_name; //一级类聚中心点码本
@@ -63,7 +62,7 @@ struct IndexConf {
     /*
     * @brief 根据用户配置的数据，更新部分训练参数，保证训练效果
     **/
-    void adaptive_train_param();
+    int adaptive_train_param();
 
     /*
     * @brief 根据用户配置的数据，更新部分检索参数

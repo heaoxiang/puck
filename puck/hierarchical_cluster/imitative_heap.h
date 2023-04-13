@@ -55,14 +55,14 @@ public:
 private:
     /*
      * @brief 调整队列
-     * @@return : 返回堆顶位置idx+1，[0,idx]内包含>=_neighbors_count个doc，[0,idx)范围的_cell_distance[i].first无序
+     * @@return : 返回堆顶位置idx+1，[0,idx]内包含>=_neighbors_count个point，[0,idx)范围的_cell_distance[i].first无序
      **/
     uint32_t imitative_heap_partition();
 private:
     DistanceInfo& _cell_distance;
     uint32_t _top_idx;                 //当前堆内包含元素总个数
     uint32_t _heap_size;               //堆的容量，可包含元素的最大个数
-    uint32_t _contain_doc_cnt;         //入队cell内包含的doc个数
+    uint32_t _contain_point_cnt;         //入队cell内包含的point个数
     uint32_t _neighbors_count;
     float _pivot;
     float _min_distance;

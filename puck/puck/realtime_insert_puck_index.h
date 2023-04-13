@@ -86,7 +86,7 @@ protected:
      **/
     virtual int compute_quantized_distance(SearchContext* context, const int cell_idx,
                                            const float* pq_dist_table, MaxHeap& result_heap);
-    virtual int rank_topN_docs(SearchContext* context, const float* feature, const uint32_t filter_topk,
+    virtual int rank_topN_points(SearchContext* context, const float* feature, const uint32_t filter_topk,
                                MaxHeap& result_heap);
 protected:
     //Insert points of each cell

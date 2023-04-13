@@ -16,7 +16,7 @@ ImitativeHeap::ImitativeHeap(const uint32_t neighbors_count, DistanceInfo& cell_
     _cell_distance(cell_distance) {
     _top_idx = 0;
     _heap_size = _cell_distance.size();
-    _contain_doc_cnt = 0;
+    _contain_point_cnt = 0;
     _neighbors_count = neighbors_count;
     _pivot = std::sqrt(std::numeric_limits<float>::max());
     _min_distance = _pivot;
@@ -31,10 +31,10 @@ uint32_t ImitativeHeap::push(const float distance, FineCluster* cell, uint32_t p
     _cell_distance[_top_idx] = {distance, std::make_pair(cell, point_cnt)};
     _min_distance = std::min(_min_distance, distance);
     ++_top_idx;
-    _contain_doc_cnt += point_cnt;
+    _contain_point_cnt += point_cnt;
 
-    //新入堆的doc个数>=_neighbors_count * 1.4 或 有越界风险,进行堆调整
-    if (_contain_doc_cnt >= _neighbors_count * 1.4
+    //新入堆的point个数>=_neighbors_count * 1.4 或 有越界风险,进行堆调整
+    if (_contain_point_cnt >= _neighbors_count * 1.4
             || _top_idx >= _heap_size) {
         //尽量快的找到合适的堆顶
         _top_idx = imitative_heap_partition();
@@ -45,13 +45,13 @@ uint32_t ImitativeHeap::push(const float distance, FineCluster* cell, uint32_t p
 }
 
 uint32_t ImitativeHeap::imitative_heap_partition() {
-    if (_contain_doc_cnt < _neighbors_count) {
+    if (_contain_point_cnt < _neighbors_count) {
         return _top_idx;
     }
 
     auto first = _cell_distance.begin();
     auto last = _cell_distance.begin() + _top_idx;
-    float pivot = _min_distance + (_neighbors_count * 1.0 / _contain_doc_cnt) * (_pivot - _min_distance);
+    float pivot = _min_distance + (_neighbors_count * 1.0 / _contain_point_cnt) * (_pivot - _min_distance);
 
     auto middle = std::partition(first,
     last, [pivot](const std::pair<float, std::pair<FineCluster*, uint32_t>>& a) {
@@ -64,10 +64,10 @@ uint32_t ImitativeHeap::imitative_heap_partition() {
     uint32_t tail_min = std::distance(first, middle);
 
     while (tail_idx > tail_min) {
-        auto cur_doc_cnt = _cell_distance[tail_idx].second.second;
+        auto cur_point_cnt = _cell_distance[tail_idx].second.second;
 
-        if (_contain_doc_cnt - cur_doc_cnt >= _neighbors_count) {
-            _contain_doc_cnt -= cur_doc_cnt;
+        if (_contain_point_cnt - cur_point_cnt >= _neighbors_count) {
+            _contain_point_cnt -= cur_point_cnt;
             --tail_idx;
         } else {
             _pivot = _cell_distance[tail_idx].first;
