@@ -66,6 +66,9 @@ int getFileLineCnt(const char* fileName) {
 }
 
 int main(int argc, char** argv) {
+#ifndef _OPENMP
+    LOG(INFO)<<"not found openmp, train & build will cost more time.";
+#endif
     google::ParseCommandLineFlags(&argc, &argv, true);
     std::cout << "start to train\n";
     //puck::InitializeLogger(0);

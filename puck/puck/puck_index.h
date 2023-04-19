@@ -157,8 +157,6 @@ protected:
     std::unique_ptr<Quantization> _pq_quantization;
     //大尺度量化，用来过滤
     std::unique_ptr<Quantization> _filter_quantization;
-    //大尺度量化，用来过滤
-    std::unique_ptr<Quantization> _subgroup_quantization;
 };
 
 struct PuckBuildInfo : public BuildInfo {

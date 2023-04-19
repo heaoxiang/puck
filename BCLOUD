@@ -17,7 +17,7 @@ if GLOBAL_GCC_VERSION() == 'gcc82':
     CPPFLAGS('-Wno-error=sign-compare')
 
 
-CPPFLAGS('-std=c++11 -Wall -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g -DFINTEGER=int')
+CPPFLAGS('-std=c++11 -Wall -fopenmp  -msse4 -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g -DFINTEGER=int')
 
 #CONFIGS('baidu/third-party/yael@yael_v438@git_branch')
 CONFIGS('baidu/third-party/mkl@mkl_2019-3-199-1_PD_BL@git_tag')

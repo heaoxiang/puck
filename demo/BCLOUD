@@ -15,9 +15,7 @@ if GLOBAL_GCC_VERSION() == 'gcc82':
     CPPFLAGS('-Wno-error=unused-parameter')
     CPPFLAGS('-Wno-cast-function-type')
     CPPFLAGS('-Wno-error=sign-compare')
-
-
-CPPFLAGS('-std=c++11 -Wall -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g  -DFINTEGER=int')
+CPPFLAGS('-std=c++11 -Wall -fopenmp  -msse4 -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g -DFINTEGER=int')
 
 #link flags
 LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
