@@ -52,9 +52,10 @@ HEADERS('puck/puck/*.h ', '$INC/puck/puck')
 HEADERS('puck/hierarchical_cluster/*.h ', '$INC/puck/hierarchical_cluster')
 HEADERS('tools/*.h ', '$INC/puck/tools')
 OUTPUT('ann-benchmarks', '$OUT')
+OUTPUT('pyapi_wrapper/setup.py', '$OUT/')
 
 #release files except headers
-OUTPUT(GLOB_GEN_SRCS("py_puck_api/py_puck_api.py"), "$OUT/lib")
+OUTPUT(GLOB_GEN_SRCS("py_puck_api/py_puck_api.py"), "$OUT/puck")
 
 #.a
 StaticLibrary('puck', Sources(user_sources, UseUbrpcgen(False)))

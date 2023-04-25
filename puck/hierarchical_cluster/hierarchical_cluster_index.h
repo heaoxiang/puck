@@ -95,7 +95,7 @@ struct CoarseCluster {
 
 bool check_file_length_info(const std::string& file_name,
                             const uint64_t file_length);
-void write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
+int write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
                        const int dim);
 
 int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt,

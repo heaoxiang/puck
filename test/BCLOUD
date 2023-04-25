@@ -39,5 +39,5 @@ UTApplication('runtest',
                Sources(test_online_sources),
                UTOnServer(True))
 UTApplication('runtest_offline',
-               Sources(test_online_sources),
+               Sources(test_offline_sources),
                UTOnServer(False))

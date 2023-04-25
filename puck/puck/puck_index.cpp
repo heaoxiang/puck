@@ -82,6 +82,7 @@ void save_quantization_index(const Quantization* quantization, const std::string
 }
 
 int PuckIndex::save_index() {
+    
     //this->HierarchicalClusterIndex::save_index();
     std::vector<std::thread> writers;
 
@@ -451,21 +452,18 @@ int PuckIndex::search(const Request* request, Response* response) {
     DataHandler<SearchContext> context(_context_pool);
 
     if (0 != context->reset(_conf)) {
+        LOG(ERROR)<<"init search context has error.";
         return -1;
     }
 
     const float* feature = normalization(context.get(), request->feature);
-
-    if (feature == nullptr) {
-        return -1;
-    }
 
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
                                             _conf.search_coarse_count);//, coarse_distance, coarse_tag);
 
     if (ret != 0) {
-        LOG(INFO) << "search_nearest_coarse_cluster error " << ret;
+        LOG(ERROR) << "search nearest coarse cluster error " << ret;
         return ret;
     }
 
@@ -505,8 +503,12 @@ int PuckIndex::puck_assign(const ThreadParams& thread_params, uint32_t* cell_ass
     for (uint32_t cid = 0; cid < thread_params.chunks_count; ++cid) {
         uint32_t real_thread_chunk_size = std::min(FLAGS_thread_chunk_size,
                                           (int)(thread_params.points_count - cid * FLAGS_thread_chunk_size));
-        fvecs_fread(thread_params.learn_stream, chunk_points.get(), real_thread_chunk_size,
+        int read_chunk_size = fvecs_fread(thread_params.learn_stream, chunk_points.get(), real_thread_chunk_size,
                     _conf.feature_dim);
+        if (read_chunk_size != (int)real_thread_chunk_size){
+            LOG(ERROR)<<"puck assign from " << thread_params.start_id<<" read file error at cid = "<<cid <<" / "<<thread_params.chunks_count<<", ret = "<<read_chunk_size;
+            throw "fvecs_fread error!";
+        }
         int cur_start_point_id = thread_params.start_id + cid * FLAGS_thread_chunk_size;
 
         //计算point的召回特征与所属于的cell的残差向量
@@ -601,7 +603,6 @@ void PuckIndex::batch_assign(const uint32_t total_cnt, const std::string& featur
     std::exception_ptr lastException = nullptr;
     std::mutex lastExceptMutex;
 
-
     _filter_quantization->init_quantized_feature_memory();
 
 
@@ -620,11 +621,11 @@ void PuckIndex::batch_assign(const uint32_t total_cnt, const std::string& featur
                 thread_params.points_count = std::min(thread_params.points_count, (int)(total_cnt - thread_params.start_id));
 
                 if (thread_params.points_count > 0) {
-                    thread_params.chunks_count = std::ceil(1.0 * thread_params.points_count / FLAGS_thread_chunk_size);
-
-                    thread_params.open_file(feature_file_name.c_str(), _conf.feature_dim);
-
                     try {
+                        thread_params.chunks_count = std::ceil(1.0 * thread_params.points_count / FLAGS_thread_chunk_size);
+                        if(thread_params.open_file(feature_file_name.c_str(), _conf.feature_dim) != 0) {
+                            throw "open file has error.";
+                        }
                         LOG(INFO) << "puck_assign, thread_params.start_id = " << thread_params.start_id << " points_count = " <<
                                   thread_params.points_count << " feature_file_name = " << feature_file_name << " threadId = " << threadId;
                         puck_assign(thread_params, cell_assign);
@@ -644,9 +645,7 @@ void PuckIndex::batch_assign(const uint32_t total_cnt, const std::string& featur
     if (lastException) {
         std::rethrow_exception(lastException);
     }
-
     LOG(INFO) << "PuckIndex batch_assign Suc.";
-
 }
 
 int PuckIndex::train() {
@@ -657,6 +656,7 @@ int PuckIndex::train() {
 
     //Puck 必须有filter
     if (_conf.whether_filter == false) {
+        LOG(ERROR) << "train params has error, whether_filter must be true.";
         return -1;
     }
 
@@ -690,10 +690,13 @@ int PuckIndex::train() {
     LOG(INFO) << "true point cnt for puck train = " << pq_train_points_count;
 
     //写文件，训练使用这批抽样数据
-    write_fvec_format(train_pq_file_name.c_str(),
+    int ret = write_fvec_format(train_pq_file_name.c_str(),
                       kmeans_train_vocab.get(), pq_train_points_count, _conf.feature_dim);
 
-
+    if (ret != 0){
+         LOG(ERROR) << "write sampling data has error.";
+         return -1;
+    }
     std::unique_ptr<uint32_t[]> cell_assign(new uint32_t[pq_train_points_count]);
     this->HierarchicalClusterIndex::batch_assign(pq_train_points_count, train_pq_file_name, cell_assign.get());
 

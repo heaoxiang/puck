@@ -284,12 +284,11 @@ int Quantization::get_dist_table(const float*  feature, float* dist_table) const
     return 0;
 }
 
-void write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
+int write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
                        const int dim);
 
 int Quantization::save_coodbooks(const std::string& file_name) const {
-    write_fvec_format(file_name.c_str(), get_coodbooks(), _params.nsq * _params.ks, _params.lsq);
-    return 0;
+   return write_fvec_format(file_name.c_str(), get_coodbooks(), _params.nsq * _params.ks, _params.lsq);
 }
 
 void write_sequential_format(const char* file_name, const void* wrt_vocab, const size_t vocab_len) {

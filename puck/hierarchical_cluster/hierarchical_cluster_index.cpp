@@ -61,6 +61,7 @@ bool check_file_length_info(const std::string& file_name,
     struct stat st;
 
     if (fd == -1 || -1 == fstat(fd, &st) || (file_length != (uint64_t)st.st_size)) {
+        LOG(ERROR)<<"check file length has error, file name = "<<file_name;
         return false;
     }
 
@@ -68,20 +69,24 @@ bool check_file_length_info(const std::string& file_name,
 }
 
 //写码本
-void write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
+int write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
                        const int dim) {
     LOG(INFO) << "start write_fvec_format " << file_name;
-    std::ofstream out_fvec_init(file_name,
-                                std::ios::binary | std::ios::out);
-    LOG(INFO) << file_name << "\t" << fea_cnt << " " << dim << " " << fea_cnt * (sizeof(int) + dim * sizeof(
-                  float));
 
-    for (uint64_t i = 0; i < fea_cnt; ++i) {
-        out_fvec_init.write((char*)&dim, sizeof(int));
-        out_fvec_init.write((char*)(fea_vocab + i * dim), dim * sizeof(float));
+    FILE* out_fvec_init = fopen(file_name, "w");
+
+    if (!out_fvec_init) {
+        LOG(ERROR) << "fvecs_write: cannot open " << file_name << " for writing";
+        return -1;
     }
 
-    out_fvec_init.close();
+    if (fvecs_fwrite(out_fvec_init, dim, fea_cnt, fea_vocab) != fea_cnt) {
+        LOG(ERROR) << "fvec_fwrite error. ";
+        return -1;
+    }
+
+    fclose(out_fvec_init);
+    return 0;
 }
 
 void InitializeLogger(int choice) {
@@ -114,10 +119,12 @@ HierarchicalClusterIndex::HierarchicalClusterIndex() {
 HierarchicalClusterIndex::~HierarchicalClusterIndex() {
     if (_model != nullptr) {
         free(_model);
+        _model = nullptr;
     }
 
     if (_all_feature != nullptr) {
         free(_all_feature);
+        _all_feature = nullptr;
     }
 
     init_params_value();
@@ -128,24 +135,30 @@ int HierarchicalClusterIndex::init() {
 
     //从文件获取配置信息
     if (read_model_file() != 0) {
+        LOG(ERROR)<<"read_model_file has error.";
         return -1;
     }
-    if (check_index_type() != 0){
+
+    if (check_index_type() != 0) {
+        LOG(ERROR)<<"check_index_type has error.";
         return -1;
     }
-    
+
     //初始化内存
     if (init_model_memory() != 0) {
+        LOG(ERROR)<<"init_model_memory has error.";
         return -1;
     }
 
     //读码本
     if (read_coodbooks() != 0) {
+        LOG(ERROR)<<"read_coodbooks has error.";
         return -1;
     }
 
     //读与样本有关的索引部分
     if (read_index() != 0) {
+        LOG(ERROR)<<"read_index has error.";
         return -1;
     }
 
@@ -230,12 +243,17 @@ int HierarchicalClusterIndex::save_coodbooks() const {
     LOG(INFO) << "HierarchicalClusterIndex start save index";
     save_model_file();
     //写一级聚类中心索引文件
-    write_fvec_format(_conf.coarse_codebook_file_name.c_str(),
-                      _coarse_vocab, _conf.coarse_cluster_count, _conf.feature_dim);
+    int ret = write_fvec_format(_conf.coarse_codebook_file_name.c_str(),
+                                _coarse_vocab, _conf.coarse_cluster_count, _conf.feature_dim);
+
+    if (ret != 0) {
+        return -1;
+    }
+
     //写二级聚类中心索引文件
-    write_fvec_format(_conf.fine_codebook_file_name.c_str(),
-                      _fine_vocab, _conf.fine_cluster_count, _conf.feature_dim);
-    return 0;
+    ret = write_fvec_format(_conf.fine_codebook_file_name.c_str(),
+                            _fine_vocab, _conf.fine_cluster_count, _conf.feature_dim);
+    return ret;
 }
 
 int HierarchicalClusterIndex::read_index() {
@@ -562,7 +580,7 @@ int HierarchicalClusterIndex::read_model_file() {
         ssize_t ret = read(fd, buffer.get() + read_size, size - read_size);
 
         if (ret < 0) {
-            LOG(WARNING) << "read error errno:" << errno;
+            LOG(ERROR) << "read error errno:" << errno;
             return -1;
         }
 
@@ -582,21 +600,22 @@ int HierarchicalClusterIndex::read_model_file() {
     temp_buffer = GetValueAndIncPtr<size_t>(temp_buffer, part_size);
     LOG(INFO) << "part_size=" << part_size << " st.st_size= " << st.st_size << " sizeof(size_t) = " << sizeof(
                   size_t);
+    uint32_t total_point_count = _conf.total_point_count;
     {
         //realtime insert和分布式建库的索引必须有label file，search返回的local_id是该样本label在label_file的行数
         struct stat buffer;
-
-        if (stat(_conf.label_file_name.c_str(), &buffer) == 0) {
-            _conf.total_point_count = getFileLineCnt(_conf.label_file_name.c_str());
+        int line_cnt = getFileLineCnt(_conf.label_file_name.c_str());
+        if (line_cnt > 0) {
+            total_point_count = line_cnt;
             LOG(INFO) << "Index has label(" << _conf.label_file_name << "), total_point_count = " <<
-                      _conf.total_point_count;
+                      total_point_count;
         }
     }
 
-    uint32_t total_point_count = _conf.total_point_count;
+    
     temp_buffer = load_model_config(temp_buffer);
 
-    if (total_point_count != 0) {
+    if (total_point_count != _conf.total_point_count) {
         LOG(INFO) << "pre set total_point_count, using set value total_point_count = " << total_point_count;
         _conf.total_point_count = total_point_count;
     }
@@ -605,11 +624,12 @@ int HierarchicalClusterIndex::read_model_file() {
     return 0;
 }
 
-int HierarchicalClusterIndex::check_index_type(){
-    if (_conf.index_type != IndexType::HIERARCHICAL_CLUSTER){
-        LOG(ERROR)<<"index_type is not HIERARCHICAL_CLUSTER";
+int HierarchicalClusterIndex::check_index_type() {
+    if (_conf.index_type != IndexType::HIERARCHICAL_CLUSTER) {
+        LOG(ERROR) << "index_type is not HIERARCHICAL_CLUSTER";
         return -1;
     }
+
     return 0;
 }
 
@@ -727,14 +747,9 @@ int HierarchicalClusterIndex::search_nearest_fine_cluster(SearchContext* context
 
     }
 
-    //tm_cost.stop();
-    //context->log_push("search_cell_cluster_cost_us", "%d", tm_cost.u_elapsed());
-
-    //tm_cost.start();
     uint32_t cell_cnt = imitative_heap.get_top_idx();
     std::sort(search_cell_data.cell_distance.begin(), search_cell_data.cell_distance.begin() + cell_cnt);
-    //tm_cost.stop();
-    //context->log_push("sort_cell_cluster_cost_us", "%d", tm_cost.u_elapsed());
+    
     return cell_cnt;
 }
 
@@ -747,6 +762,7 @@ int HierarchicalClusterIndex::search(const Request* request, Response* response)
     DataHandler<SearchContext> context(_context_pool);
 
     if (0 != context->reset(_conf)) {
+        LOG(ERROR) <<"init search context has error.";
         return -1;
     }
 
@@ -754,15 +770,12 @@ int HierarchicalClusterIndex::search(const Request* request, Response* response)
 
     const float* feature = normalization(context.get(), request->feature);
 
-    if (feature == nullptr) {
-        return -1;
-    }
-
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
-                                            _conf.search_coarse_count);//, coarse_distance, coarse_tag);
+                                            _conf.search_coarse_count);
 
     if (ret != 0) {
+        LOG(ERROR)<<"search nearest coarse cluster has error.";
         return ret;
     }
 
@@ -949,7 +962,7 @@ int HierarchicalClusterIndex::build() {
         LOG(INFO) << "read_model_file error";
         return -1;
     }
-    
+
     //从文件获取配置信息
     if (init_model_memory() != 0) {
         LOG(INFO) << "init_model_memory error";
@@ -1043,8 +1056,15 @@ int HierarchicalClusterIndex::assign(const ThreadParams& thread_params, uint32_t
                   thread_params.chunks_count;
         int real_thread_chunk_size = std::min(FLAGS_thread_chunk_size,
                                               (int)(thread_params.points_count - cid * FLAGS_thread_chunk_size));
-        fvecs_fread(thread_params.learn_stream, chunk_points.get(), real_thread_chunk_size,
-                    _conf.feature_dim);
+        int read_chunk_size = fvecs_fread(thread_params.learn_stream, chunk_points.get(), real_thread_chunk_size,
+                                          _conf.feature_dim);
+
+        if (read_chunk_size != real_thread_chunk_size) {
+            LOG(ERROR) << "puck assign from " << thread_params.start_id << " read file error at cid = " << cid << " / " <<
+                       thread_params.chunks_count << ", ret = " << read_chunk_size;
+            throw "fvecs_fread error!";
+        }
+
         fmat_mul_full(_coarse_vocab, chunk_points.get(), _conf.coarse_cluster_count,
                       real_thread_chunk_size,
                       _conf.feature_dim, "TN", points_coarse_terms.get());
@@ -1078,6 +1098,7 @@ int ThreadParams::open_file(const char* train_fea_file_name, uint32_t feature_di
     learn_stream = fopen(train_fea_file_name, "r");
 
     if (!learn_stream) {
+        LOG(FATAL) << "open file "<<train_fea_file_name<<" has error.";
         return -1;
     }
 
@@ -1128,11 +1149,14 @@ void HierarchicalClusterIndex::batch_assign(const uint32_t total_cnt, const std:
                 thread_params.points_count = std::min(thread_params.points_count, (int)(total_cnt - thread_params.start_id));
 
                 if (thread_params.points_count > 0) {
-                    thread_params.chunks_count = std::ceil(1.0 * thread_params.points_count / FLAGS_thread_chunk_size);
-
-                    thread_params.open_file(feature_file_name.c_str(), _conf.feature_dim);
-
                     try {
+                        thread_params.chunks_count = std::ceil(1.0 * thread_params.points_count / FLAGS_thread_chunk_size);
+
+                        int param_stat = thread_params.open_file(feature_file_name.c_str(), _conf.feature_dim);
+                        if (param_stat != 0){
+                            throw "open file has error.";
+                        }
+                    
                         LOG(INFO) << "assign, thread_params.start_id = " << thread_params.start_id << " points_count = " <<
                                   thread_params.points_count << " feature_file_name = " << feature_file_name << " threadId = " << threadId;
                         assign(thread_params, cell_assign, error_distance.data() + threadId,  pruning_computation.data() + threadId);
@@ -1173,6 +1197,7 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
                     const u_int64_t sampling_cnt, const uint32_t feature_dim, float* sampling_vocab) {
 
     if (!sampling_vocab) {
+        LOG(FATAL) <<"sampling_vocab is nullptr";
         return -1;
     }
 
@@ -1204,7 +1229,8 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
 
 
         int true_point_idx = temp_val;
-        u_int64_t offset = (u_int64_t)true_point_idx * feature_dim * sizeof(float) + (u_int64_t)true_point_idx * sizeof(
+        u_int64_t offset = (u_int64_t)true_point_idx * feature_dim * sizeof(float) +
+                           (u_int64_t)true_point_idx * sizeof(
                                int);
         learn_stream.seekg(offset, std::ios::beg);
         uint32_t cur_dim = -1;
@@ -1312,8 +1338,12 @@ int HierarchicalClusterIndex::train() {
     LOG(INFO) << "cur_index_path = " << cur_index_path;
     mkdir(cur_index_path.c_str(), 0777);
     //写文件，训练使用这批抽样数据
-    write_fvec_format(FLAGS_train_fea_file_name.c_str(),
-                      kmeans_train_vocab.get(), train_points_count, _conf.feature_dim);
+    int ret = write_fvec_format(FLAGS_train_fea_file_name.c_str(),
+                                kmeans_train_vocab.get(), train_points_count, _conf.feature_dim);
+
+    if (ret != 0) {
+        return -1;
+    }
 
     if (train(train_points_count, kmeans_train_vocab.get()) != 0) {
         return 1;
@@ -1442,7 +1472,8 @@ int getFileLineCnt(const char* fileName) {
     struct stat st;
 
     if (stat(fileName, &st) != 0) {
-        return 0;
+        LOG(ERROR)<<"checking file stat has error, file name = "<<fileName;
+        return -1;
     }
 
     char buff[1024];
@@ -1460,6 +1491,8 @@ int getFileLineCnt(const char* fileName) {
             buff[index] = '\0';
             total_line_cnt =  atoi(buff);
         }
+    }else{
+        LOG(ERROR)<<"checking file line cnt has error, file name = "<<fileName;
     }
 
     if (fstream) {

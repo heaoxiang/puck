@@ -12,7 +12,7 @@ WORKROOT('../../../')
 #PLATFORM('centos4u3')
 
 #gcc version
-GCC('gcc82')
+#GCC('gcc82')
 
 #Preprocessor flags.
 #CPPFLAGS(r'-D_GNU_SOURCE -D__STDC_LIMIT_MACROS')
