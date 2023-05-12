@@ -7,7 +7,7 @@ ImportConfigsFrom('../')
 #PLATFORM('centos4u3')
 
 #gcc version, default 'gcc'
-COMPILER('gcc82')
+COMPILER('gcc12')
 if GLOBAL_GCC_VERSION() == 'gcc82':
     CPPFLAGS('-Wno-error=sizeof-pointer-div')
     CPPFLAGS('-Wno-error=cast-function-type')

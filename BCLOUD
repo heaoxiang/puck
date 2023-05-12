@@ -7,7 +7,7 @@ WORKROOT('../../../')
 #PLATFORM('centos4u3')
 
 #gcc version, default 'gcc'
-COMPILER('gcc82')
+COMPILER('gcc12')
 if GLOBAL_GCC_VERSION() == 'gcc82':
     CPPFLAGS('-Wno-error=sizeof-pointer-div')
     CPPFLAGS('-Wno-error=cast-function-type')
@@ -34,8 +34,6 @@ LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
 #-I path
 INCPATHS('. ')
 
-INCPATHS('$OUT_ROOT/baidu/third-party/cpython/output/include/python3.6m/ ')
-
 GenSources('./swig_run.sh', ' ', './pyapi_wrapper/py_puck_api.i ./pyapi_wrapper/numpy.i ./swig_run.sh ../../../baidu/third-party/swig')
 
 user_sources=GLOB(' ./puck/*.cpp ./puck/base/*.cpp ./puck/base/yael/*.c ./puck/gflags/*.cpp ./puck/hierarchical_cluster/*.cpp puck/tinker/*.cpp puck/tinker/method/*.cc puck/puck/*.cpp ')
@@ -60,12 +58,13 @@ OUTPUT(GLOB_GEN_SRCS("py_puck_api/py_puck_api.py"), "$OUT/puck")
 #.a
 StaticLibrary('puck', Sources(user_sources, UseUbrpcgen(False)))
 
-#py. so
-py_lib_sources=user_sources
-py_lib_sources+= ' pyapi_wrapper/py_api_wrapper.cpp '
-SharedLibrary('_py_puck_api', LinkDeps(True), Sources(py_lib_sources + GLOB_GEN_SRCS(' py_puck_api/py_puck_api.cpp ')))
+##py. so
+#py_lib_sources=user_sources
+#py_lib_sources+= ' pyapi_wrapper/py_api_wrapper.cpp '
+#SharedLibrary('_py_puck_api', LinkDeps(True), Sources(py_lib_sources + GLOB_GEN_SRCS(' py_puck_api/py_puck_api.cpp ')))
 
 
 Directory("tools")
 Directory("demo")
 Directory("test")
+Directory("pyapi_wrapper")
