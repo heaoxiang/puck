@@ -545,8 +545,56 @@ deep-10M:
                 [[50, 700]]
 
                 ]
-
+    vamanapy-1:
+      docker-tag: billion-scale-benchmark-vamanapy
+      module: benchmark.algorithms.diskann_inmem
+      constructor: Vamana
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: [{'l_build': 100, 'max_outdegree': 64, 'alpha': 1.2}]
+          query-args: [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
+    
+    vamanapy-2:
+      docker-tag: billion-scale-benchmark-vamanapy
+      module: benchmark.algorithms.diskann_inmem
+      constructor: Vamana
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: [{'l_build': 125, 'max_outdegree': 32, 'alpha': 1.2}]
+          query-args : [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
+    
+    vamanapy-3:
+      docker-tag: billion-scale-benchmark-vamanapy
+      module: benchmark.algorithms.diskann_inmem
+      constructor: Vamana
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args : [{'l_build': 125, 'max_outdegree': 32, 'alpha': 1.0}]
+          query-args : [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
+    
+    vamanapy-4:
+      docker-tag: billion-scale-benchmark-vamanapy
+      module: benchmark.algorithms.diskann_inmem
+      constructor: Vamana
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args : [{'l_build': 100, 'max_outdegree': 64, 'alpha': 1.0}]
+          query-args : [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
                  
+    vamanapy_pq-1:
+      docker-tag: billion-scale-benchmark-vamana_pq
+      module: benchmark.algorithms.diskann_inmem
+      constructor: VamanaPQ
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: [{'l_build': 100, 'max_outdegree': 64, 'alpha': 1.2,  'chunks': 96}]
+          query-args: [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
+    
 deep-1B:
     faiss-t1:
       docker-tag: billion-scale-benchmark-faissconda
