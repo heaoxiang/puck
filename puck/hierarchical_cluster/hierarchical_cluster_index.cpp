@@ -600,27 +600,10 @@ int HierarchicalClusterIndex::read_model_file() {
     temp_buffer = GetValueAndIncPtr<size_t>(temp_buffer, part_size);
     LOG(INFO) << "part_size=" << part_size << " st.st_size= " << st.st_size << " sizeof(size_t) = " << sizeof(
                   size_t);
-    uint32_t total_point_count = _conf.total_point_count;
-    {
-        //realtime insert和分布式建库的索引必须有label file，search返回的local_id是该样本label在label_file的行数
-        struct stat buffer;
-        int line_cnt = getFileLineCnt(_conf.label_file_name.c_str());
-        if (line_cnt > 0) {
-            total_point_count = line_cnt;
-            LOG(INFO) << "Index has label(" << _conf.label_file_name << "), total_point_count = " <<
-                      total_point_count;
-        }
-    }
-
     
     temp_buffer = load_model_config(temp_buffer);
-
-    if (total_point_count != _conf.total_point_count) {
-        LOG(INFO) << "pre set total_point_count, using set value total_point_count = " << total_point_count;
-        _conf.total_point_count = total_point_count;
-    }
-
     _conf.show();
+
     return 0;
 }
 
@@ -984,10 +967,8 @@ int HierarchicalClusterIndex::build() {
 int HierarchicalClusterIndex::save_index() {
     LOG(INFO) << "HierarchicalClusterIndex::save_index";
     save_model_file();
-    std::ofstream out_fvec_init;
-    out_fvec_init.open(_conf.cell_assign_file_name.c_str(), std::ios::binary | std::ios::out);
-    out_fvec_init.write((char*)_memory_to_local, _conf.total_point_count * sizeof(int));
-    out_fvec_init.close();
+    
+    ivec_write_raw(_conf.cell_assign_file_name.c_str(), (int*)_memory_to_local, _conf.total_point_count); 
     return 0;
 }
 
@@ -1331,8 +1312,11 @@ int HierarchicalClusterIndex::train() {
         LOG(ERROR) << "sampling data has error.";
         return -1;
     }
-
-    LOG(INFO) << "true point cnt for kmeans = " << train_points_count;
+    if (train_points_count < (int)FLAGS_train_points_count){
+        google::SetCommandLineOption("train_points_count", std::to_string(train_points_count).c_str());
+        LOG(INFO) << "true point cnt for kmeans = " << train_points_count;
+    }
+    
     std::string cur_index_path = FLAGS_train_fea_file_name;
     cur_index_path = cur_index_path.substr(0, cur_index_path.rfind('/'));
     LOG(INFO) << "cur_index_path = " << cur_index_path;
@@ -1413,6 +1397,7 @@ int HierarchicalClusterIndex::single_build(BuildInfo* build_info) {
     int cell_id = build_info->nearest_cell.cell_id;
 
     if (cell_id < 0) {
+        LOG(ERROR)<<"get nearest cell id has error, error cell id = "<<cell_id;
         return cell_id;
     }
 
