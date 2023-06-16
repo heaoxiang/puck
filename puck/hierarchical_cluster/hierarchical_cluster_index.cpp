@@ -936,13 +936,13 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_point_cnt, float* kme
 int HierarchicalClusterIndex::build() {
     LOG(INFO) << "build";
 
-    if (check_feature_dim() != 0) {
-        return -1;
-    }
-
     //从文件获取配置信息
     if (read_model_file() != 0) {
         LOG(INFO) << "read_model_file error";
+        return -1;
+    }
+    
+    if (check_feature_dim() != 0) {
         return -1;
     }
 

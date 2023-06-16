@@ -141,9 +141,12 @@ int RealtimeInsertPuckIndex::read_labels() {
         _labels.push_back(url_line);
     }
 
-    _conf.total_point_count = _labels.size();
     LOG(INFO) << "_conf.total_point_count = " << _conf.total_point_count;
     in_url.close();
+
+    read_model_file();
+    _conf.total_point_count = _labels.size();
+    save_model_file();
     return 0;
 }
 

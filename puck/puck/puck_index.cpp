@@ -28,6 +28,10 @@
 #include <unistd.h>
 #include <memory>
 #include <glog/logging.h>
+#include <cassert>
+#ifdef __SSE__
+#include <immintrin.h>
+#endif
 #include "puck/gflags/puck_gflags.h"
 #include "puck/hierarchical_cluster/max_heap.h"
 #include "puck/search_context.h"
@@ -39,6 +43,79 @@ namespace puck {
 
 DEFINE_int32(pq_train_points_count, 1000000, "used for puck train pq codebooks");
 DEFINE_string(train_pq_file_name, "mid-data/train_pq.dat", "random sampling for puck train pq codebooks");
+
+#ifdef __SSE__
+static inline __m128 masked_table_read(int d, const unsigned char* assign, const float* x, const size_t dim) {
+    assert(0 <= d && d <= 4);
+    __attribute__((__aligned__(16))) float buf[4] = {0, 0, 0, 0};
+
+    switch (d) {
+    case 4:
+        buf[0] = x[(int)assign[0]];
+        buf[1] = (x + dim)[(int)assign[1]];
+        buf[2] = (x + 2 * dim)[(int)assign[2]];
+        buf[3] = (x + 3 * dim)[(int)assign[3]];
+        break;
+
+    case 3:
+        buf[0] = x[(int)assign[0]];
+        buf[1] = (x + dim)[(int)assign[1]];
+        buf[2] = (x + 2 * dim)[(int)assign[2]];
+        break;
+
+    case 2:
+        buf[0] = x[(int)assign[0]];
+        buf[1] = (x + dim)[(int)assign[1]];
+        break;
+
+    case 1:
+        buf[0] = x[(int)assign[0]];
+        break;
+    }
+
+    return _mm_load_ps(buf);
+}
+
+float loopup_dist_table(const unsigned char* assign,
+                        const float* dist_table, size_t dim, size_t nsq) {
+    __m128 msum1 = _mm_setzero_ps();
+    const unsigned char* x = assign;
+    const float* y = dist_table;
+    size_t d = nsq;
+
+    while (d >= 8) {
+        __m128 m1 = masked_table_read(4, x, y, dim);
+        msum1 += m1;
+        x += 4;
+        y += 4 * dim;
+        d -= 4;
+
+        __m128 m2 = masked_table_read(4, x, y, dim);
+        msum1 += m2;
+        x += 4;
+        y += 4 * dim;
+        d -= 4;
+        //LOG(INFO)<<_mm_cvtss_f32(msum1);
+    }
+
+    if (d >= 4) {
+        __m128 m1 = masked_table_read(4, x, y, dim);
+        msum1 += m1;
+        x += 4;
+        y += 4 * dim;
+        d -= 4;
+    }
+
+    if (d > 0) {
+        __m128 mx = masked_table_read(d, x, y, dim);
+        msum1 += mx;
+    }
+
+    msum1 = _mm_hadd_ps(msum1, msum1);
+    msum1 = _mm_hadd_ps(msum1, msum1);
+    return  _mm_cvtss_f32(msum1);
+}
+#endif
 
 PuckIndex::PuckIndex() {
     _conf.index_type = IndexType::PUCK;
@@ -307,7 +384,9 @@ int PuckIndex::compute_quantized_distance(SearchContext* context, const int cell
         }
 
         const unsigned char* pq_feature = (unsigned char*)feature + _filter_quantization->get_fea_offset();
-
+#ifdef __SSE__
+        temp_dist += loopup_dist_table(pq_feature, pq_dist_table, quantization_params.ks, quantization_params.nsq);
+#else
         for (uint32_t m = 0; m < (uint32_t)quantization_params.nsq; ++m) {
             uint32_t idx = query_sorted_tag[m];
             temp_dist += (pq_dist_table + idx * quantization_params.ks)[pq_feature[idx]];
@@ -317,6 +396,7 @@ int PuckIndex::compute_quantized_distance(SearchContext* context, const int cell
                 break;
             }
         }
+#endif
 
         if (temp_dist < result_distance[0]) {
             result_heap.max_heap_update(temp_dist, cur_fine_cluster->memory_idx_start + i);
@@ -400,13 +480,16 @@ int PuckIndex::rank_topN_points(SearchContext* context, const float* feature, co
             float temp_dist = result_distance[idx] - query_norm + ((float*)pq_feature)[0];
 
             pq_feature += pq_quantization->get_fea_offset();
-
+#ifdef __SSE__
+            temp_dist += loopup_dist_table(pq_feature, pq_dist_table, pq_quantization->get_quantization_params().ks,
+                                           pq_quantization->get_quantization_params().nsq);
+#else
             for (uint32_t m = 0; m < (uint32_t)pq_quantization->get_quantization_params().nsq
                     && temp_dist < true_result_distance[0]; ++m) {
 
                 temp_dist += (pq_dist_table + m * pq_quantization->get_quantization_params().ks)[pq_feature[m]];
             }
-
+#endif
             if (temp_dist < true_result_distance[0]) {
                 result_heap.max_heap_update(temp_dist, point_id);
             }
