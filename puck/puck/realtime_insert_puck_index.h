@@ -44,7 +44,7 @@ public:
      * @@param [in] request : query的特征向量 + label
      * @@return 0 => 正常 非0 => 错误
      **/
-    int insert(InsertRequest* request);
+    int insert(const InsertRequest* request);
 
 
     /*
@@ -78,7 +78,7 @@ protected:
     /*
      * @brief insert的样本写索引文件
      **/
-    int append_index(InsertRequest* request, puck::BuildInfo& build_info, uint32_t insert_id);
+    int append_index(const InsertRequest* request, puck::BuildInfo& build_info, uint32_t insert_id);
 protected:
     int read_labels();
     /*

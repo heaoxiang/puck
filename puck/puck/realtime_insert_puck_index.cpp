@@ -270,7 +270,7 @@ int RealtimeInsertPuckIndex::init() {
     return 0;
 }
 
-int RealtimeInsertPuckIndex::insert(InsertRequest* request) {
+int RealtimeInsertPuckIndex::insert(const InsertRequest* request) {
     if (request == nullptr || request->feature == nullptr) {
         return -1;
     }
@@ -340,7 +340,7 @@ int RealtimeInsertPuckIndex::insert(InsertRequest* request) {
 }
 
 
-int RealtimeInsertPuckIndex::append_index(InsertRequest* request, puck::BuildInfo& build_info,uint32_t insert_id) {
+int RealtimeInsertPuckIndex::append_index(const InsertRequest* request, puck::BuildInfo& build_info,uint32_t insert_id) {
                                     //InsertDataMemory* data, uint32_t group_idx, uint32_t memory_idx) {
     uint32_t group_idx = insert_id / _max_insert_point;
     uint32_t memory_idx = insert_id % _max_insert_point;
