@@ -62,7 +62,8 @@ IndexConf::IndexConf() {
 
     neighbors_count = FLAGS_neighbors_count;
     topk = FLAGS_topk;
-
+    radius_rate = FLAGS_radius_rate;
+    
     //加载文件相关参数
     threads_count = FLAGS_threads_count;
     coarse_cluster_count = FLAGS_coarse_cluster_count;

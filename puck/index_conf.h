@@ -39,7 +39,7 @@ struct IndexConf {
 
     uint32_t neighbors_count;                    //检索的point个数
     uint32_t topk;                               //取topK个检索结果
-
+    double radius_rate;
     bool whether_pq;
     bool whether_norm;
 
@@ -64,7 +64,7 @@ struct IndexConf {
     ///ip2cos
     uint32_t ip2cos;
     std::string index_file_name;
-    
+
     IndexType index_type; //0 hcluster, 1 puck, 2 tinker
     std::string pq_data_file_name;
     std::string index_path;

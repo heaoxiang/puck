@@ -100,6 +100,14 @@ protected:
      **/
     virtual void batch_assign(const uint32_t total_cnt, const std::string& feature_file_name,
                               uint32_t* cell_assign);
+     /*
+     * @brief 计算PQ-TABLE等
+     * @@param [in\out] context : context由内存池管理
+     * @@param [in] feature : query的特征向量
+     * @@param [out] 正常返回0，错误返回值<0
+     **/
+    int pre_filter_search(SearchContext* context, const float* feature);
+
     /*
      * @brief 计算query与某个cell下所有样本的距离（样本的filter量化特征）
      * @@param [in\out] context : context由内存池管理
@@ -108,6 +116,8 @@ protected:
      * @@param [in] result_heap : 堆结构，存储query与样本的topk
      * @@return (int) : 正常返回0，错误返回值<0
      **/
+    virtual int compute_quantized_distance(SearchContext* context, const FineCluster*, const float cell_dist,
+                                           MaxHeap& result_heap);
     virtual int compute_quantized_distance(SearchContext* context, const int cell_idx,
                                            const float* pq_dist_table, MaxHeap& result_heap);
     /*
@@ -163,6 +173,10 @@ struct PuckBuildInfo : public BuildInfo {
     typedef std::pair<float, std::vector<unsigned char>> QuantizatedFeature;
     std::vector<QuantizatedFeature> quantizated_feature;
 };
+#ifdef __SSE__
+float lookup_dist_table(const unsigned char* assign,
+                        const float* dist_table, size_t dim, size_t nsq);
+#endif
 } //namesapce puck
 
 

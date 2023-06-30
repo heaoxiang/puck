@@ -62,7 +62,6 @@ DEFINE_string(tinker_file_name, "tinker_relations.dat", "tinker_file_name");
 DEFINE_int32(tinker_neighborhood, 16, "neighborhood conut");
 DEFINE_int32(tinker_construction, 600, "tinker_construction");
 
-
 /***********检索参数*********/
 //检索相关
 //检索时，初始化内存池的size
@@ -71,9 +70,12 @@ DEFINE_int32(context_initial_pool_size, std::thread::hardware_concurrency(), "se
 DEFINE_int32(search_coarse_count, 200, "restrict the retrieval range in top-n nearest coarse clusters");
 DEFINE_int32(topk, 100, "return top-k nearest points");
 
+//HierarchicalClusterIndex
+DEFINE_int32(neighbors_count, 40000, "search points count, default value is 4w");
+
 //puck
 DEFINE_int32(filter_topk, FLAGS_topk * 11, "filter top-k");
-DEFINE_int32(neighbors_count, 40000, "search points count, default value is 4w");
+DEFINE_double(radius_rate, 1.0, "radius_rate");
 
 //tinker
 DEFINE_int32(tinker_search_range, FLAGS_topk * 5, "tinker search param, tinker_search_range");

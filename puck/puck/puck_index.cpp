@@ -76,7 +76,7 @@ static inline __m128 masked_table_read(int d, const unsigned char* assign, const
     return _mm_load_ps(buf);
 }
 
-float loopup_dist_table(const unsigned char* assign,
+float lookup_dist_table(const unsigned char* assign,
                         const float* dist_table, size_t dim, size_t nsq) {
     __m128 msum1 = _mm_setzero_ps();
     const unsigned char* x = assign;
@@ -364,20 +364,25 @@ int PuckIndex::compute_quantized_distance(SearchContext* context, const int cell
         const float* pq_dist_table, MaxHeap& result_heap) {
     SearchCellData& search_cell_data = context->get_search_cell_data();
     const FineCluster* cur_fine_cluster = search_cell_data.cell_distance[cell_idx].second.first;
+    return compute_quantized_distance(context, cur_fine_cluster, search_cell_data.cell_distance[cell_idx].first,
+                                      result_heap);
+}
 
+int PuckIndex::compute_quantized_distance(SearchContext* context, const FineCluster* cur_fine_cluster,
+        const float cell_dist, MaxHeap& result_heap) {
     float* result_distance = result_heap.get_top_addr();
+    const float* pq_dist_table = context->get_search_point_data().pq_dist_table;
 
-    ///point info存储的量化特征对应的参数
+    //point info存储的量化特征对应的参数
     auto& quantization_params = _filter_quantization->get_quantization_params();
-
     uint32_t* query_sorted_tag = context->get_search_point_data().query_sorted_tag;
     auto point_cnt = cur_fine_cluster->get_point_cnt();
+    uint32_t updated_cnt = 0;
 
     for (uint32_t i = 0; i < point_cnt; ++i) {
-
         const unsigned char* feature = _filter_quantization->get_quantized_feature(
                                            cur_fine_cluster->memory_idx_start + i);
-        float temp_dist = 2.0 * search_cell_data.cell_distance[cell_idx].first + ((float*)feature)[0];
+        float temp_dist = 2.0 * cell_dist + ((float*)feature)[0];
 
         if (temp_dist >= result_distance[0]) {
             break;
@@ -385,8 +390,9 @@ int PuckIndex::compute_quantized_distance(SearchContext* context, const int cell
 
         const unsigned char* pq_feature = (unsigned char*)feature + _filter_quantization->get_fea_offset();
 #ifdef __SSE__
-        temp_dist += loopup_dist_table(pq_feature, pq_dist_table, quantization_params.ks, quantization_params.nsq);
+        temp_dist += lookup_dist_table(pq_feature, pq_dist_table, quantization_params.ks, quantization_params.nsq);
 #else
+
         for (uint32_t m = 0; m < (uint32_t)quantization_params.nsq; ++m) {
             uint32_t idx = query_sorted_tag[m];
             temp_dist += (pq_dist_table + idx * quantization_params.ks)[pq_feature[idx]];
@@ -396,6 +402,7 @@ int PuckIndex::compute_quantized_distance(SearchContext* context, const int cell
                 break;
             }
         }
+
 #endif
 
         if (temp_dist < result_distance[0]) {
@@ -405,6 +412,7 @@ int PuckIndex::compute_quantized_distance(SearchContext* context, const int cell
 
     return point_cnt;
 }
+
 
 int PuckIndex::filter_topN_points(SearchContext* context, const float* feature, const int search_cell_cnt,
                                   MaxHeap& result_heap) {
@@ -481,7 +489,7 @@ int PuckIndex::rank_topN_points(SearchContext* context, const float* feature, co
 
             pq_feature += pq_quantization->get_fea_offset();
 #ifdef __SSE__
-            temp_dist += loopup_dist_table(pq_feature, pq_dist_table, pq_quantization->get_quantization_params().ks,
+            temp_dist += lookup_dist_table(pq_feature, pq_dist_table, pq_quantization->get_quantization_params().ks,
                                            pq_quantization->get_quantization_params().nsq);
 #else
             for (uint32_t m = 0; m < (uint32_t)pq_quantization->get_quantization_params().nsq
@@ -524,6 +532,32 @@ int PuckIndex::rank_topN_points(SearchContext* context, const float* feature, co
 
     result_heap.reorder();
     return 0;
+}
+
+int PuckIndex::pre_filter_search(SearchContext* context, const float* feature) {
+    auto& search_point_data = context->get_search_point_data();
+#ifndef __SSE__
+    uint32_t* query_sorted_tag = search_point_data.query_sorted_tag;
+    float* query_sorted_dist = search_point_data.query_sorted_dist;
+    //初始化最大堆。
+    auto& params = _filter_quantization->get_quantization_params();
+    MaxHeap sorted_heap(params.nsq, query_sorted_dist, query_sorted_tag);
+
+    for (uint32_t i = 0; i < (uint32_t)params.nsq; ++i) {
+        float temp_val = 0;
+
+        for (uint32_t m = 0; m < (uint32_t)params.lsq; ++m) {
+            temp_val += -fabs(feature[i * params.lsq + m]);
+        }
+
+        sorted_heap.max_heap_update(temp_val, i);
+    }
+
+    sorted_heap.reorder();
+#endif
+    float* pq_dist_table = search_point_data.pq_dist_table;
+    auto* cur_quantization = _filter_quantization.get();
+    return cur_quantization->get_dist_table(feature, pq_dist_table);
 }
 
 int PuckIndex::search(const Request* request, Response* response) {

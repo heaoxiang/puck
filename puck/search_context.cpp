@@ -96,25 +96,32 @@ int SearchContext::reset(const IndexConf& conf) {
     size_t fine_ip_heap_size = (sizeof(float) + sizeof(uint32_t)) * conf.fine_cluster_count;
 
     size_t stage_fine = coarse_heap_size + fine_ip_dist + fine_ip_heap_size;
-    model_size = std::max(model_size, stage_fine);
+    
 
+    //model_size = std::max(model_size, stage_fine);
     if (conf.whether_filter) {
         //filter
         size_t filter_dist_table = sizeof(float) * conf.filter_nsq * conf.ks;
         size_t filter_heap = (sizeof(float) + sizeof(uint32_t)) * conf.filter_topk;
         size_t pq_reorder = (sizeof(float) + sizeof(uint32_t)) * conf.filter_nsq;
         size_t stage_filter = pq_reorder + filter_dist_table + filter_heap;
-        model_size = std::max(model_size, stage_filter);
+        //model_size = std::max(model_size, stage_filter);
 
 
         if (conf.whether_pq) {
             //rank
             size_t pq_dist_table = sizeof(float) * conf.nsq * conf.ks;
             size_t pq_stage = pq_dist_table + filter_heap;
-            model_size = std::max(model_size, pq_stage);
+            //model_size = std::max(model_size, pq_stage);
+            stage_filter = std::max(stage_filter, pq_stage);
         }
+
+        stage_fine += stage_filter;
     }
 
+    //LOG(INFO)<<"stage_fine="<<stage_fine;
+    model_size = std::max(model_size, stage_fine);
+    //LOG(INFO)<<"model_size="<<model_size;
     model_size += sizeof(float) * conf.feature_dim;
 
     void* memb = nullptr;
@@ -147,8 +154,8 @@ int SearchContext::reset(const IndexConf& conf) {
 
     _search_cell_data.fine_tag = (uint32_t*)temp;
 
-
-    temp = _model + sizeof(float) * conf.feature_dim;
+    temp += sizeof(uint32_t) * conf.fine_cluster_count;
+    //temp = _model + sizeof(float) * conf.feature_dim;
 
     if (conf.whether_filter) {
         _search_point_data.result_distance = (float*)temp;

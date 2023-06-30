@@ -49,7 +49,7 @@ DECLARE_int32(threads_count);
 
 DECLARE_int32(ip2cos);
 
-//puck 
+//puck
 DECLARE_bool(whether_pq);
 DECLARE_int32(nsq);
 DECLARE_string(pq_codebook_file_name);
@@ -71,10 +71,12 @@ DECLARE_int32(context_initial_pool_size);
 DECLARE_int32(search_coarse_count);
 DECLARE_int32(topk);
 
-//puck 
-DECLARE_int32(filter_topk);
+//HierarchicalClusterIndex
 DECLARE_int32(neighbors_count);
 
+//puck
+DECLARE_int32(filter_topk);
+DECLARE_double(radius_rate);
 //tinker
 DECLARE_int32(tinker_search_range);
 

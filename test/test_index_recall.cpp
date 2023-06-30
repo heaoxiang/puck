@@ -25,8 +25,8 @@
 #include <gflags/gflags.h>
 #include "test/test_index.h"
 
-using namespace puck;
 DEFINE_double(base_recall_acc, 0.98, "");
+using namespace puck;
 
 TEST(IndexTest, FlatIndex) {
     TestIndex index;
