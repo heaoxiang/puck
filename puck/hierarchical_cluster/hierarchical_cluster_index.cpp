@@ -22,6 +22,7 @@
 
 #include <fstream>
 #include <thread>
+#include <unordered_set>
 #include <functional>
 #include <random>
 #include <memory>
@@ -1184,7 +1185,8 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
 
     //随机抽样
     std::mt19937 rnd(time(0));
-    std::set<int> filter;
+    std::uniform_int_distribution<> dis(0, total_cnt);
+    std::vector<bool> filter(total_cnt, false);
 
     std::ifstream learn_stream;
     learn_stream.open(init_file_name.c_str(), std::ios::binary);
@@ -1196,61 +1198,63 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
     }
 
     uint32_t available_sample = 0;
-    std::set<std::string> md5_str_set;
+    uint32_t filtered_cnt = 0;
+    std::unordered_set<std::string> md5_str_set;
     base::MD5Digest md5_digest;
 
-    while (available_sample < sampling_cnt && filter.size() < total_cnt) {
-        uint32_t temp_val = (uint32_t)rnd() % total_cnt;
-
-        if (filter.find(temp_val) != filter.end()) {
-            continue;
+    while (available_sample < sampling_cnt && filtered_cnt < total_cnt) {
+        std::vector<int> sampled_points;
+        while(sampled_points.size() + available_sample < sampling_cnt && filtered_cnt < total_cnt){
+            uint32_t rnd_int = dis(rnd);
+            if (filter[rnd_int]){
+                continue;
+            } 
+            filter[rnd_int] = true;
+            filtered_cnt++;
+            sampled_points.push_back(rnd_int);
         }
 
-        filter.insert(temp_val);
+        std::sort(sampled_points.begin(), sampled_points.end());
+        for(uint32_t i = 0; i < sampled_points.size(); ++i){
 
+            int true_point_idx = sampled_points[i];
+            u_int64_t offset = (u_int64_t)true_point_idx * feature_dim * sizeof(float) +
+                            (u_int64_t)true_point_idx * sizeof(
+                                int);
+            learn_stream.seekg(offset, std::ios::beg);
+            uint32_t cur_dim = -1;
+            //feature长度检查，如果出错说明文件格式有问题
+            learn_stream.read((char*)&cur_dim, sizeof(int));
 
-        int true_point_idx = temp_val;
-        u_int64_t offset = (u_int64_t)true_point_idx * feature_dim * sizeof(float) +
-                           (u_int64_t)true_point_idx * sizeof(
-                               int);
-        learn_stream.seekg(offset, std::ios::beg);
-        uint32_t cur_dim = -1;
-        //feature长度检查，如果出错说明文件格式有问题
-        learn_stream.read((char*)&cur_dim, sizeof(int));
+            if (cur_dim != feature_dim) {
+                LOG(FATAL) << true_point_idx << " feature dim error, " << cur_dim << " != " << feature_dim;
+                learn_stream.close();
+                return -1;
+            }
 
-        if (cur_dim != feature_dim) {
-            LOG(FATAL) << true_point_idx << " feature dim error, " << cur_dim << " != " << feature_dim;
-            learn_stream.close();
-            return -1;
-        }
+            u_int64_t vocab_offset = (u_int64_t)available_sample * feature_dim;
+            learn_stream.read((char*)(sampling_vocab + vocab_offset), sizeof(float) * feature_dim);
 
-        u_int64_t vocab_offset = (u_int64_t)available_sample * feature_dim;
-        learn_stream.read((char*)(sampling_vocab + vocab_offset), sizeof(float) * feature_dim);
+            //判断是否是数字
+            if (!isfinite((sampling_vocab + vocab_offset)[0])) {
+                continue;
+            }
 
-        //判断是否是数字
-        if (!isfinite((sampling_vocab + vocab_offset)[0])) {
-            continue;
-        }
+            //重复数据检查
+            base::MD5Sum((void*)(sampling_vocab + vocab_offset), sizeof(float) * feature_dim, &md5_digest);
+            std::string md5_str = base::MD5DigestToBase16(md5_digest);
 
-        //重复数据检查
-        base::MD5Sum((void*)(sampling_vocab + vocab_offset), sizeof(float) * feature_dim, &md5_digest);
-        std::string md5_str = base::MD5DigestToBase16(md5_digest);
+            if (md5_str_set.find(md5_str) != md5_str_set.end()) {
+                //LOG(INFO)<<"duplicate:"<<available_sample<<"\t"<<md5_str;
+                continue;
+            }
 
-        if (md5_str_set.find(md5_str) != md5_str_set.end()) {
-            //LOG(INFO)<<"duplicate:"<<available_sample<<"\t"<<md5_str;
-            continue;
-        }
+            md5_str_set.insert(md5_str);
+            ++available_sample;
 
-        md5_str_set.insert(md5_str);
-        ++available_sample;
-
-        if (available_sample % 100000 == 0) {
-            LOG(INFO) << "read sample " << available_sample << " from source file " << init_file_name;
-        }
-
-
-        if (filter.size() >= total_cnt || total_cnt < sampling_cnt) {
-            break;
+            if (available_sample % 100000 == 0) {
+                LOG(INFO) << "read sample " << available_sample << " from source file " << init_file_name;
+            }
         }
 
     }
