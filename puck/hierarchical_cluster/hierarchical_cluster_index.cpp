@@ -1185,7 +1185,7 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
 
     //随机抽样
     std::mt19937 rnd(time(0));
-    std::uniform_int_distribution<> dis(0, total_cnt);
+    std::uniform_int_distribution<> dis(0, total_cnt-1);
     std::vector<bool> filter(total_cnt, false);
 
     std::ifstream learn_stream;
@@ -1227,8 +1227,8 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
             learn_stream.read((char*)&cur_dim, sizeof(int));
 
             if (cur_dim != feature_dim) {
-                LOG(FATAL) << true_point_idx << " feature dim error, " << cur_dim << " != " << feature_dim;
-                learn_stream.close();
+                LOG(FATAL) << true_point_idx << " feature dim error, " << cur_dim << " != " << feature_dim << init_file_name;
+                    learn_stream.close();
                 return -1;
             }
 
