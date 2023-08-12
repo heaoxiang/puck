@@ -74,9 +74,10 @@ class InitProcessData(object):
 
         # whetherNorm
         self.whetherNorm = 1
-        whetherNorm = re.findall(r'--whether_norm=(\d+)', train_conf_info)
+        whetherNorm = re.findall(r'--whether_norm=(\S+)', train_conf_info)
         if len(whetherNorm) == 1:
-            self.whetherNorm = int(whetherNorm[0])
+            if whetherNorm[0] == '0' or whetherNorm[0] == 'false':
+                self.whetherNorm = 0
         print self.whetherNorm
 
         self.ip2cos = 0
