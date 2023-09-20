@@ -505,8 +505,11 @@ int RealtimeInsertPuckIndex::search(const Request* request, Response* response) 
     MaxHeap result_heap(request->topk, response->distance, response->local_idx);
 
     ret = filter_topN_points(context.get(), feature, search_cell_cnt, result_heap);
+    
     if (ret == 0){
         response->result_num = result_heap.get_heap_size();
+    }else{
+        LOG(ERROR)<<"filter_topN_points has error.";
     }
     return ret;
 }
