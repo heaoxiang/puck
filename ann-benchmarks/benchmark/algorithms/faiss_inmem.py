@@ -13,6 +13,8 @@ import struct
 from benchmark.algorithms.base import BaseANN
 from benchmark.algorithms.base import CPU_LIMIT
 from benchmark.datasets import DATASETS
+from multiprocessing.pool import ThreadPool
+import numpy as np
 
 def knn_search_batched(index, xq, k, thread_limited):
     D, I = [], []
@@ -30,10 +32,10 @@ class Faiss(BaseANN):
         if self._metric == 'angular':
             X /= numpy.linalg.norm(X)
         self.res = self.index.search(X.astype(numpy.float32), n)
-
-    def get_results(self):
         D, I = self.res
-        return I
+        self.I = I
+    def get_results(self):
+        return self.I
 #        res = []
 #        for i in range(len(D)):
 #            r = []
@@ -96,7 +98,7 @@ class FaissFactory(Faiss):
     def __init__(self, metric, index_params):
         self._index_params = index_params
         self._metric = metric
-        self._query_bs = -1
+        self._query_bs = CPU_LIMIT
         self.indexkey = index_params.get("indexkey", "IVF4096")
 
         self.build_memory_usage = -1
@@ -131,8 +133,6 @@ class FaissFactory(Faiss):
             print("setting maxtrain to %d" % maxtrain)
 
         faiss.omp_set_num_threads(int(CPU_LIMIT))
-        if isinstance(index, faiss.IndexHNSW):
-            self._query_bs = int(CPU_LIMIT)
         # train on dataset
         print(f"getting first {maxtrain} dataset vectors for training")
         if index.is_trained == False:
@@ -174,10 +174,6 @@ class FaissFactory(Faiss):
         print("Loading index")
         self.index = faiss.read_index(self.index_name(dataset))
         faiss.omp_set_num_threads(int(CPU_LIMIT))
-        #faiss的IndexHNSW的检索接口仅分块后OMP并行，分块大小与hnsw参数有关，与OMP设置无关
-        #接口外对query分块，分块大小=cpu_limit，分块检索（简单的控制OMP实际检索并发粒度，可优化）
-        if isinstance(self.index, faiss.IndexHNSW):
-            self._query_bs = CPU_LIMIT
         self.ps = faiss.ParameterSpace()
         self.ps.initialize(self.index)
 
@@ -190,10 +186,19 @@ class FaissFactory(Faiss):
         self.qas = query_args
 
     def query(self, X, n):
+        nq = X.shape[0]
+        self.I = -np.ones((nq, n), dtype='int32')
         if self._query_bs == -1:
-            self.res = self.index.search(X, n)
+            D, self.I= self.index.search(X, n)
         else:
-            self.res = knn_search_batched(self.index, X, n, self._query_bs)
+            def process_one_row(q):
+                faiss.omp_set_num_threads(1)
+                Di, Ii = self.index.search(X[q:q+1], n)
+                self.I[q] = Ii
+            
+            faiss.omp_set_num_threads(self._query_bs)
+            pool = ThreadPool(self._query_bs)
+            list(pool.map(process_one_row, range(nq)))
             
     def __str__(self):
         return f'Faiss{self.indexkey, self.qas}'

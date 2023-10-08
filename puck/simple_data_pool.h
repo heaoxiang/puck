@@ -85,7 +85,7 @@ inline void SimpleDataPool::Reset(const DataFactory* factory) {
     void** saved_pool = nullptr;
     const DataFactory* saved_factory = nullptr;
     {
-        
+
         std::unique_lock<std::mutex> mu(_mutex);
         saved_size = _size;
         saved_pool = _pool;

@@ -8,7 +8,6 @@ file(
     "./tinker/*.cpp"
     "./tinker/*/*.cc"
     "./*.cpp"
-    "./base/yael/*.c"
 )
 file(
     GLOB PUCK_HEAD_FILES
@@ -19,7 +18,6 @@ file(
     "./tinker/*.h"
     "./tinker/*/*.h"
     "./*.h"
-    "./base/yael/*.h"
 )
 
 add_library(puck ${PUCK_CPP_FILES})

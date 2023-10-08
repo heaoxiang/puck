@@ -11,7 +11,6 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-
 /**
  * @file max_heap.cpp
  * @author huangben@baidu.com
@@ -20,7 +19,6 @@
  * @brief
  *
  **/
-
 #include <memory>
 #include <iostream>
 #include <glog/logging.h>
@@ -29,7 +27,6 @@ namespace puck {
 
 MaxHeap::MaxHeap(uint32_t size, float* val, uint32_t* tag) :
     _heap_val(val), _heap_tag(tag), _heap_size(size) {
-
     _default_point_cnt = size;
     //初始值为极大值
     memset(_heap_val, 0x7f, sizeof(float) * _heap_size);
@@ -68,7 +65,6 @@ void MaxHeap::max_heap_update(const float new_val, const uint32_t new_tag) {
 }
 
 void MaxHeap::insert(uint32_t heap_size, uint32_t father_idx, float new_val, uint32_t new_tag) {
-
     while (1) {
         uint32_t left_ch = father_idx << 1;
 
@@ -90,7 +86,6 @@ void MaxHeap::insert(uint32_t heap_size, uint32_t father_idx, float new_val, uin
             _heap_tag[father_idx] = _heap_tag[left_ch];
             father_idx = left_ch;
         } else {
-
             //更新的val大于右节点，放在右节点的父节点
             if (_heap_val[right_ch] < new_val) {
                 break;

@@ -64,7 +64,6 @@ static inline __m128 masked_read(int d, const float* x) {
 }
 
 namespace {
-
 float sqr(float x) {
     return x * x;
 }

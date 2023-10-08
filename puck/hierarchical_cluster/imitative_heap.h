@@ -11,7 +11,6 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-
 /**
  * @file imitative_heap.h
  * @author yinjie06@baidu.com
@@ -19,11 +18,9 @@
  * @brief
  *
  **/
-
 #pragma once
 #include "puck/search_context.h"
 namespace puck {
-
 inline bool dist_cmp(const std::pair<float, FineCluster*>& x, const std::pair<float, FineCluster*>& y) {
     return x.first < y.first;
 }
@@ -44,7 +41,6 @@ public:
      * @@return （uint32_t）:入队的cell个数
      **/
     uint32_t push(const float distance, FineCluster* cell, uint32_t point_cnt);
-
     /*
      * @brief 返回当前堆的包含的元素个数
      * @@return （uint32_t）队列长度
@@ -66,7 +62,6 @@ public:
     inline float get_pivot() {
         return _pivot;
     }
-
 private:
     /*
      * @brief 调整队列
@@ -82,6 +77,4 @@ private:
     float _pivot;
     float _min_distance;
 };
-
 }
-

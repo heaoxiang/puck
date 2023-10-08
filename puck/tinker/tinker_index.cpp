@@ -21,50 +21,43 @@
  **/
 #include <queue>
 #include <memory>
-/////yael库
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "puck/base/yael/vector.h"
-#ifdef __cplusplus
-}
-#endif
-
 #include "puck/tinker/tinker_index.h"
 #include "puck/gflags/puck_gflags.h"
 #include "puck/search_context.h"
 #include "puck/hierarchical_cluster/max_heap.h"
 namespace puck {
-
 TinkerIndex::TinkerIndex() {
     _conf.index_type = puck::IndexType::TINKER;
     std::vector<std::string> buildParams;
     int tinker_neighborhood = puck::FLAGS_tinker_neighborhood;
     std::string m_str = "M=" + std::to_string(tinker_neighborhood);
     buildParams.push_back(m_str);
+
     int construction = puck::FLAGS_tinker_construction;
     std::string construction_str = "efConstruction=" + std::to_string(construction);
     buildParams.push_back(construction_str);
+
     int index_build_thread_count = puck::FLAGS_threads_count;
     buildParams.push_back("indexThreadQty=" + std::to_string(index_build_thread_count));
-    _any_params.reset(new similarity::AnyParams(buildParams));
 
+    _any_params.reset(new similarity::AnyParams(buildParams));
     _space.reset(new similarity::SpaceLp<float>(2));
 }
 
-int TinkerIndex::check_index_type(){
-    if (_conf.index_type != IndexType::TINKER){
-        LOG(ERROR)<<"index_type is not TINKER";
+int TinkerIndex::check_index_type() {
+    if (_conf.index_type != IndexType::TINKER) {
+        LOG(ERROR) << "index_type is not TINKER";
         return -1;
     }
+
     return 0;
 }
-int TinkerIndex::search_top1_fine_cluster(puck::SearchContext* context, const float* feature) {
 
+int TinkerIndex::search_top1_fine_cluster(puck::SearchContext* context, const float* feature) {
     auto& search_cell_data = context->get_search_cell_data();
     float* cluster_inner_product = search_cell_data.cluster_inner_product;
 
-    fmat_mul_full(_fine_vocab, feature, _conf.fine_cluster_count, 1, _conf.feature_dim,
+    matrix_multiplication(_fine_vocab, feature, _conf.fine_cluster_count, 1, _conf.feature_dim,
                   "TN", cluster_inner_product);
     puck::MaxHeap result_heap(_conf.fine_cluster_count, search_cell_data.fine_distance,
                               search_cell_data.fine_tag);
@@ -77,26 +70,19 @@ int TinkerIndex::search_top1_fine_cluster(puck::SearchContext* context, const fl
 
     std::pair<float, int> nearest_cell;
     nearest_cell.first = 1 << 20;
-
     //计算一级聚类中心的距离,使用最大堆
     float* coarse_distance = search_cell_data.coarse_distance;
     uint32_t* coarse_tag = search_cell_data.coarse_tag;
 
     for (uint32_t l = 0; l < _conf.search_coarse_count; ++l) {
         int coarse_id = coarse_tag[l];
-
         //计算query与当前一级聚类中心下cell的距离
         auto* cur_fine_cluster_list = _coarse_clusters[coarse_id].fine_cell_list;
-        //uint32_t updated_fine_cnt = 0;
         float min_dist = _coarse_clusters[coarse_id].min_dist_offset + coarse_distance[l];
-        //const float* cur_stationary_cell_dist = _stationary_cell_dist + coarse_id *
-        //                                        _conf.fine_cluster_count;
         float max_stationary_dist = nearest_cell.first - coarse_distance[l] - search_cell_data.fine_distance[0];
 
         for (uint32_t idx = 0; idx < _conf.fine_cluster_count; ++idx) {
-
             if (search_cell_data.fine_distance[idx] + min_dist >= nearest_cell.first) {
-                //LOG(INFO)<<l<<" "<<idx<<" break;";
                 break;
             }
 
@@ -108,7 +94,6 @@ int TinkerIndex::search_top1_fine_cluster(puck::SearchContext* context, const fl
 
             float temp_dist = coarse_distance[l] + cur_fine_cluster_list[k].stationary_cell_dist +
                               search_cell_data.fine_distance[idx];
-
 
             if (temp_dist < nearest_cell.first) {
                 nearest_cell.first = temp_dist;
@@ -122,7 +107,7 @@ int TinkerIndex::search_top1_fine_cluster(puck::SearchContext* context, const fl
 
 int TinkerIndex::search(const Request* request, Response* response) {
     if (request->topk > _conf.topk || request->feature == nullptr) {
-        LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk <<", or feature is nullptr";
+        LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk << ", or feature is nullptr";
         return -1;
     }
 
@@ -133,9 +118,11 @@ int TinkerIndex::search(const Request* request, Response* response) {
     }
 
     const float* feature = normalization(context.get(), request->feature);
-    if (feature == nullptr){
+
+    if (feature == nullptr) {
         return -1;
     }
+
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
                                             _conf.search_coarse_count);
@@ -145,7 +132,6 @@ int TinkerIndex::search(const Request* request, Response* response) {
     }
 
     int nearest_cell_id = search_top1_fine_cluster(context.get(), feature);
-
     const auto* cur_fine_cluster = get_fine_cluster(nearest_cell_id);
     std::vector<int> eps;
 
@@ -161,7 +147,9 @@ int TinkerIndex::search(const Request* request, Response* response) {
     while (closest_dist_queuei.size() > request->topk) {
         closest_dist_queuei.pop();
     }
+
     response->result_num = closest_dist_queuei.size();
+
     while (!closest_dist_queuei.empty()) {
         int idx = closest_dist_queuei.size() - 1;
         int cur_memory_id = closest_dist_queuei.top().second;
@@ -183,19 +171,15 @@ int TinkerIndex::read_feature_index(uint32_t* local_to_memory_idx) {
     _tinker_index->LoadIndex(tinker_index_file);
     return 0;
 }
+
 int TinkerIndex::build() {
     this->HierarchicalClusterIndex::build();
-
     uint32_t cell_cnt = _conf.coarse_cluster_count * _conf.fine_cluster_count;
     std::vector<uint32_t> cell_start_memory_idx(cell_cnt + 1, _conf.total_point_count);
-
     std::vector<uint32_t> local_to_memory_idx(_conf.total_point_count);
     //读取local idx，转换memory idx
     convert_local_to_memory_idx(cell_start_memory_idx.data(), local_to_memory_idx.data());
-
-
     similarity::ObjectVector object_data(_conf.total_point_count);
-
     size_t datalength = _conf.feature_dim * sizeof(float);
 
     std::ifstream data_stream;
@@ -213,12 +197,12 @@ int TinkerIndex::build() {
 
         data_stream.read((char*)temp_data_fea.data(), sizeof(float) * _conf.feature_dim);
         uint32_t memory_idx = local_to_memory_idx[i];
-
         similarity::Object* cur_object = new similarity::Object(memory_idx, memory_idx, datalength,
                 (void*)(temp_data_fea.data()));
         object_data[memory_idx] = cur_object;
     }
-
+    data_stream.close();
+    
     _tinker_index.reset(new similarity::Hnsw<float>(*_space.get(), object_data));
     _tinker_index->CreateIndex(*_any_params.get());
     std::string tinker_index_file = _conf.index_path + "/" + puck::FLAGS_tinker_file_name;

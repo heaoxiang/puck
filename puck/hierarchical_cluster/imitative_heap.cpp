@@ -18,14 +18,12 @@
  * @brief
  *
  **/
-
 #include <algorithm>
 #include <cmath>
 #include <glog/logging.h>
 #include "puck/hierarchical_cluster/imitative_heap.h"
 #include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
 namespace puck {
-
 ImitativeHeap::ImitativeHeap(const uint32_t neighbors_count, DistanceInfo& cell_distance) :
     _cell_distance(cell_distance) {
     _top_idx = 0;
@@ -91,7 +89,6 @@ uint32_t ImitativeHeap::imitative_heap_partition() {
 
     _pivot = pivot;
     return std::distance(first, middle);
-
 }
 
 }

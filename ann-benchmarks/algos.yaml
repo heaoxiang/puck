@@ -108,6 +108,117 @@ random-xs:
                   
                  "10,20,2000,200",
                  "10,30,3000,200"]
+    puck-inmem:
+      docker-tag: billion-scale-benchmark-puck_inmem
+      module: benchmark.algorithms.puck_inmem
+      constructor: Puck
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: [{"C":100, "F":100, "FN":5, "N":20}]
+          query-args: |
+                [ 
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
+
+
+                  ]
+
+    puck-flat-inmem:
+      docker-tag: billion-scale-benchmark-puck_inmem
+      module: benchmark.algorithms.puck_inmem
+      constructor: Puck
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: [{"C":100, "F":100, "FN":5, "N":0}]
+          query-args: |
+                [ 
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
+                ]
+
+    tinker-inmem-M16:
+      docker-tag: billion-scale-benchmark-puck_inmem
+      module: benchmark.algorithms.puck_inmem
+      constructor: Puck
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: [{"index_type":2, "C":100, "F":100,"tinker_neighborhood":6,"tinker_construction":60}]
+          query-args: |
+                [
+                  {"search_coarse_count":10, "tinker_search_range": 100},
+                  {"search_coarse_count":10, "tinker_search_range": 200},
+                  {"search_coarse_count":10, "tinker_search_range": 300},
+                  {"search_coarse_count":10, "tinker_search_range": 400},
+                  {"search_coarse_count":10, "tinker_search_range": 500},
+                  {"search_coarse_count":10, "tinker_search_range": 600},
+                  {"search_coarse_count":10, "tinker_search_range": 700},
+                  {"search_coarse_count":10, "tinker_search_range": 800},
+                  {"search_coarse_count":10, "tinker_search_range": 900},
+                  {"search_coarse_count":10, "tinker_search_range": 1000},
+                  {"search_coarse_count":10, "tinker_search_range": 1100},
+                  {"search_coarse_count":10, "tinker_search_range": 1200},
+                  {"search_coarse_count":10, "tinker_search_range": 1300},
+                  {"search_coarse_count":10, "tinker_search_range": 1400}
+                ]
+   
+
 deep-10M:
     faiss-IVF:
       docker-tag: billion-scale-benchmark-faissconda
@@ -326,31 +437,41 @@ deep-10M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"C":1000, "F":1000, "FN":16, "N":96, "kmeans_init_berkeley" : "true"}]
+          args: [{"C":1000, "F":1000, "FN":16, "N":96}]
           query-args: |
                 [ 
-                  "100,50,8000,500", 
-                  "100,60,8000,600",
-                  "100,70,9000,500",
-                  "100,30,10000,500",
-                  "100,80,10000,600",
-                  "100,60,11000,600",
-                  "100,60,12000,600",
-                  "100,40,13000,600",
-                  "100,40,14000,700", 
-                  "100,80,15000,700",
-                  "100,40,17000,800", 
-                  "100,50,18000,900",
-                  "100,90,19000,700",
-                  "100,90,20000,900",
-                  "100,90,21000,800",
-                  "100,70,23000,900",
-                  "100,60,24000,800",
-                  "100,90,25000,900",
-                  "100,70,27000,900",
-                  "100,70,28000,800",
-                  "100,90,28000,900",
-                  "100,90,29000,900"]
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
+
+
+                  ]
 
     puck-flat-inmem:
       docker-tag: billion-scale-benchmark-puck_inmem
@@ -359,30 +480,39 @@ deep-10M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"C":1000, "F":1000, "FN":16, "N":0, "kmeans_init_berkeley" : "true"}]
+          args: [{"C":1000, "F":1000, "FN":16, "N":0}]
           query-args: |
                 [ 
-                  "100,110,8000,300",
-                  "100,60,8000,400",
-                  "100,50,9000,400",
-                  "100,50,9000,500",
-                  "100,40,9000,600",
-                  "100,50,9000,600",
-                  "100,40,9000,700",
-                  "100,40,10000,500",
-                  "100,40,11000,500",
-                  "100,70,11000,600",
-                  "100,60,12000,600",
-                  "100,60,13000,700",
-                  "100,70,14000,700",
-                  "100,70,16000,600",
-                  "100,60,17000,700",
-                  "100,70,18000,800",
-                  "100,70,20000,900",
-                  "100,80,23000,900",
-                  "100,100,26000,1000",
-                  "100,70,27000,900",
-                  "100,100,30000,1000"]
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
+                ]
 
     tinker-inmem-M16:
       docker-tag: billion-scale-benchmark-puck_inmem
@@ -391,160 +521,160 @@ deep-10M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"index_type":2, "C":1000, "F":1000,"tinker_neighborhood":16,"tinker_construction":600, "kmeans_init_berkeley" : "true"}]
+          args: [{"index_type":2, "C":1000, "F":1000,"tinker_neighborhood":16,"tinker_construction":600}]
           query-args: |
                 [
-                  "10,10,100,100",
-                  "10,10,200,100",
-                  "10,10,300,100",
-                  "10,10,400,100",
-                  "10,10,500,100",
-                  "10,10,600,100",
-                  "10,10,700,100",
-                  "10,10,800,100", 
-                  "10,10,900,100", 
-                  "10,10,1000,100", 
-                  "10,10,1100,100",
-                  "10,10,1200,100",
-                  "10,10,1300,100",
-                  "10,10,1400,100",
-                  "10,10,1500,100"
+                  {"search_coarse_count":10, "tinker_search_range": 100},
+                  {"search_coarse_count":10, "tinker_search_range": 200},
+                  {"search_coarse_count":10, "tinker_search_range": 300},
+                  {"search_coarse_count":10, "tinker_search_range": 400},
+                  {"search_coarse_count":10, "tinker_search_range": 500},
+                  {"search_coarse_count":10, "tinker_search_range": 600},
+                  {"search_coarse_count":10, "tinker_search_range": 700},
+                  {"search_coarse_count":10, "tinker_search_range": 800},
+                  {"search_coarse_count":10, "tinker_search_range": 900},
+                  {"search_coarse_count":10, "tinker_search_range": 1000},
+                  {"search_coarse_count":10, "tinker_search_range": 1100},
+                  {"search_coarse_count":10, "tinker_search_range": 1200},
+                  {"search_coarse_count":10, "tinker_search_range": 1300},
+                  {"search_coarse_count":10, "tinker_search_range": 1400}
                 ]
+    
     #scann has too many params, we use the configuration of https://github.com/erikbern/ann-benchmarks/blob/master/algos.yaml# 
-    scann-inmem-1:
-      docker-tag: billion-scale-benchmark-scann
-      module: benchmark.algorithms.scann_inmem
-      constructor: Scann
-      base-args: ["@metric"]
-      run-groups:
-        base:
-          args: [{"indexkey":[[600], [.nan], [2], ["squared_l2"]]}]
-          query-args: |
-                [
-                [[13, 100]], 
-                [[16, 120]], 
-                [[20, 140]], 
-                [[30, 180]], 
-                [[35, 240]],
+    #scann-inmem-1:
+    #  docker-tag: billion-scale-benchmark-scann
+    #  module: benchmark.algorithms.scann_inmem
+    #  constructor: Scann
+    #  base-args: ["@metric"]
+    #  run-groups:
+    #    base:
+    #      args: [{"indexkey":[[600], [.nan], [2], ["squared_l2"]]}]
+    #      query-args: |
+    #            [
+    #            [[13, 100]], 
+    #            [[16, 120]], 
+    #            [[20, 140]], 
+    #            [[30, 180]], 
+    #            [[35, 240]],
  
-                [[35, 300]], 
-                [[35, 400]], 
-                [[35, 500]], 
-                [[35, 600]], 
-                [[35, 700]], 
-                [[35, 800]], 
-                [[35, 900]], 
+    #            [[35, 300]], 
+    #            [[35, 400]], 
+    #            [[35, 500]], 
+    #            [[35, 600]], 
+    #            [[35, 700]], 
+    #            [[35, 800]], 
+    #            [[35, 900]], 
 
-                [[50, 240]], 
-                [[50, 300]], 
-                [[50, 400]], 
-                [[50, 500]], 
-                [[50, 600]], 
-                [[50, 700]], 
-                [[50, 800]], 
-                [[50, 900]]
-                ]
-    scann-inmem-2:
-      docker-tag: billion-scale-benchmark-scann
-      module: benchmark.algorithms.scann_inmem
-      constructor: Scann
-      base-args: ["@metric"]
-      run-groups:
-        base:
-          args: [{"indexkey":[[2000], [.nan], [4], ["squared_l2"]]}]
-          query-args: |
-                [
-                [[10, 100]], 
-                [[15, 140]], 
-                [[25, 160]], 
-                [[35, 190]], 
-                [[40, 200]], 
-                [[45, 220]], 
-                [[50, 240]], 
-                [[60, 250]], 
-                [[70, 300]], 
-                [[80, 400]], 
-                [[100, 500]], 
-                [[120, 600]], 
-                [[150, 800]], 
-                [[200, 900]],
-               
+    #            [[50, 240]], 
+    #            [[50, 300]], 
+    #            [[50, 400]], 
+    #            [[50, 500]], 
+    #            [[50, 600]], 
+    #            [[50, 700]], 
+    #            [[50, 800]], 
+    #            [[50, 900]]
+    #            ]
+    #scann-inmem-2:
+    #  docker-tag: billion-scale-benchmark-scann
+    #  module: benchmark.algorithms.scann_inmem
+    #  constructor: Scann
+    #  base-args: ["@metric"]
+    #  run-groups:
+    #    base:
+    #      args: [{"indexkey":[[2000], [.nan], [4], ["squared_l2"]]}]
+    #      query-args: |
+    #            [
+    #            [[10, 100]], 
+    #            [[15, 140]], 
+    #            [[25, 160]], 
+    #            [[35, 190]], 
+    #            [[40, 200]], 
+    #            [[45, 220]], 
+    #            [[50, 240]], 
+    #            [[60, 250]], 
+    #            [[70, 300]], 
+    #            [[80, 400]], 
+    #            [[100, 500]], 
+    #            [[120, 600]], 
+    #            [[150, 800]], 
+    #            [[200, 900]],
+    #           
 
-                [[200, 1000]],
-                [[200, 1100]],
-                [[200, 1200]],
-                [[200, 1300]],
-                [[200, 1400]],
-                [[200, 1500]],
-                [[200, 1600]],
-                [[200, 1700]],
-                [[200, 1800]],
-                [[200, 1900]],
-                [[200, 2000]],
-
-
-                [[500, 1000]],
-                [[500, 1100]],
-                [[500, 1200]],
-                [[500, 1300]],
-                [[500, 1400]],
-                [[500, 1500]],
-                [[500, 1600]],
-                [[500, 1700]],
-                [[500, 1800]],
-                [[500, 1900]],
-                [[500, 2000]],
+    #            [[200, 1000]],
+    #            [[200, 1100]],
+    #            [[200, 1200]],
+    #            [[200, 1300]],
+    #            [[200, 1400]],
+    #            [[200, 1500]],
+    #            [[200, 1600]],
+    #            [[200, 1700]],
+    #            [[200, 1800]],
+    #            [[200, 1900]],
+    #            [[200, 2000]],
 
 
-                [[1000, 1000]],
-                [[1000, 1100]],
-                [[1000, 1200]],
-                [[1000, 1300]],
-                [[1000, 1400]],
-                [[1000, 1500]],
-                [[1000, 1600]],
-                [[1000, 1700]],
-                [[1000, 1800]],
-                [[1000, 1900]],
-                [[1000, 2000]]
-                ]
-    scann-inmem-3:
-      docker-tag: billion-scale-benchmark-scann
-      module: benchmark.algorithms.scann_inmem
-      constructor: Scann
-      base-args: ["@metric"]
-      run-groups:
-        base:
-          args: [{"indexkey":[[100], [.nan], [4], ["squared_l2"]]}]
-          query-args: |
-                [
-                [[8, 100]],
-                [[8, 200]],
-                [[8, 300]],
-                [[8, 400]],
-                [[8, 500]],
-                [[8, 600]],
-                [[8, 700]],
-                
+    #            [[500, 1000]],
+    #            [[500, 1100]],
+    #            [[500, 1200]],
+    #            [[500, 1300]],
+    #            [[500, 1400]],
+    #            [[500, 1500]],
+    #            [[500, 1600]],
+    #            [[500, 1700]],
+    #            [[500, 1800]],
+    #            [[500, 1900]],
+    #            [[500, 2000]],
 
-                [[20, 100]],
-                [[20, 200]],
-                [[20, 300]],
-                [[20, 400]],
-                [[20, 500]],
-                [[20, 600]],
-                [[20, 700]],
-                
 
-                [[50, 100]],
-                [[50, 200]],
-                [[50, 300]],
-                [[50, 400]],
-                [[50, 500]],
-                [[50, 600]],
-                [[50, 700]]
+    #            [[1000, 1000]],
+    #            [[1000, 1100]],
+    #            [[1000, 1200]],
+    #            [[1000, 1300]],
+    #            [[1000, 1400]],
+    #            [[1000, 1500]],
+    #            [[1000, 1600]],
+    #            [[1000, 1700]],
+    #            [[1000, 1800]],
+    #            [[1000, 1900]],
+    #            [[1000, 2000]]
+    #            ]
+    #scann-inmem-3:
+    #  docker-tag: billion-scale-benchmark-scann
+    #  module: benchmark.algorithms.scann_inmem
+    #  constructor: Scann
+    #  base-args: ["@metric"]
+    #  run-groups:
+    #    base:
+    #      args: [{"indexkey":[[100], [.nan], [4], ["squared_l2"]]}]
+    #      query-args: |
+    #            [
+    #            [[8, 100]],
+    #            [[8, 200]],
+    #            [[8, 300]],
+    #            [[8, 400]],
+    #            [[8, 500]],
+    #            [[8, 600]],
+    #            [[8, 700]],
+    #            
 
-                ]
+    #            [[20, 100]],
+    #            [[20, 200]],
+    #            [[20, 300]],
+    #            [[20, 400]],
+    #            [[20, 500]],
+    #            [[20, 600]],
+    #            [[20, 700]],
+    #            
+
+    #            [[50, 100]],
+    #            [[50, 200]],
+    #            [[50, 300]],
+    #            [[50, 400]],
+    #            [[50, 500]],
+    #            [[50, 600]],
+    #            [[50, 700]]
+
+    #            ]
     vamanapy-1:
       docker-tag: billion-scale-benchmark-vamanapy
       module: benchmark.algorithms.diskann_inmem
@@ -1320,60 +1450,38 @@ bigann-10M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"indexkey": "C1000_F1000_FN16_N128", "C":1000, "F":1000, "FN":16, "N":128, "kmeans_init_berkeley" : "true"}]
+          args: [{"indexkey": "C1000_F1000_FN16_N128", "C":1000, "F":1000, "FN":16, "N":128}]
           query-args: |
                 [ 
-                  "100,40,8000,300" ,
-                  "100,90,8000,300" ,
-                  "100,60,8000,300" ,
-                  "100,60,8000,400" ,
-                  "100,50,8000,400" ,
-                  "100,80,9000,300" ,
-                  "100,60,10000,300" ,
-                  "100,30,9000,400" ,
-                  "100,90,8000,500" ,
-                  "100,40,9000,500" ,
-                  "100,50,9000,400" ,
-                  "100,70,9000,400" ,
-                  "100,90,10000,400" ,
-                  "100,70,10000,400" ,
-                  "100,40,10000,400" ,
-                  "100,60,11000,400" ,
-                  "100,80,10000,600" ,
-                  "100,40,11000,400" ,
-                  "100,70,11000,600" ,
-                  "100,50,12000,400" ,
-                  "100,70,12000,400" ,
-                  "100,80,12000,500" ,
-                  "100,70,12000,500" ,
-                  "100,60,12000,500" ,
-                  "100,50,14000,500" ,
-                  "100,70,13000,600" ,
-                  "100,50,13000,600" ,
-                  "100,70,14000,700" ,
-                  "100,90,15000,500" ,
-                  "100,60,15000,500" ,
-                  "100,60,18000,500" ,
-                  "100,80,16000,700" ,
-                  "100,60,16000,600" ,
-                  "100,80,18000,600" ,
-                  "100,90,18000,600" ,
-                  "100,70,19000,500" ,
-                  "100,90,22000,500" ,
-                  "100,80,20000,600" ,
-                  "100,60,21000,600" ,
-                  "100,90,22000,700" ,
-                  "100,80,24000,600" ,
-                  "100,70,24000,600" ,
-                  "100,90,27000,700" ,
-                  "100,90,26000,600" ,
-                  "100,90,28000,600" ,
-                  "100,90,26000,700" ,
-                  "100,90,27000,600" ,
-                  "100,90,26000,700" ,
-                  "100,70,31000,800" ,
-                  "100,90,31000,800" ,
-                  "100,90,29000,900" 
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
                 ]
 
     puck-flat-inmem:
@@ -1383,52 +1491,39 @@ bigann-10M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"indexkey": "C1000_F1000_FN16_Flat", "C":1000, "F":1000, "FN":16, "N":0, "kmeans_init_berkeley" : "true"}]
+          args: [{"indexkey": "C1000_F1000_FN16_Flat", "C":1000, "F":1000, "FN":16, "N":0}]
           query-args: |
                 [ 
-                  "100,50,7000,300",
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
 
-                  "100,60,8000,300",
-                  "100,80,9000,300",
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
 
-                  "100,80,8000,500",
-                  "100,30,9000,400",
-                  "100,60,10000,300",
-
-                  "100,40,10000,400",
-                  "100,70,10000,400",
-                  "100,60,10000,400",
-                  "100,90,10000,500",
-
-                  "100,70,12000,400",
-                  "100,50,12000,400",
-                  "100,70,11000,600",
-                  "100,50,13000,600",
-                  "100,70,13000,600",
-                  "100,60,14000,500",
-
-                  "100,60,16000,600",
-                  "100,80,16000,700",
-                  "100,60,18000,500",
-                  "100,70,19000,500",
-
-                  "100,60,21000,600",
-                  "100,80,20000,600",
-                  "100,70,23000,600",
-                  "100,70,24000,600",
-                  "100,70,25000,600",
-                  "100,70,23000,700",
-                  "100,70,25000,500",
-                  "100,80,24000,600",
-                  "100,70,24000,700",
-
-                  "100,90,26000,700",
-                  "100,90,27000,700",
-                  "100,90,28000,700",
-                  "100,90,29000,900",
-                  "100,80,31000,700",
-                  "100,90,31000,800"
-                    ]
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
+                ]
 
     tinker-inmem-M16:
       docker-tag: billion-scale-benchmark-puck_inmem
@@ -1437,173 +1532,173 @@ bigann-10M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"index_type":2,"C":1000, "F":1000,"tinker_neighborhood":16,"tinker_construction":600, "kmeans_init_berkeley" : "true"}]
+          args: [{"index_type":2,"C":1000, "F":1000,"tinker_neighborhood":16,"tinker_construction":600}]
           query-args: |
                 [
-                  "10,10,100,100",
-                  "10,10,200,100",
-                  "10,10,300,100",
-                  "10,10,400,100",
-                  "10,10,500,100",
-                  "10,10,600,100",
-                  "10,10,700,100",
-                  "10,10,800,100", 
-                  "10,10,900,100", 
-                  "10,10,1000,100", 
-                  "10,10,1100,100",
-                  "10,10,1200,100",
-                  "10,10,1300,100",
-                  "10,10,1500,100"
+                  {"search_coarse_count":10, "tinker_search_range": 100},
+                  {"search_coarse_count":10, "tinker_search_range": 200},
+                  {"search_coarse_count":10, "tinker_search_range": 300},
+                  {"search_coarse_count":10, "tinker_search_range": 400},
+                  {"search_coarse_count":10, "tinker_search_range": 500},
+                  {"search_coarse_count":10, "tinker_search_range": 600},
+                  {"search_coarse_count":10, "tinker_search_range": 700},
+                  {"search_coarse_count":10, "tinker_search_range": 800},
+                  {"search_coarse_count":10, "tinker_search_range": 900},
+                  {"search_coarse_count":10, "tinker_search_range": 1000},
+                  {"search_coarse_count":10, "tinker_search_range": 1100},
+                  {"search_coarse_count":10, "tinker_search_range": 1200},
+                  {"search_coarse_count":10, "tinker_search_range": 1300},
+                  {"search_coarse_count":10, "tinker_search_range": 1400}
                 ]
     #scann has too many params, we use the configuration of https://github.com/erikbern/ann-benchmarks/blob/master/algos.yaml# 
-    scann-inmem-1:
-      docker-tag: billion-scale-benchmark-scann
-      module: benchmark.algorithms.scann_inmem
-      constructor: Scann
-      base-args: ["@metric"]
-      run-groups:
-        base:
-          args: [{"indexkey":[[600], [.nan], [2], ["squared_l2"]]}]
-          query-args: |
-                [
-                [[4, 40]], 
-                [[3, 30]], 
-                [[6, 60]], 
-                [[8, 74]], 
-                [[9, 78]], 
-                [[10, 82]], 
-                [[11, 85]], 
-                [[13, 100]], 
-                [[16, 120]], 
-                [[20, 140]], 
-                [[30, 180]], 
-                [[35, 240]],
+    #scann-inmem-1:
+    #  docker-tag: billion-scale-benchmark-scann
+    #  module: benchmark.algorithms.scann_inmem
+    #  constructor: Scann
+    #  base-args: ["@metric"]
+    #  run-groups:
+    #    base:
+    #      args: [{"indexkey":[[600], [.nan], [2], ["squared_l2"]]}]
+    #      query-args: |
+    #            [
+    #            [[4, 40]], 
+    #            [[3, 30]], 
+    #            [[6, 60]], 
+    #            [[8, 74]], 
+    #            [[9, 78]], 
+    #            [[10, 82]], 
+    #            [[11, 85]], 
+    #            [[13, 100]], 
+    #            [[16, 120]], 
+    #            [[20, 140]], 
+    #            [[30, 180]], 
+    #            [[35, 240]],
  
-                [[35, 300]], 
-                [[35, 400]], 
-                [[35, 500]], 
-                [[35, 600]], 
-                [[35, 700]], 
-                [[35, 800]], 
-                [[35, 900]], 
+    #            [[35, 300]], 
+    #            [[35, 400]], 
+    #            [[35, 500]], 
+    #            [[35, 600]], 
+    #            [[35, 700]], 
+    #            [[35, 800]], 
+    #            [[35, 900]], 
 
-                [[50, 240]], 
-                [[50, 300]], 
-                [[50, 400]], 
-                [[50, 500]], 
-                [[50, 600]], 
-                [[50, 700]], 
-                [[50, 800]], 
-                [[50, 900]]
-                ]
-    scann-inmem-2:
-      docker-tag: billion-scale-benchmark-scann
-      module: benchmark.algorithms.scann_inmem
-      constructor: Scann
-      base-args: ["@metric"]
-      run-groups:
-        base:
-          args: [{"indexkey":[[2000], [.nan], [4], ["squared_l2"]]}]
-          query-args: |
-                [
-                [[10, 100]], 
-                [[15, 140]], 
-                [[25, 160]], 
-                [[35, 190]], 
-                [[40, 200]], 
-                [[45, 220]], 
-                [[50, 240]], 
-                [[60, 250]], 
-                [[70, 300]], 
-                [[80, 400]], 
-                [[100, 500]], 
-                [[120, 600]], 
-                [[150, 800]], 
-                [[200, 900]],
-               
+    #            [[50, 240]], 
+    #            [[50, 300]], 
+    #            [[50, 400]], 
+    #            [[50, 500]], 
+    #            [[50, 600]], 
+    #            [[50, 700]], 
+    #            [[50, 800]], 
+    #            [[50, 900]]
+    #            ]
+    #scann-inmem-2:
+    #  docker-tag: billion-scale-benchmark-scann
+    #  module: benchmark.algorithms.scann_inmem
+    #  constructor: Scann
+    #  base-args: ["@metric"]
+    #  run-groups:
+    #    base:
+    #      args: [{"indexkey":[[2000], [.nan], [4], ["squared_l2"]]}]
+    #      query-args: |
+    #            [
+    #            [[10, 100]], 
+    #            [[15, 140]], 
+    #            [[25, 160]], 
+    #            [[35, 190]], 
+    #            [[40, 200]], 
+    #            [[45, 220]], 
+    #            [[50, 240]], 
+    #            [[60, 250]], 
+    #            [[70, 300]], 
+    #            [[80, 400]], 
+    #            [[100, 500]], 
+    #            [[120, 600]], 
+    #            [[150, 800]], 
+    #            [[200, 900]],
+    #           
 
-                [[200, 1000]],
-                [[200, 1100]],
-                [[200, 1200]],
-                [[200, 1300]],
-                [[200, 1400]],
-                [[200, 1500]],
-                [[200, 1600]],
-                [[200, 1700]],
-                [[200, 1800]],
-                [[200, 1900]],
-                [[200, 2000]],
-
-
-                [[500, 1000]],
-                [[500, 1100]],
-                [[500, 1200]],
-                [[500, 1300]],
-                [[500, 1400]],
-                [[500, 1500]],
-                [[500, 1600]],
-                [[500, 1700]],
-                [[500, 1800]],
-                [[500, 1900]],
-                [[500, 2000]],
+    #            [[200, 1000]],
+    #            [[200, 1100]],
+    #            [[200, 1200]],
+    #            [[200, 1300]],
+    #            [[200, 1400]],
+    #            [[200, 1500]],
+    #            [[200, 1600]],
+    #            [[200, 1700]],
+    #            [[200, 1800]],
+    #            [[200, 1900]],
+    #            [[200, 2000]],
 
 
-                [[1000, 1000]],
-                [[1000, 1100]],
-                [[1000, 1200]],
-                [[1000, 1300]],
-                [[1000, 1400]],
-                [[1000, 1500]],
-                [[1000, 1600]],
-                [[1000, 1700]],
-                [[1000, 1800]],
-                [[1000, 1900]],
-                [[1000, 2000]]
-                ]
-    scann-inmem-3:
-      docker-tag: billion-scale-benchmark-scann
-      module: benchmark.algorithms.scann_inmem
-      constructor: Scann
-      base-args: ["@metric"]
-      run-groups:
-        base:
-          args: [{"indexkey":[[100], [.nan], [4], ["squared_l2"]]}]
-          query-args: |
-                [
-                [[2, 20]], 
-                [[3, 20]], 
-                [[3, 30]], 
-                [[4, 30]], 
-                [[5, 40]], 
-                [[8, 80]],
-                
-                [[8, 100]],
-                [[8, 200]],
-                [[8, 300]],
-                [[8, 400]],
-                [[8, 500]],
-                [[8, 600]],
-                [[8, 700]],
-                
+    #            [[500, 1000]],
+    #            [[500, 1100]],
+    #            [[500, 1200]],
+    #            [[500, 1300]],
+    #            [[500, 1400]],
+    #            [[500, 1500]],
+    #            [[500, 1600]],
+    #            [[500, 1700]],
+    #            [[500, 1800]],
+    #            [[500, 1900]],
+    #            [[500, 2000]],
 
-                [[20, 100]],
-                [[20, 200]],
-                [[20, 300]],
-                [[20, 400]],
-                [[20, 500]],
-                [[20, 600]],
-                [[20, 700]],
-                
 
-                [[50, 100]],
-                [[50, 200]],
-                [[50, 300]],
-                [[50, 400]],
-                [[50, 500]],
-                [[50, 600]],
-                [[50, 700]]
+    #            [[1000, 1000]],
+    #            [[1000, 1100]],
+    #            [[1000, 1200]],
+    #            [[1000, 1300]],
+    #            [[1000, 1400]],
+    #            [[1000, 1500]],
+    #            [[1000, 1600]],
+    #            [[1000, 1700]],
+    #            [[1000, 1800]],
+    #            [[1000, 1900]],
+    #            [[1000, 2000]]
+    #            ]
+    #scann-inmem-3:
+    #  docker-tag: billion-scale-benchmark-scann
+    #  module: benchmark.algorithms.scann_inmem
+    #  constructor: Scann
+    #  base-args: ["@metric"]
+    #  run-groups:
+    #    base:
+    #      args: [{"indexkey":[[100], [.nan], [4], ["squared_l2"]]}]
+    #      query-args: |
+    #            [
+    #            [[2, 20]], 
+    #            [[3, 20]], 
+    #            [[3, 30]], 
+    #            [[4, 30]], 
+    #            [[5, 40]], 
+    #            [[8, 80]],
+    #            
+    #            [[8, 100]],
+    #            [[8, 200]],
+    #            [[8, 300]],
+    #            [[8, 400]],
+    #            [[8, 500]],
+    #            [[8, 600]],
+    #            [[8, 700]],
+    #            
 
-                ]
+    #            [[20, 100]],
+    #            [[20, 200]],
+    #            [[20, 300]],
+    #            [[20, 400]],
+    #            [[20, 500]],
+    #            [[20, 600]],
+    #            [[20, 700]],
+    #            
+
+    #            [[50, 100]],
+    #            [[50, 200]],
+    #            [[50, 300]],
+    #            [[50, 400]],
+    #            [[50, 500]],
+    #            [[50, 600]],
+    #            [[50, 700]]
+
+    #            ]
 
 #
 #   diskann-t2:
@@ -1782,50 +1877,38 @@ bigann-100M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"indexkey": "C3000_F3000_FN16_N128", "C":3000, "F":3000, "FN":16, "N":128, "kmeans_init_berkeley" : "true"}]
+          args: [{"indexkey": "C3000_F3000_FN16_N128", "C":3000, "F":3000, "FN":16, "N":128}]
           query-args: |
               [
-                "100,50,17000,500" ,
-                "100,90,18000,400" ,
-                "100,40,17000,600" ,
-                "100,70,19000,500" ,
-                "100,90,18000,600" ,
-                "100,70,18000,600" ,
-                "100,90,20000,600" ,
-                "100,50,20000,600" ,
-                "100,90,19000,600" ,
-                "100,70,20000,800" ,
-                "100,60,21000,600" ,
-                "100,70,21000,600" ,
-                "100,70,23000,600" ,
-                "100,90,23000,600" ,
-                "100,60,23000,600" ,
-                "100,90,26000,500" ,
-                "100,70,25000,600" ,
-                "100,70,24000,700" ,
-                "100,60,26000,900" ,
-                "100,90,27000,600" ,
-                "100,70,27000,600" ,
-                "100,70,30000,700" ,
-                "100,90,28000,900" ,
-                "100,60,29000,800" ,
-                "100,70,31000,900" ,
-                "100,90,32000,700" ,
-                "100,80,32000,800" ,
-                "100,80,36000,800" ,
-                "100,90,35000,800" ,
-                "100,90,34000,900" ,
-                "100,70,39000,900" ,
-                "100,90,38000,900" ,
-                "100,70,40000,800" ,
-                "100,70,45000,900" ,
-                "100,90,44000,800" ,
-                "100,90,43000,900" ,
-                "100,80,52000,800" ,
-                "100,90,51000,800" ,
-                "100,90,50000,900" ,
-                "100,90,59000,900" ,
-                "100,90,58000,900"
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
               ]
 
     puck-flat-inmem:
@@ -1835,57 +1918,38 @@ bigann-100M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"indexkey": "C3000_F3000_FN16_Flat", "C":3000, "F":3000, "FN":16, "N":0, "kmeans_init_berkeley" : "true"}]
+          args: [{"indexkey": "C3000_F3000_FN16_Flat", "C":3000, "F":3000, "FN":16, "N":0}]
           query-args: |
               [
-                "100,100,22000,300" ,
-                "100,60,20000,400" ,
-                "100,40,21000,400" ,
-                "100,80,20000,400" ,
-                "100,60,20000,400" ,
-                "100,40,21000,400" ,
-                "100,60,20000,600" ,
-                "100,60,20000,700" ,
-                "100,60,20000,500" ,
-                "100,60,21000,700" ,
-                "100,50,21000,700" ,
-                "100,60,22000,500" ,
-                "100,50,23000,600" ,
-                "100,90,23000,600" ,
-                "100,100,22000,700" ,
-                "100,100,25000,600" ,
-                "100,90,24000,700" ,
-                "100,100,24000,700" ,
-                "100,60,28000,700" ,
-                "100,90,27000,600" ,
-                "100,60,27000,700" ,
-                "100,100,30000,600" ,
-                "100,90,28000,800" ,
-                "100,60,29000,800" ,
-                "100,90,31000,800" ,
-                "100,80,31000,800" ,
-                "100,100,30000,1100" ,
-                "100,90,35000,800" ,
-                "100,90,36000,700" ,
-                "100,90,34000,1000" ,
-                "100,90,39000,900" ,
-                "100,90,39000,800" ,
-                "100,90,38000,900" ,
-                "100,90,43000,1000" ,
-                "100,80,44000,900" ,
-                "100,90,42000,1000" ,
-                "100,90,49000,1000" ,
-                "100,90,47000,1300" ,
-                "100,90,47000,1200" ,
-                "100,80,56000,1200" ,
-                "100,90,55000,1200" ,
-                "100,90,54000,1300" ,
-                "100,90,63000,1600" ,
-                "100,90,64000,1500" ,
-                "100,90,67000,1000" ,
-                "100,90,78000,1400" ,
-                "100,90,78000,1500" ,
-                "100,90,77000,1600"
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
               ]
     tinker-inmem:
       docker-tag: billion-scale-benchmark-puck_inmem
@@ -1894,23 +1958,73 @@ bigann-100M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"index_type":2,"C":3000, "F":3000,"tinker_neighborhood":10,"tinker_construction":600, "kmeans_init_berkeley" : "true"}]
+          args: [{"index_type":2,"C":3000, "F":3000,"tinker_neighborhood":10,"tinker_construction":600}]
           query-args: |
                 [
-                  "10,10,200,100",
-                  "10,10,300,100",
-                  "10,10,400,100",
-                  "10,10,500,100",
-                  "10,10,600,100",
-                  "10,10,700,100",
-                  "10,10,800,100", 
-                  "10,10,900,100", 
-                  "10,10,1000,100", 
-                  "10,10,1100,100",
-                  "10,10,1200,100",
-                  "10,10,1300,100",
-                  "10,10,1500,100"
+                  {"search_coarse_count":10, "tinker_search_range": 100},
+                  {"search_coarse_count":10, "tinker_search_range": 200},
+                  {"search_coarse_count":10, "tinker_search_range": 300},
+                  {"search_coarse_count":10, "tinker_search_range": 400},
+                  {"search_coarse_count":10, "tinker_search_range": 500},
+                  {"search_coarse_count":10, "tinker_search_range": 600},
+                  {"search_coarse_count":10, "tinker_search_range": 700},
+                  {"search_coarse_count":10, "tinker_search_range": 800},
+                  {"search_coarse_count":10, "tinker_search_range": 900},
+                  {"search_coarse_count":10, "tinker_search_range": 1000},
+                  {"search_coarse_count":10, "tinker_search_range": 1100},
+                  {"search_coarse_count":10, "tinker_search_range": 1200},
+                  {"search_coarse_count":10, "tinker_search_range": 1300},
+                  {"search_coarse_count":10, "tinker_search_range": 1400}
                 ]
+    vamanapy-1:
+      docker-tag: billion-scale-benchmark-vamanapy
+      module: benchmark.algorithms.diskann_inmem
+      constructor: Vamana
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: [{'l_build': 100, 'max_outdegree': 64, 'alpha': 1.2}]
+          query-args: [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
+    
+    vamanapy-2:
+      docker-tag: billion-scale-benchmark-vamanapy
+      module: benchmark.algorithms.diskann_inmem
+      constructor: Vamana
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: [{'l_build': 125, 'max_outdegree': 32, 'alpha': 1.2}]
+          query-args : [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
+    
+    vamanapy-3:
+      docker-tag: billion-scale-benchmark-vamanapy
+      module: benchmark.algorithms.diskann_inmem
+      constructor: Vamana
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args : [{'l_build': 125, 'max_outdegree': 32, 'alpha': 1.0}]
+          query-args : [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
+    
+    vamanapy-4:
+      docker-tag: billion-scale-benchmark-vamanapy
+      module: benchmark.algorithms.diskann_inmem
+      constructor: Vamana
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args : [{'l_build': 100, 'max_outdegree': 64, 'alpha': 1.0}]
+          query-args : [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
+                 
+    vamanapy_pq-1:
+      docker-tag: billion-scale-benchmark-vamana_pq
+      module: benchmark.algorithms.diskann_inmem
+      constructor: VamanaPQ
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: [{'l_build': 100, 'max_outdegree': 64, 'alpha': 1.2,  'chunks': 96}]
+          query-args: [[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]]
     
 
 deep-100M:
@@ -2079,54 +2193,38 @@ deep-100M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"indexkey": "C3000_F3000_FN16_N96", "C":3000, "F":3000, "FN":16, "N":96, "kmeans_init_berkeley" : "true"}]
+          args: [{"indexkey": "C3000_F3000_FN16_N96", "C":3000, "F":3000, "FN":16, "N":96}]
           query-args: |
               [
-                "100,80,20000,600" ,
-                "100,60,19000,800" ,
-                "100,40,20000,600" ,
-                "100,50,20000,1000" ,
-                "100,40,22000,600" ,
-                "100,40,21000,700" ,
-                "100,30,23000,800" ,
-                "100,40,26000,500" ,
-                "100,60,22000,900" ,
-                "100,50,25000,800" ,
-                "100,50,23000,1100" ,
-                "100,70,23000,1000" ,
-                "100,40,28000,700" ,
-                "100,70,26000,900" ,
-                "100,30,27000,1000" ,
-                "100,40,29000,800" ,
-                "100,60,29000,700" ,
-                "100,60,27000,1000" ,
-                "100,30,33000,900" ,
-                "100,60,31000,900" ,
-                "100,60,30000,900" ,
-                "100,60,33000,900" ,
-                "100,60,33000,1000" ,
-                "100,60,34000,800" ,
-                "100,70,34000,1600" ,
-                "100,50,36000,1300" ,
-                "100,50,35000,1300" ,
-                "100,50,42000,900" ,
-                "100,50,40000,1100" ,
-                "100,40,41000,1200" ,
-                "100,70,44000,1100" ,
-                "100,60,45000,1000" ,
-                "100,80,43000,1100" ,
-                "100,70,46000,1900" ,
-                "100,50,52000,1100" ,
-                "100,70,49000,1200" ,
-                "100,70,57000,1200" ,
-                "100,70,58000,1100" ,
-                "100,70,57000,1100" ,
-                "100,70,65000,1400" ,
-                "100,70,63000,1600" ,
-                "100,70,62000,1600" ,
-                "100,70,74000,1700" ,
-                "100,70,75000,1600" ,
-                "100,80,74000,1400" 
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
                 ]
 
     puck-flat-inmem:
@@ -2136,54 +2234,38 @@ deep-100M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"indexkey": "C3000_F3000_FN16_Flat", "C":3000, "F":3000, "FN":16, "N":0, "kmeans_init_berkeley" : "true"}]
+          args: [{"indexkey": "C3000_F3000_FN16_Flat", "C":3000, "F":3000, "FN":16, "N":0}]
           query-args: |
               [
-                "100,50,20000,800" ,
-                "100,30,21000,600" ,
-                "100,50,20000,700" ,
-                "100,40,21000,1000" ,
-                "100,100,23000,500" ,
-                "100,40,21000,800" ,
-                "100,50,22000,1000" ,
-                "100,50,24000,700" ,
-                "100,50,22000,900" ,
-                "100,50,24000,1100" ,
-                "100,50,23000,1100" ,
-                "100,40,26000,800" ,
-                "100,60,27000,700" ,
-                "100,100,26000,800" ,
-                "100,40,25000,1300" ,
-                "100,90,27000,1200" ,
-                "100,90,29000,700" ,
-                "100,100,27000,1100" ,
-                "100,60,29000,1300" ,
-                "100,50,30000,1100" ,
-                "100,50,31000,1100" ,
-                "100,60,34000,1100" ,
-                "100,90,32000,1100" ,
-                "100,100,32000,1100" ,
-                "100,90,36000,900" ,
-                "100,60,35000,1400" ,
-                "100,90,37000,900" ,
-                "100,40,42000,1100" ,
-                "100,90,39000,1200" ,
-                "100,90,40000,1000" ,
-                "100,100,43000,1100" ,
-                "100,90,43000,1300" ,
-                "100,50,44000,1300" ,
-                "100,50,53000,1000" ,
-                "100,90,49000,1200" ,
-                "100,90,48000,1400" ,
-                "100,90,54000,1500" ,
-                "100,50,58000,1300" ,
-                "100,80,54000,1400" ,
-                "100,80,64000,1200" ,
-                "100,90,60000,1500" ,
-                "100,80,59000,1900" ,
-                "100,80,72000,1700" ,
-                "100,80,72000,1400" ,
-                "100,90,75000,1200" 
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.0, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.05, "filter_topk": 1000},
+
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 200},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 300},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 400},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 500},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 600},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 700},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 800},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 900},
+                  {"search_coarse_count":100, "radius_rate":1.1, "filter_topk": 1000}
               ]
     tinker-inmem:
       docker-tag: billion-scale-benchmark-puck_inmem
@@ -2192,25 +2274,25 @@ deep-100M:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"index_type":2,"C":3000, "F":3000,"tinker_neighborhood":16,"tinker_construction":600, "kmeans_init_berkeley" : "true"}]
+          args: [{"index_type":2,"C":3000, "F":3000,"tinker_neighborhood":16,"tinker_construction":600}]
           query-args: |
                 [
-                  "10,10,200,100",
-                  "10,10,300,100",
-                  "10,10,400,100",
-                  "10,10,500,100",
-                  "10,10,600,100",
-                  "10,10,700,100",
-                  "10,10,800,100", 
-                  "10,10,900,100", 
-                  "10,10,1000,100", 
-                  "10,10,1100,100",
-                  "10,10,1200,100",
-                  "10,10,1300,100",
-                  "10,10,1500,100"
+                  {"search_coarse_count":10, "tinker_search_range": 100},
+                  {"search_coarse_count":10, "tinker_search_range": 200},
+                  {"search_coarse_count":10, "tinker_search_range": 300},
+                  {"search_coarse_count":10, "tinker_search_range": 400},
+                  {"search_coarse_count":10, "tinker_search_range": 500},
+                  {"search_coarse_count":10, "tinker_search_range": 600},
+                  {"search_coarse_count":10, "tinker_search_range": 700},
+                  {"search_coarse_count":10, "tinker_search_range": 800},
+                  {"search_coarse_count":10, "tinker_search_range": 900},
+                  {"search_coarse_count":10, "tinker_search_range": 1000},
+                  {"search_coarse_count":10, "tinker_search_range": 1100},
+                  {"search_coarse_count":10, "tinker_search_range": 1200},
+                  {"search_coarse_count":10, "tinker_search_range": 1300},
+                  {"search_coarse_count":10, "tinker_search_range": 1500}
                 ]
     
-
 msturing-1M:
    diskann-t2:
       docker-tag: billion-scale-benchmark-diskann
@@ -2297,15 +2379,18 @@ search-vip-300w:
       base-args: ["@metric"]
       run-groups:
         base:
-          args: [{"index_type":2, "C":200, "F":200,"tinker_neighborhood":16,"tinker_construction":600, "kmeans_init_berkeley" : "true"}]
+          args: [{"index_type":2, "C":200, "F":200,"tinker_neighborhood":16,"tinker_construction":600}]
           query-args: |
                 [
-                  "10,5,94,100", 
-                  "10,5,95,100", 
-                  "10,5,96,100", 
-                  "10,5,97,100", 
-                  "10,5,98,100", 
-                  "10,5,99,100", 
-                  "10,50,100,100", 
-                  "10,50,110,100"
+                  {"search_coarse_count":10, "tinker_search_range": 95},
+                  {"search_coarse_count":10, "tinker_search_range": 96},
+                  {"search_coarse_count":10, "tinker_search_range": 97},
+                  {"search_coarse_count":10, "tinker_search_range": 98},
+                  {"search_coarse_count":10, "tinker_search_range": 99},
+                  {"search_coarse_count":10, "tinker_search_range": 100},
+                  {"search_coarse_count":10, "tinker_search_range": 102},
+                  {"search_coarse_count":10, "tinker_search_range": 104},
+                  {"search_coarse_count":10, "tinker_search_range": 106},
+                  {"search_coarse_count":10, "tinker_search_range": 108},
+                  {"search_coarse_count":10, "tinker_search_range": 110}
                 ]

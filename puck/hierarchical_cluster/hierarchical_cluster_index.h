@@ -11,8 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-
 /**
  * @file hierarchical_cluster.h
  * @author huangben@baidu.com
@@ -21,9 +19,7 @@
  * @brief
  *
  **/
-
 #pragma once
-
 #include <fstream>
 #include <memory>
 #include <mutex>
@@ -33,25 +29,15 @@
 #include <gflags/gflags.h>
 #include <fcntl.h>
 #include <math.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <mkl_cblas.h>
+#include <mkl.h>
 #include <mkl_service.h>
-#include "puck/base/yael/vector.h"
-#include "puck/base/yael/matrix.h"
-#include "puck/base/yael/kmeans.h"
-#include "puck/base/yael/nn.h"
-#ifdef __cplusplus
-}
-#endif
-
 #include "puck/index_conf.h"
 #include "puck/puck_data_pool.h"
 #include "puck/index.h"
 #include "puck/base/time.h"
+#include "puck/hierarchical_cluster/kmeans.h"
 namespace puck {
-
 //训练相关
 DECLARE_int32(thread_chunk_size);
 DECLARE_int32(train_points_count);
@@ -60,11 +46,15 @@ DECLARE_string(train_fea_file_name);
 #define DISALLOW_COPY_AND_ASSIGN_AND_MOVE(TypeName)                      \
     TypeName(const TypeName&) = delete;            \
     void operator=(const TypeName&) = delete;        \
-    TypeName(const TypeName&&) = delete       
+    TypeName(const TypeName&&) = delete
 
 #ifdef __GNUC__
 # define BAIDU_CACHELINE_ALIGNMENT_8 __attribute__((aligned(8)))
 #endif /* __GNUC__ */
+
+#ifndef FINTEGER
+#define FINTEGER long
+#endif
 
 //索引中二级聚类中心的信息
 struct BAIDU_CACHELINE_ALIGNMENT_8 FineCluster {
@@ -83,7 +73,6 @@ struct BAIDU_CACHELINE_ALIGNMENT_8 FineCluster {
 struct CoarseCluster {
     FineCluster* fine_cell_list;
     float min_dist_offset;
-
     CoarseCluster() {
         init();
     }
@@ -95,11 +84,15 @@ struct CoarseCluster {
 
 bool check_file_length_info(const std::string& file_name,
                             const uint64_t file_length);
-int write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
-                       const int dim);
-
+int write_fvec_format(const char* file_name, const uint32_t dim, const uint64_t n, const float* fea_vocab);
+int read_fvec_format(const char* fname, uint32_t dim, uint64_t n, float* v);
+int read_fvec_format(FILE* f, uint32_t dim, uint64_t n, float* v);
 int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt,
                     const u_int64_t sampling_cnt, const uint32_t feature_dim, float* sampling_vocab);
+void matrix_multiplication(const float* left, const float* right,
+                           FINTEGER m, FINTEGER n, FINTEGER k,
+                           const char* transp,
+                           float* result);
 class MaxHeap;
 class SearchContext;
 struct ThreadParams;
@@ -129,78 +122,73 @@ public:
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int search(const Request* request, Response* response) override;
-
     /*
     * @brief 初始化内存、训练码本（计算一二级聚类中心）、写码本文件
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     virtual int train() override;
-
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、建库（计算样本最近的1个聚类中心）、写索引文件
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     virtual int build() override;
-
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、1个样本建库（MR建库和实时入库时会调用该函数）
     * @@param [in/out] build_info : build_info包含样本建库所需的所有信息
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     virtual int single_build(BuildInfo* build_info);
-
     /*
      * @brief 读取索引配置文件（index.dat）、初始化内存、加载码本；第一次调研single_build时，用来初始化
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int init_single_build();
-
 protected:
     /*
      * @brief 获取索引文件的配置信息
      * @@return （IndexConf）:当前索引的配置
      **/
     friend IndexConf load_index_conf_file();
+    /*
+     * @brief 获取索引的类型信息
+     * @@return （IndexConf）:当前索引的类型IndexType
+     **/
     friend IndexType load_index_type();
-
-    //////加载索引相关
     /*
      * @brief 读取索引配置文件（index.dat）
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     int read_model_file();
+    /*
+     * @brief 检查索引类型，与
+     * @@return (int) : 正常返回0，错误返回值<0
+     **/
     virtual int check_index_type();
-
     /*
      * @brief 初始化内存
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int init_model_memory();
-
     /*
      * @brief 读码本文件
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int read_coodbooks();
-
     /*
      * @brief 写码本文件
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int save_coodbooks() const;
-
     /*
      * @brief 写索引文件(建库的产出，与建库样本相关)
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int save_index();
-
     /*
      * @brief 读索引文件到内存，(建库的产出，与建库样本相关)
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int read_index();
-
     //////检索相关
     /*
      * @brief 获取cell的指针
@@ -211,7 +199,6 @@ protected:
         return _coarse_clusters[cell_id / _conf.fine_cluster_count].fine_cell_list + cell_id %
                _conf.fine_cluster_count;;
     }
-
     /*
      * @brief 计算query与一级聚类中心的距离并排序
      * @@param [in\out] context : context由内存池管理
@@ -228,7 +215,6 @@ protected:
      * @@return (int) : 正常返回保留的cell个数(>0)，错误返回值<0
      **/
     int search_nearest_fine_cluster(SearchContext* context, const float* feature);
-
     /*
      * @brief 计算query与某个cell下所有样本的距离（样本的原始特征）
      * @@param [in\out] context : context由内存池管理
@@ -248,8 +234,7 @@ protected:
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     int flat_topN_points(SearchContext* context, const float* feature, const int search_cell_cnt,
-                       MaxHeap& result_heap);
-
+                         MaxHeap& result_heap);
     /*
      * @brief 导出配置
      * @@param [out] ptr : 根据_conf的信息，按固定顺序更新ptr
@@ -262,7 +247,6 @@ protected:
      * @@return （char*）: 下一次读取的位置
      **/
     virtual char* load_model_config(char* ptr);
-
     /*
      * @brief 写索引配置文件（index.dat）
      * @@return (int) : 正常返回0，错误返回值<0
@@ -289,14 +273,12 @@ protected:
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint32_t* local_to_memory_idx);
-
     /*
     * @brief 加载与样本相关的索引文件
     * @@param [in] local_to_memory_idx : 每个样本local_idx 与 memory_idx的映射关系
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     virtual int read_feature_index(uint32_t* local_to_memory_idx);
-
     /*
     * @brief 训练一二级聚类中心
     * @@param [in] kmenas_point_cnt : 训练样本个数
@@ -304,7 +286,6 @@ protected:
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     int train(const u_int64_t kmenas_point_cnt, float* kmeans_train_vocab);
-
     /*
     * @brief 计算部分样本距离最近的cell
     * @@param [in] thread_params : 线程信息
@@ -315,7 +296,6 @@ protected:
     **/
     int assign(const ThreadParams& thread_params, uint32_t* cell_assign, float* error_distance,
                float* pruning_computation) const;
-
     /*
     * @brief 计算一个样本距离最近的cell
     * @@param [in] coarse_distance/fine_distance/query_norm :<q,S>,<q,T>,<q,q>
@@ -326,17 +306,14 @@ protected:
                             const float* fine_distance,
                             const float query_norm,
                             NearestCell& nearest_cell) const;
-
     /*
     * @brief 成员变量指针初始化nullptr
     **/
     void init_params_value();
-
     /*
     * @brief 初始化内存池
     **/
     void init_context_pool();
-
     /*
     * @brief 归一
     * @@param [in] context : context
@@ -350,15 +327,13 @@ protected:
     IndexConf  _conf;
     DataHandlerPool<SearchContext> _context_pool;       //context pool
     CoarseCluster* _coarse_clusters;                    //新索引结构，一级聚类中心数组
-    float*      _coarse_vocab;                          //存储一级聚类中心的特征，列存储
-    float*      _coarse_norms;                          //存储一级聚类中心的特征的模，列存储
-
-    float*      _fine_vocab;                            //存储二级聚类中心的特征，列存储
-    float*      _fine_norms;                            //存储二级聚类中心的特征的模，列存储
-
+    float* _coarse_vocab;                          //存储一级聚类中心的特征
+    float* _coarse_norms;                          //存储一级聚类中心的特征的模
+    float* _fine_vocab;                            //存储二级聚类中心的特征
+    float* _fine_norms;                            //存储二级聚类中心的特征的模
     char* _model;
     uint32_t* _memory_to_local;
-    float*      _all_feature;
+    float*  _all_feature;
 };
 
 //训练和建库过程中多线程中，记录线程需要处理的所有信息
@@ -367,23 +342,14 @@ struct ThreadParams {
     int points_count;         //处理的point总数
     uint32_t chunks_count;
     FILE* learn_stream;       //特征文件句柄
-
     ThreadParams(): learn_stream(nullptr) {
         start_id = -1;
         points_count = -1;
     }
-
     //打开文件
     int open_file(const char* train_fea_file_name, uint32_t feature_dim);
     //关闭文件句柄
-    int close_file() {
-        if (learn_stream) {
-            fclose(learn_stream);
-            learn_stream = nullptr;
-        }
-
-        return 0;
-    }
+    int close_file();
     ~ThreadParams() {
         close_file();
     }
@@ -400,28 +366,7 @@ struct NearestCell {
     }
 };
 
-//Kmeans聚类的参数
-struct KmeansParams {
-    int redo;
-    long int seed;
-    int nt;
-    int flags;
-    int niter;
-    KmeansParams(bool kmeans_pp = false) {
-        redo    = 1;
-        seed    = 0;
-        nt      = std::thread::hardware_concurrency();
 
-        if (kmeans_pp == false) {
-            flags = nt | KMEANS_INIT_RANDOM | KMEANS_QUIET;
-        } else {
-            flags = nt | KMEANS_INIT_BERKELEY | KMEANS_QUIET;
-        }
-
-        niter   = 30;
-    }
-
-};
 
 //建库所需信息(最近的cell id)
 struct BuildInfo {
@@ -433,7 +378,5 @@ struct BuildInfo {
 };
 
 IndexConf load_index_conf_file();
-
 int getFileLineCnt(const char* fileName);
 }
-

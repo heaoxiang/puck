@@ -17,7 +17,7 @@ if GLOBAL_GCC_VERSION() == 'gcc82':
     CPPFLAGS('-Wno-error=sign-compare')
 
 
-CPPFLAGS('-std=c++11 -Wall -fopenmp  -msse4 -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -Wl,--no-as-needed -fpic -g -DFINTEGER=int')
+CPPFLAGS('-std=c++11 -Wall -fopenmp -mavx -mavx2 -msse4 -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -Wl,--no-as-needed -fpic -g -DFINTEGER=int')
 
 #CONFIGS('baidu/third-party/yael@yael_v438@git_branch')
 CONFIGS('baidu/third-party/mkl@mkl_2019-3-199-1_PD_BL@git_tag')
@@ -36,12 +36,11 @@ INCPATHS('. ')
 
 GenSources('./swig_run.sh', ' ', './pyapi_wrapper/py_puck_api.i ./pyapi_wrapper/numpy.i ./swig_run.sh ../../../baidu/third-party/swig')
 
-user_sources=GLOB(' ./puck/*.cpp ./puck/base/*.cpp ./puck/base/yael/*.c ./puck/gflags/*.cpp ./puck/hierarchical_cluster/*.cpp puck/tinker/*.cpp puck/tinker/method/*.cc puck/puck/*.cpp ')
+user_sources=GLOB(' ./puck/*.cpp ./puck/base/*.cpp ./puck/gflags/*.cpp ./puck/hierarchical_cluster/*.cpp puck/tinker/*.cpp puck/tinker/method/*.cc puck/puck/*.cpp ')
 
 #release headers  move result to output
 HEADERS('puck/*.h', '$INC/puck/')
 HEADERS('puck/base/*.h ', '$INC/puck/base')
-HEADERS('puck/base/yael/*.h ', '$INC/puck/base/yael')
 HEADERS('puck/tinker/*.h ', '$INC/puck/tinker')
 HEADERS('puck/gflags/*.h ', '$INC/puck/gflags')
 HEADERS('puck/tinker/space/*.h ', '$INC/puck/tinker/space')

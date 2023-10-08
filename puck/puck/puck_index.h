@@ -19,22 +19,17 @@
  * @brief
  *
  **/
-
 #pragma once
 #include <vector>
 #include <string>
 #include <memory>
-
 #include <mutex>
 #include <fstream>
 #include <stdlib.h>
 #include "puck/puck/quantization.h"
 #include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
-
 //#define _aligned_malloc(size, alignment) aligned_alloc(alignment, size)
 namespace puck {
-
-
 //内存索引结构
 class PuckIndex : public puck::HierarchicalClusterIndex {
 public:
@@ -43,7 +38,6 @@ public:
      **/
     PuckIndex();
     virtual ~PuckIndex();
-
     /*
      * @brief 检索最近的topk个样本
      * @@param [in] request : request
@@ -51,7 +45,6 @@ public:
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int search(const Request* request, Response* response) override;
-
     /*
     * @brief 初始化内存、训练码本（计算一二级聚类中心）、写码本文件
     * @@return (int) : 正常返回0，错误返回值<0
@@ -68,7 +61,6 @@ public:
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     virtual int single_build(BuildInfo* build_info) override;
-
 protected:
     virtual int check_index_type() override;
     /*
@@ -91,7 +83,6 @@ protected:
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     int init_model_memory();
-
     /*
      * @brief 建库的计算过程
      * @@param [int] total_cnt : 建库样本总数
@@ -109,10 +100,17 @@ protected:
     int pre_filter_search(SearchContext* context, const float* feature);
 
     /*
+     * @brief 计算query与top_coarse_cnt个一级聚类中心的下所有二级聚类中心的距离
+     * @@param [in\out] context : context由内存池管理
+     * @@param [in] feature : query的特征向量
+     * @@return (int) : 正常返回保留的cell个数(>0)，错误返回值<0
+     **/
+    int search_nearest_filter_points(SearchContext* context, const float* feature);
+    /*
      * @brief 计算query与某个cell下所有样本的距离（样本的filter量化特征）
      * @@param [in\out] context : context由内存池管理
-     * @@param [in] cell_idx : 某个cell的id
-     * @@param [in] pq_dist_table : pq_dist_table
+     * @@param [in] FineCluster : cell指针
+     * @@param [in] cell_dist : query和cell的距离
      * @@param [in] result_heap : 堆结构，存储query与样本的topk
      * @@return (int) : 正常返回0，错误返回值<0
      **/
@@ -121,16 +119,15 @@ protected:
     virtual int compute_quantized_distance(SearchContext* context, const int cell_idx,
                                            const float* pq_dist_table, MaxHeap& result_heap);
     /*
-     * @brief 计算query与top-N个cell下所有样本的距离（样本的原始特征）
+     * @brief 计算query与部分样本的距离(query与filter特征的topN个样本）
      * @@param [in\out] context : context由内存池管理
      * @@param [in] feature : query的特征向量
-     * @@param [in] search_cell_cnt : 需要计算的cell的个数
+     * @@param [in] filter_topk : cell指针
      * @@param [in] result_heap : 堆结构，存储query与样本的topk
      * @@return (int) : 正常返回0，错误返回值<0
      **/
-    int filter_topN_points(SearchContext* context, const float* feature, const int search_cell_cnt,
-                         MaxHeap& result_heap);
-    virtual int rank_topN_points(SearchContext* context, const float* feature, const uint32_t filter_topk, MaxHeap& result_heap);
+    virtual int rank_topN_points(SearchContext* context, const float* feature, const uint32_t filter_topk,
+                                 MaxHeap& result_heap);
     /*
     * @brief 检索过程中会按某种规则调整样本在内存的顺序（memory_idx），计算对应的信息
     * @@param [out] cell_start_memory_idx : 每个cell下样本中最小的memory_idx
@@ -138,7 +135,6 @@ protected:
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     virtual int convert_local_to_memory_idx(uint32_t* cell_start_memory_idx, uint32_t* local_to_memory_idx);
-
     /*
     * @brief 加载与样本相关的索引文件
     * @@param [in] local_to_memory_idx : 每个样本local_idx 与 memory_idx的映射关系
@@ -160,7 +156,6 @@ protected:
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     int puck_single_assign(BuildInfo* build_info, std::vector<Quantization*>& quantizations, uint32_t idx);
-
 protected:
     DISALLOW_COPY_AND_ASSIGN_AND_MOVE(PuckIndex);
     //通常取1/4量化，对过滤出的小规模样本重新排序时使用
@@ -178,5 +173,3 @@ float lookup_dist_table(const unsigned char* assign,
                         const float* dist_table, size_t dim, size_t nsq);
 #endif
 } //namesapce puck
-
-

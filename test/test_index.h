@@ -31,6 +31,7 @@ public:
     ~TestIndex() {}
     int download_data();
     int build_index(int index_type);
+    int insert_index(int thread_cnt);
     float cmp_search_recall();
 private:
     std::unique_ptr<Index> _index;

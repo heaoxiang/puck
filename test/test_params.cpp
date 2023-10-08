@@ -37,13 +37,16 @@ TEST(IndexConfTest, FlatIndex) {
 }
 
 TEST(IndexConfTest, PuckIndex) {
+    google::SetCommandLineOption("whether_pq", "true");
     puck::IndexConf conf;
     conf.index_type = puck::IndexType::PUCK;
+    
     conf.adaptive_train_param();
 
     EXPECT_EQ(conf.whether_pq, true);
     EXPECT_EQ(conf.whether_filter, true);
     EXPECT_EQ(conf.index_type, puck::IndexType::PUCK);
+    EXPECT_GE(conf.radius_rate, 1.0);
 }
 
 TEST(IndexConfTest, PuckFlatIndex) {
@@ -56,6 +59,7 @@ TEST(IndexConfTest, PuckFlatIndex) {
     EXPECT_EQ(conf.whether_pq, false);
     EXPECT_EQ(conf.whether_filter, true);
     EXPECT_EQ(conf.index_type, puck::IndexType::PUCK);
+    EXPECT_GE(conf.radius_rate, 1.0);
 }
 
 TEST(IndexConfTest, TinkerIndex) {
@@ -67,7 +71,6 @@ TEST(IndexConfTest, TinkerIndex) {
     EXPECT_EQ(conf.whether_filter, false);
     EXPECT_EQ(conf.index_type, puck::IndexType::TINKER);
 }
-
 
 TEST(IndexConfTest, Dataset) {
     puck::IndexConf conf;

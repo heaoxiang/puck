@@ -17,7 +17,7 @@ if GLOBAL_GCC_VERSION() == 'gcc82':
     CPPFLAGS('-Wno-error=sign-compare')
 
 
-CPPFLAGS('-std=c++11 -Wall -fopenmp  -msse4 -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g -DFINTEGER=int -fno-access-control')
+CPPFLAGS('-std=c++11 -Wall -fopenmp -mavx -mavx2 -msse4 -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g -DFINTEGER=int -fno-access-control')
 
 #CONFIGS('baidu/third-party/yael@yael_v438@git_branch')
 CONFIGS('baidu/third-party/mkl@mkl_2019-3-199-1_PD_BL@git_tag')
@@ -32,8 +32,8 @@ LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
 #-I path
 INCPATHS('../')
 
-test_online_sources= GLOB('test_main.cpp test_params.cpp  ../puck/*.cpp ../puck/base/*.cpp ../puck/base/yael/*.c ../puck/gflags/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/tinker/*.cpp ../puck/tinker/method/*.cc ../puck/puck/*.cpp ')
-test_offline_sources= GLOB('test_*.cpp  ../puck/*.cpp ../puck/base/*.cpp ../puck/base/yael/*.c ../puck/gflags/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/tinker/*.cpp ../puck/tinker/method/*.cc ../puck/puck/*.cpp ')
+test_online_sources= GLOB('test_main.cpp test_params.cpp  ../puck/*.cpp ../puck/base/*.cpp ../puck/gflags/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/tinker/*.cpp ../puck/tinker/method/*.cc ../puck/puck/*.cpp ')
+test_offline_sources= GLOB('test_*.cpp  ../puck/*.cpp ../puck/base/*.cpp ../puck/gflags/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/tinker/*.cpp ../puck/tinker/method/*.cc ../puck/puck/*.cpp ')
 
 UTApplication('runtest',
                Sources(test_online_sources),

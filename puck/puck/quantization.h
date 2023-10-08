@@ -19,7 +19,6 @@
  * @brief
  *
  **/
-
 #pragma once
 #include <string>
 #include <memory>
@@ -28,9 +27,7 @@
 #include <math.h>
 #include <vector>
 #include "puck/index_conf.h"
-
 namespace puck {
-
 struct QuantizationParams {
     uint32_t ks;
     uint32_t dim;
@@ -38,7 +35,9 @@ struct QuantizationParams {
     uint32_t lsq;
     void show();
     int init(const IndexConf& conf, bool is_filter = false) {
-        if (conf.ks != 256 || conf.feature_dim < conf.nsq) {
+        if (conf.ks != 256
+                || (is_filter && conf.feature_dim < conf.filter_nsq)
+                || (is_filter == false && conf.feature_dim < conf.nsq)) {
             return -1;
         }
 
@@ -47,8 +46,6 @@ struct QuantizationParams {
         nsq = (is_filter == false) ? conf.nsq : conf.filter_nsq;
         lsq = std::ceil(1.0 * dim / nsq);
         show();
-        //LOG(INFO) << "QuantizationParams.dim = " << dim << ", QuantizationParams.ks = " << ks <<
-        //            ", QuantizationParams.lsq = " << lsq << ", QuantizationParams.nsq = " << nsq;
         return 0;
     }
 };
@@ -103,7 +100,6 @@ public:
     int get_per_fea_len() const {
         return _per_fea_len;
     }
-
     /*
     * @brief 更新某个样本的偏移值
     * @@return (int) : 正常返回0，错误返回值<0
@@ -132,7 +128,6 @@ public:
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     int save_coodbooks(const std::string& file_name) const;
-
     /*
      * @brief 写索引文件(建库的产出，与建库样本相关)
      * @@return (int) : 正常返回0，错误返回值<0
@@ -154,7 +149,6 @@ private:
     size_t get_quantized_feature_length() {
         return _per_fea_len * _total_point_count * sizeof(unsigned char);
     }
-
     /*
     * @brief decode
     * @@return (int) : 正常返回0，错误返回值<0
@@ -182,4 +176,3 @@ private:
 };
 
 }//namespace puck
-

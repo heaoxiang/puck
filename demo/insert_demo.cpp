@@ -56,6 +56,13 @@ int read_feature_data(std::string& input_file, std::vector<std::string>& pic_nam
     return ret;
 }
 
+int insert(puck::RealtimeInsertPuckIndex* index, const float* feature, std::string lable) {
+    puck::InsertRequest insert_request;
+    insert_request.feature = feature;
+    insert_request.label = lable;
+    return index->insert(&insert_request);
+}
+
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -147,18 +154,16 @@ int main(int argc, char** argv) {
 
     fclose(pf);
 
-    puck::InsertRequest insert_request;
+
+    std::vector<std::thread> writers;
 
     for (int i = 0; i < (int)in_data.size(); ++i) {
-        insert_request.feature = in_data[i].data();
+        std::thread write_index(insert, searcher.get(), in_data[i].data(), pic_name[i]);
+        writers.push_back(std::move(write_index));
+    }
 
-        insert_request.label = pic_name[i];
-        int ret = searcher->insert(&insert_request);
-
-        if (ret != 0) {
-            LOG(ERROR) << "insert item " << i << " error" << ret;
-            return -1;
-        }
+    for (auto& t : writers) {
+        t.join();
     }
 
     {
@@ -182,7 +187,7 @@ int main(int argc, char** argv) {
             break;
         }
 
-        for (uint32_t j = 0; j < response.result_num; j ++) {
+        for (int32_t j = 0; j < response.result_num; j ++) {
             char* p = buff;
             std::string lable;
 
@@ -192,7 +197,7 @@ int main(int argc, char** argv) {
                            response.local_idx[j];
                 return -1;
             }
-            
+
             snprintf(p, 1024, "%s\t%s\t%d\t%f", pic_name[i].c_str(),
                      lable.c_str(),
                      response.local_idx[j],

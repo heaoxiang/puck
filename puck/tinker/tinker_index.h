@@ -20,14 +20,11 @@
  *
  **/
 #pragma once
-
 #include <vector>
 #include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
 #include "puck/tinker/method/hnsw.h"
 #include "puck/tinker/space/space_lp.h"
-
 namespace puck {
-
 //内存索引结构
 class TinkerIndex : public puck::HierarchicalClusterIndex {
 public:
@@ -36,7 +33,6 @@ public:
      **/
     TinkerIndex();
     virtual ~TinkerIndex() {}
-    
     /*
      * @brief 检索最近的topk个样本
      * @@param [in] request : request
@@ -44,7 +40,6 @@ public:
      * @@return (int) : 正常返回0，错误返回值<0
      **/
     virtual int search(const Request* request, Response* response) override;
-
     /*
     * @brief 读取索引配置文件（index.dat）、初始化内存、建库（计算样本最近的1个聚类中心）、写索引文件
     * @@return (int) : 正常返回0，错误返回值<0
@@ -66,7 +61,6 @@ private:
     * @@return (int) : 正常返回0，错误返回值<0
     **/
     int read_feature_index(uint32_t* local_to_memory_idx = nullptr);
-
     DISALLOW_COPY_AND_ASSIGN_AND_MOVE(TinkerIndex);
     //Tinker _tinker;
     std::unique_ptr<similarity::AnyParams> _any_params;
@@ -74,7 +68,4 @@ private:
     std::unique_ptr<similarity::SpaceLp<float>> _space;
 };
 
-
 }//tinker
-
-

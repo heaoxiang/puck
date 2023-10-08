@@ -164,9 +164,11 @@ class Puck(BaseANN):
         return True
     
     def set_query_arguments(self, query_args):
-        print(query_args)
-        query_args_list = query_args.strip().split(',')
-        self.index.update_params(int(self.topk), int(query_args_list[1]), int(query_args_list[2]),int(query_args_list[3]))
+        for key, value in query_args.items():
+            py_puck_api.update_gflag(key, "%s"%value)
+        #query_args_list = query_args.strip().split(',')
+        #self.index.update_params(int(self.topk), int(query_args_list[1]), int(query_args_list[2]),int(query_args_list[3]))
+        self.index.init()
         #topk是作为检索参数传入puck
         self.res = (np.empty((self.n, self.topk), dtype='float32'), np.empty((self.n, self.topk), dtype='uint32'))
         self.qas = query_args

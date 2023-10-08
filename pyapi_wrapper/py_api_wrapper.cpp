@@ -168,16 +168,5 @@ int PySearcher::search(uint32_t n, const float* query_fea, const uint32_t topk, 
 
     return 0;
 }
-
-void PySearcher::update_params(uint32_t topk, uint32_t search_cells, uint32_t neighbors,
-                               uint32_t filter_topk) {
-    update_gflag("topk", std::to_string(topk).c_str());
-    update_gflag("search_coarse_count", std::to_string(search_cells).c_str());
-    update_gflag("neighbors_count", std::to_string(neighbors).c_str());
-    update_gflag("filter_topk", std::to_string(filter_topk).c_str());
-    update_gflag("tinker_search_range", std::to_string(neighbors).c_str());
-    init();
-}
-
 PySearcher::~PySearcher() {};
 };//namespace py_puck_api

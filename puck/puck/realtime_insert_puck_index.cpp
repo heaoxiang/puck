@@ -26,29 +26,31 @@
 #include "puck/puck/realtime_insert_puck_index.h"
 #include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
 namespace puck {
-
-InsertFineCluster::~InsertFineCluster(){
+InsertFineCluster::~InsertFineCluster() {
     std::lock_guard<std::mutex> fine_lock(update_mutex);
-    while(insert_points != nullptr){
+
+    while (insert_points != nullptr) {
         auto* temp = insert_points;
         insert_points = insert_points->next;
         delete temp;
     }
 }
 
-InsertDataMemory::~InsertDataMemory(){
-    for(auto& data : quantizations){
+InsertDataMemory::~InsertDataMemory() {
+    for (auto& data : quantizations) {
         delete data;
         data = nullptr;
     }
 }
+
 RealtimeInsertPuckIndex::RealtimeInsertPuckIndex(): _insert_id(0) {
 }
+
 RealtimeInsertPuckIndex::~RealtimeInsertPuckIndex() {
-   for(auto& labels: _insert_labels){
+    for (auto& labels : _insert_labels) {
         delete labels;
-       labels = nullptr; 
-   } 
+        labels = nullptr;
+    }
 }
 
 int RealtimeInsertPuckIndex::reorganize_inserted_index() {
@@ -65,7 +67,6 @@ int RealtimeInsertPuckIndex::reorganize_inserted_index() {
     QuantizationParams q_param;
     q_param.init(_conf, true);
     Quantization filter_quantization(q_param, _conf.total_point_count);
-
     uint64_t file_length = total_point_count * (filter_quantization.get_per_fea_len());
 
     if (reorganize(_conf.filter_data_file_name, file_length) != 0) {
@@ -76,17 +77,15 @@ int RealtimeInsertPuckIndex::reorganize_inserted_index() {
         QuantizationParams q_param;
         q_param.init(_conf, false);
         Quantization pq_quantization(q_param, _conf.total_point_count);
-
         file_length = total_point_count * (pq_quantization.get_per_fea_len());
 
         if (reorganize(_conf.pq_data_file_name, file_length) != 0) {
             return -1;
         }
     } else {
-
         file_length = total_point_count * (sizeof(uint32_t) + sizeof(float) * _conf.feature_dim);
         LOG(INFO) << file_length << " " << total_point_count << " " << sizeof(uint32_t) + sizeof(
-                        float) * _conf.feature_dim;
+                      float) * _conf.feature_dim;
 
         if (reorganize(_conf.feature_file_name, file_length) != 0) {
             return -1;
@@ -126,7 +125,6 @@ int RealtimeInsertPuckIndex::reorganize(const std::string& filename, uint64_t fi
 
 int RealtimeInsertPuckIndex::read_labels() {
     LOG(INFO) << "start load index file  " << _conf.label_file_name;
-
     std::ifstream in_url(_conf.label_file_name);
     std::string url_line;
 
@@ -141,7 +139,7 @@ int RealtimeInsertPuckIndex::read_labels() {
         _labels.push_back(url_line);
     }
 
-    LOG(INFO) << "_conf.total_point_count = " << _conf.total_point_count;
+    LOG(INFO) << "total_point_count = " << _labels.size();
     in_url.close();
 
     read_model_file();
@@ -262,7 +260,9 @@ int RealtimeInsertPuckIndex::init() {
         _fine_norms = new float[_conf.fine_cluster_count];
 
         for (uint32_t j = 0; j < _conf.fine_cluster_count; ++j) {
-            _fine_norms[j] = fvec_norm2sqr(_fine_vocab + _conf.feature_dim * j, _conf.feature_dim) / 2;
+            _fine_norms[j] = cblas_sdot(_conf.feature_dim, _fine_vocab + _conf.feature_dim * j, 1,
+                                        _fine_vocab + _conf.feature_dim * j, 1) / 2;
+
             _fine_norms[j] = 0 - std::sqrt(_fine_norms[j]);
         }
     }
@@ -287,7 +287,6 @@ int RealtimeInsertPuckIndex::insert(const InsertRequest* request) {
 
     //计算量化特征 + 写内存，cur_insert_id是insert部分内存的idx，在文件中的顺序可能会不一样（前面可能有样本写失败）
     uint32_t cur_insert_id = _insert_id.fetch_add(1);
-
     uint32_t group_id = cur_insert_id / _max_insert_point;
     uint32_t offset_id = cur_insert_id % _max_insert_point;
 
@@ -310,9 +309,11 @@ int RealtimeInsertPuckIndex::insert(const InsertRequest* request) {
     InsertFineCluster* cur_fine_cluster = _insert_fine_cluster.get() + build_info.nearest_cell.cell_id;
     std::lock_guard<std::mutex> fine_lock(cur_fine_cluster->update_mutex);
     InsertPoint* point = new InsertPoint(cur_insert_id);
-    if(point == nullptr){
+
+    if (point == nullptr) {
         return -1;
     }
+
     point->next = cur_fine_cluster->insert_points;
     cur_fine_cluster->insert_points = point;
     cur_fine_cluster->point_cnt ++;
@@ -322,30 +323,24 @@ int RealtimeInsertPuckIndex::insert(const InsertRequest* request) {
         uint32_t coarse_id = build_info.nearest_cell.cell_id / _conf.fine_cluster_count;
         uint32_t fine_id = build_info.nearest_cell.cell_id % _conf.fine_cluster_count;
 
-        //float old_val = get_fine_cluster(build_info.nearest_cell.cell_id)->stationary_cell_dist;
         float stationary_cell_dist =  cblas_sdot(_conf.feature_dim,
                                       _coarse_vocab + coarse_id * _conf.feature_dim, 1,
                                       _fine_vocab + fine_id * _conf.feature_dim, 1);
         stationary_cell_dist -= cblas_sdot(_conf.feature_dim,
                                            _fine_vocab + fine_id * _conf.feature_dim, 1,
                                            _fine_vocab + fine_id * _conf.feature_dim, 1);
-
-        //LOG(INFO) << old_val << "\t" << stationary_cell_dist;
         get_fine_cluster(build_info.nearest_cell.cell_id)->stationary_cell_dist =
             stationary_cell_dist;
     }
 
-    //LOG(INFO) << "insert " << request->label << " Suc.";
     return 0;
 }
 
-
-int RealtimeInsertPuckIndex::append_index(const InsertRequest* request, puck::BuildInfo& build_info,uint32_t insert_id) {
-                                    //InsertDataMemory* data, uint32_t group_idx, uint32_t memory_idx) {
+int RealtimeInsertPuckIndex::append_index(const InsertRequest* request, puck::BuildInfo& build_info,
+        uint32_t insert_id) {
     uint32_t group_idx = insert_id / _max_insert_point;
     uint32_t memory_idx = insert_id % _max_insert_point;
     InsertDataMemory* data = _insert_data_memorys[group_idx];
-
     //写文件加锁
     std::lock_guard<std::mutex> lk(_index_file_handle->update_file_mutex);
     //计算文件偏移量、写文件
@@ -396,140 +391,30 @@ int RealtimeInsertPuckIndex::append_index(const InsertRequest* request, puck::Bu
     //label_file文件写成功，落盘成功，更新label的内存
     _insert_labels[group_idx]->data()[memory_idx] = request->label;
     data->memory_to_local[memory_idx] = _labels.size() + insert_id;
-
     ++_conf.total_point_count;
-    //LOG(INFO) << "append index " << memory_idx << " Suc.";
     return 0;
 }
 
-
-int RealtimeInsertPuckIndex::search_nearest_fine_cluster(SearchContext* context, const float* feature) {
-    SearchCellData& search_cell_data = context->get_search_cell_data();
-    float* cluster_inner_product = search_cell_data.cluster_inner_product;
-
-    fmat_mul_full(_fine_vocab, feature, _conf.fine_cluster_count, 1, _conf.feature_dim,
-                  "TN", cluster_inner_product);
-    MaxHeap max_heap(_conf.fine_cluster_count, search_cell_data.fine_distance,
-                     search_cell_data.fine_tag);
-
-    for (uint32_t k = 0; k < _conf.fine_cluster_count; ++k) {
-        max_heap.max_heap_update(-cluster_inner_product[k], k);
-    }
-
-    max_heap.reorder();
-
-    //计算一级聚类中心的距离,使用最大堆
-    float* coarse_distance = search_cell_data.coarse_distance;
-    uint32_t* coarse_tag = search_cell_data.coarse_tag;
-    ImitativeHeap imitative_heap(_conf.neighbors_count, search_cell_data.cell_distance);
-    imitative_heap.set_pivot(coarse_distance[_conf.search_coarse_count - 1]);
-
-    for (uint32_t l = 0; l < _conf.search_coarse_count; ++l) {
-        int coarse_id = coarse_tag[l];
-
-        //计算query与当前一级聚类中心下cell的距离
-        FineCluster* cur_fine_cluster_list = _coarse_clusters[coarse_id].fine_cell_list;
-        uint32_t updated_fine_cnt = 0;
-        //float min_dist = _coarse_clusters[coarse_id].min_dist_offset + coarse_distance[l];
-
-        float max_stationary_dist = imitative_heap.get_pivot() - coarse_distance[l] -
-                                    search_cell_data.fine_distance[0];
-
-        for (uint32_t idx = 0; idx < _conf.fine_cluster_count; ++idx) {
-
-            //if (search_cell_data.fine_distance[idx] + min_dist >= imitative_heap.get_pivot()) {
-            //LOG(INFO)<<l<<" "<<idx<<" break;";
-            //break;
-            //}
-
-            uint32_t k = search_cell_data.fine_tag[idx];
-
-            if (cur_fine_cluster_list[k].stationary_cell_dist >= max_stationary_dist) {
-                continue;
-            }
-
-            float temp_dist = coarse_distance[l] + cur_fine_cluster_list[k].stationary_cell_dist +
-                              search_cell_data.fine_distance[idx];
-
-            uint32_t point_cnt = _insert_fine_cluster.get()[coarse_id * _conf.fine_cluster_count + k].point_cnt;
-            int ret = imitative_heap.push(temp_dist, cur_fine_cluster_list + k, point_cnt);
-
-            if (ret == 0) {
-                max_stationary_dist = imitative_heap.get_pivot() - coarse_distance[l] - search_cell_data.fine_distance[idx];
-            }
-
-            updated_fine_cnt += ret;
-        }
-
-
-    }
-
-    //tm_cost.stop();
-    //context->log_push("search_cell_cluster_cost_us", "%d", tm_cost.u_elapsed());
-
-    //tm_cost.start();
-    uint32_t cell_cnt = imitative_heap.get_top_idx();
-    std::sort(search_cell_data.cell_distance.begin(), search_cell_data.cell_distance.begin() + cell_cnt);
-    //tm_cost.stop();
-    //context->log_push("sort_cell_cluster_cost_us", "%d", tm_cost.u_elapsed());
-    return cell_cnt;
-}
-
-int RealtimeInsertPuckIndex::search(const Request* request, Response* response) {
-    if (request->topk > _conf.topk || request->feature == nullptr) {
-        LOG(ERROR) << "topk should <= topk, topk = " << _conf.topk << ", or feature is nullptr";
-        return -1;
-    }
-
-    DataHandler<SearchContext> context(_context_pool);
-
-    if (0 != context->reset(_conf)) {
-        return -1;
-    }
-
-    const float* feature = normalization(context.get(), request->feature);
-    if (feature == nullptr){
-        return -1;
-    }
-    //输出query与一级聚类中心的top-search-cell个ID和距离
-    int ret = search_nearest_coarse_cluster(context.get(), feature,
-                                            _conf.search_coarse_count);//, coarse_distance, coarse_tag);
-
-    if (ret != 0) {
-        LOG(ERROR) << "search_nearest_coarse_cluster error " << ret;
-        return ret;
-    }
-
-    //计算query与二级聚类中心的距离并排序
-    int search_cell_cnt = search_nearest_fine_cluster(context.get(), feature);
-    MaxHeap result_heap(request->topk, response->distance, response->local_idx);
-
-    ret = filter_topN_points(context.get(), feature, search_cell_cnt, result_heap);
-    
-    if (ret == 0){
-        response->result_num = result_heap.get_heap_size();
-    }else{
-        LOG(ERROR)<<"filter_topN_points has error.";
-    }
-    return ret;
-}
-
-int RealtimeInsertPuckIndex::compute_quantized_distance(SearchContext* context, const int cell_idx,
-        const float* pq_dist_table, MaxHeap& result_heap) {
-
-    uint32_t  point_cnt = this->PuckIndex::compute_quantized_distance(context, cell_idx, pq_dist_table,
+int RealtimeInsertPuckIndex::compute_quantized_distance(SearchContext* context,
+        const FineCluster* fine_cluster,
+        const float cell_dist, MaxHeap& result_heap) {
+    uint32_t  point_cnt = this->PuckIndex::compute_quantized_distance(context, fine_cluster, cell_dist,
                           result_heap);
-
+    const float* pq_dist_table = context->get_search_point_data().pq_dist_table;
     SearchCellData& search_cell_data = context->get_search_cell_data();
     //LOG(INFO)<<(uint64_t)search_cell_data.cell_distance[cell_idx].second<<" "<<(uint64_t)_insert_fine_cluster.get()<<" "<<sizeof(InsertFineCluster);
-    uint32_t cur_cell_id = (FineCluster*)search_cell_data.cell_distance[cell_idx].second.first -
-                           (FineCluster*)get_fine_cluster(0);
-    //LOG(INFO)<<cur_cell_id;
+    int cur_cell_id = fine_cluster -
+                      (FineCluster*)get_fine_cluster(0);
+
+    if (cur_cell_id < 0 || cur_cell_id > _conf.coarse_cluster_count * _conf.fine_cluster_count) {
+        LOG(ERROR) << "compute_quantized_distance for insert cell has error, cell offset is " << cur_cell_id;
+        return -1;
+    }
+
     InsertFineCluster* cur_fine_cluster = _insert_fine_cluster.get() + cur_cell_id;
     auto* point = cur_fine_cluster->insert_points;
     float* result_distance = result_heap.get_top_addr();
     ///point info存储的量化特征对应的参数
-
     uint32_t* query_sorted_tag = context->get_search_point_data().query_sorted_tag;
 
     while (point != nullptr) {
@@ -538,14 +423,14 @@ int RealtimeInsertPuckIndex::compute_quantized_distance(SearchContext* context, 
         ++point_cnt;
         auto* data_memory = _insert_data_memorys[insert_id / _max_insert_point];
         uint32_t offset_id = insert_id % _max_insert_point;
-
-//        uint32_t local_id = data_memory->memory_to_local[offset_id];
-
         auto* filter_quantization = data_memory->quantizations.front();
         const unsigned char* feature = filter_quantization->get_quantized_feature(offset_id);
-        float temp_dist = 2.0 * search_cell_data.cell_distance[cell_idx].first + ((float*)feature)[0];
+        float temp_dist = 2.0 * cell_dist + ((float*)feature)[0];
         auto& quantization_params = filter_quantization->get_quantization_params();
         const unsigned char* pq_feature = (unsigned char*)feature + filter_quantization->get_fea_offset();
+#ifdef __SSE__
+        temp_dist += lookup_dist_table(pq_feature, pq_dist_table, quantization_params.ks, quantization_params.nsq);
+#else
 
         for (uint32_t m = 0; m < (uint32_t)quantization_params.nsq; ++m) {
             uint32_t idx = query_sorted_tag[m];
@@ -557,6 +442,8 @@ int RealtimeInsertPuckIndex::compute_quantized_distance(SearchContext* context, 
             }
         }
 
+#endif
+
         if (temp_dist < result_distance[0]) {
             result_heap.max_heap_update(temp_dist, insert_id + _labels.size());
         }
@@ -566,22 +453,18 @@ int RealtimeInsertPuckIndex::compute_quantized_distance(SearchContext* context, 
 }
 
 int RealtimeInsertPuckIndex::rank_topN_points(SearchContext* context, const float* feature,
-                                      const uint32_t filter_topk,
-                                      MaxHeap& result_heap) {
+        const uint32_t filter_topk,
+        MaxHeap& result_heap) {
     //LOG(INFO) << "RealtimeInsertPuckIndex::rank_topN_points";
-
     auto& search_point_data = context->get_search_point_data();
-
     float* result_distance = search_point_data.result_distance;
     uint32_t* result_tag = search_point_data.result_tag;
-
     float query_norm = cblas_sdot(_conf.feature_dim, feature, 1, feature, 1);
     ////真正会返回的结果存储的位置
     float* true_result_distance = result_heap.get_top_addr();
 
     if (_conf.whether_pq) {
         const Quantization* pq_quantization = _pq_quantization.get();
-
         float* pq_dist_table = context->get_search_point_data().pq_dist_table;
         pq_quantization->get_dist_table(feature, pq_dist_table);
 
@@ -592,31 +475,26 @@ int RealtimeInsertPuckIndex::rank_topN_points(SearchContext* context, const floa
             if (result_tag[idx] < _labels.size()) {
                 pq_feature = (unsigned char*)(_pq_quantization->get_quantized_feature(result_tag[idx]));
                 point_id = _memory_to_local[result_tag[idx]];
-
             } else {
                 uint32_t group_id = (result_tag[idx] - _labels.size()) / _max_insert_point;
                 uint32_t offset_id = (result_tag[idx] - _labels.size()) % _max_insert_point;
                 auto* data_memory = _insert_data_memorys[group_id];
                 auto* pq_quantization = data_memory->quantizations[1];
                 pq_feature = (unsigned char*)pq_quantization->get_quantized_feature(offset_id);
-
                 point_id = data_memory->memory_to_local[offset_id];
             }
 
             float temp_dist = result_distance[idx] - query_norm + ((float*)pq_feature)[0];
-
             pq_feature += pq_quantization->get_fea_offset();
 
             for (uint32_t m = 0; m < (uint32_t)pq_quantization->get_quantization_params().nsq
                     && temp_dist < true_result_distance[0]; ++m) {
-
                 temp_dist += (pq_dist_table + m * pq_quantization->get_quantization_params().ks)[pq_feature[m]];
             }
 
             if (temp_dist < true_result_distance[0]) {
                 result_heap.max_heap_update(temp_dist, point_id);
             }
-
         }
     } else {
         size_t qty_16 = 16;
@@ -633,7 +511,6 @@ int RealtimeInsertPuckIndex::rank_topN_points(SearchContext* context, const floa
                 point_id = _memory_to_local[result_tag[idx]];
             } else {
                 uint32_t group_id = (result_tag[idx] - _labels.size()) / _max_insert_point;
-
                 auto* data_memory = _insert_data_memorys[group_id];
                 uint32_t offset_id = (result_tag[idx] - _labels.size()) % _max_insert_point;
                 exhaustive_feature = data_memory->init_feature.data() + offset_id * _conf.feature_dim;
@@ -677,8 +554,6 @@ int RealtimeInsertPuckIndex::get_label(const uint32_t label_id, std::string& lab
         return -1;
     }
 
-    //LOG(INFO) << "label_id = " << label_id << ", " << _insert_labels[group_id]->data()[true_label_id %
-    //            _max_insert_point];
     label = _insert_labels[group_id]->data()[true_label_id % _max_insert_point];
     return 0;
 }
@@ -716,11 +591,9 @@ int IndexFileHandle::init() {
 }
 
 bool IndexFileHandle::open_handle(std::ofstream& file_stream, std::string& file_name) {
-    //LOG(INFO) << " " << file_name << " SUC";
     file_stream.open(file_name, std::ios::binary | std::ios::app);
 
     if (file_stream.is_open()) {
-        //LOG(INFO) << file_name << " SUC";
         return true;
     }
 

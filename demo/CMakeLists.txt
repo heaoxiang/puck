@@ -2,7 +2,6 @@ include_directories(..)
 file(
     GLOB PUCK_CPP_FILES
     "../puck/base/*.cpp"
-    "../puck/base/yael/*.c"
     "../puck/gflags/*.cpp"
     "../puck/hierarchical_cluster/*.cpp"
     "../puck/puck/*.cpp"

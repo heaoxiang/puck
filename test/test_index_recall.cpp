@@ -12,7 +12,6 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-
 /**
  * @file    test_index_recall.cpp
  * @author  yinjie06(yinjie06@baidu.com)
@@ -25,8 +24,35 @@
 #include <gflags/gflags.h>
 #include "test/test_index.h"
 
-DEFINE_double(base_recall_acc, 0.98, "");
+DEFINE_double(base_recall_acc, 0.99, "");
 using namespace puck;
+
+TEST(IndexTest, InsertIndex1) {
+    TestIndex index;
+
+    EXPECT_EQ(index.download_data(), 0);
+    EXPECT_EQ(index.insert_index(1), 0);
+    float recall_rate = index.cmp_search_recall();
+    EXPECT_GT(recall_rate, FLAGS_base_recall_acc);
+}
+
+TEST(IndexTest, InsertIndex50) {
+    TestIndex index;
+
+    EXPECT_EQ(index.download_data(), 0);
+    EXPECT_EQ(index.insert_index(50), 0);
+    float recall_rate = index.cmp_search_recall();
+    EXPECT_GT(recall_rate, FLAGS_base_recall_acc);
+}
+
+TEST(IndexTest, InsertIndex100) {
+    TestIndex index;
+
+    EXPECT_EQ(index.download_data(), 0);
+    EXPECT_EQ(index.insert_index(100), 0);
+    float recall_rate = index.cmp_search_recall();
+    EXPECT_GT(recall_rate, FLAGS_base_recall_acc);
+}
 
 TEST(IndexTest, FlatIndex) {
     TestIndex index;
@@ -67,3 +93,4 @@ TEST(IndexTest, TinkerIndex) {
     float recall_rate = index.cmp_search_recall();
     EXPECT_GT(recall_rate, FLAGS_base_recall_acc);
 }
+

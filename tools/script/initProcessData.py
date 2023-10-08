@@ -47,6 +47,16 @@ class InitProcessData(object):
     """初始化."""
 
     def __init__(self, conf_file):
+        """
+          :param conf_file: 配置文件名
+        
+          初始化类：
+        
+          1）读取配置文件
+          2）根据配置设置默认的输入路径和文件名称（如果没有指定则使用默认值），并打开相应的文件对象。
+              - 如果指定的配置文件中有指定 `all_feature_file_name` 和 `keys_file_name`，将其作为相应的文件名读入；否则使用默认的文件名。
+          3）设置是否归一化、IP2Cos计算特征等参数的值，并打印日志信息表示当前的参数设定值。
+        """
         train_conf_file = conf_file
         train_conf_info = open(train_conf_file, 'rb').read()
 

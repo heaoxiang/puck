@@ -41,18 +41,49 @@
 #include "puck/search_context.h"
 #include "puck/base/md5.h"
 
+extern "C" {
+
+    /* declare BLAS functions, see http://www.netlib.org/clapack/cblas/ */
+
+    int sgemm_(
+        const char* transa,
+        const char* transb,
+        FINTEGER* m,
+        FINTEGER* n,
+        FINTEGER* k,
+        const float* alpha,
+        const float* a,
+        FINTEGER* lda,
+        const float* b,
+        FINTEGER* ldb,
+        float* beta,
+        float* c,
+        FINTEGER* ldc);
+}
 
 namespace puck {
 
 DEFINE_bool(kmeans_init_berkeley, true, "using kmeans_init_berkeley");
 DEFINE_int32(kmeans_iterations_count, 10, "iterations count");
 DEFINE_int32(thread_chunk_size, 10000, "chunk size of each thread");
-
 DEFINE_int32(train_points_count, 5000000, "used for HierarchicalClusterIndex train clusters");
-
 DEFINE_string(train_fea_file_name, "mid-data/train_clusters.dat",
               "random sampling for HierarchicalClusterIndex train clusters");
 DEFINE_int32(single_build_max_points, 1, "during single build process, max points can be saved in memory");
+
+void matrix_multiplication(const float* left, const float* right,
+                           FINTEGER m, FINTEGER n, FINTEGER k,
+                           const char* transp,
+                           float* result) {
+    float alpha = 1;
+    float beta = 0;
+    FINTEGER lda = transp[0] == 'N' ? m : k;
+    FINTEGER ldb = transp[1] == 'N' ? k : n;
+    FINTEGER ldc = m;
+    sgemm_((char*)transp, (char*)(transp + 1), &m, &n, &k,
+           &alpha, left, &lda, right, &ldb, &beta, result, &ldc);
+
+}
 
 //检查文件长度
 bool check_file_length_info(const std::string& file_name,
@@ -62,32 +93,82 @@ bool check_file_length_info(const std::string& file_name,
     struct stat st;
 
     if (fd == -1 || -1 == fstat(fd, &st) || (file_length != (uint64_t)st.st_size)) {
-        LOG(ERROR)<<"check file length has error, file name = "<<file_name;
+        LOG(ERROR) << "check file length has error, file name = " << file_name;
+        close(fd);
         return false;
     }
-
+    close(fd);
     return true;
 }
 
 //写码本
-int write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
-                       const int dim) {
+int write_fvec_format(const char* file_name, const uint32_t dim, const uint64_t n, const float* fea_vocab) {
     LOG(INFO) << "start write_fvec_format " << file_name;
-
-    FILE* out_fvec_init = fopen(file_name, "w");
+    FILE* out_fvec_init = fopen(file_name, "wb");
 
     if (!out_fvec_init) {
-        LOG(ERROR) << "fvecs_write: cannot open " << file_name << " for writing";
+        LOG(ERROR) << "cannot open " << file_name << " for writing";
+        fclose(out_fvec_init);
         return -1;
     }
 
-    if (fvecs_fwrite(out_fvec_init, dim, fea_cnt, fea_vocab) != fea_cnt) {
-        LOG(ERROR) << "fvec_fwrite error. ";
-        return -1;
+    int ret = 0;
+
+    for (uint64_t i = 0; i < n; ++i) {
+        if (fwrite(&dim, sizeof(int), 1, out_fvec_init) != 1) {
+            LOG(ERROR) << "write error";
+            ret = -1;
+            break;
+        }
+
+        if (fwrite(fea_vocab + (size_t)i * dim, sizeof(float), dim, out_fvec_init) != (size_t)dim) {
+            LOG(ERROR) << "write error";
+            ret = -1;
+            break;
+        }
     }
 
     fclose(out_fvec_init);
-    return 0;
+    return ret;
+}
+
+int read_fvec_format(FILE* fvec_init, uint32_t dim, uint64_t n, float* v) {
+
+    for (uint64_t i = 0; i < n; ++i) {
+        int cur_dim = 0;
+
+        if (fread(&cur_dim, sizeof(int), 1, fvec_init) != 1 || cur_dim != (int)dim) {
+            LOG(ERROR) << "read_fvec_format : dim error";
+            return -1;
+        }
+
+        if (fread((void*)(v + i * dim), sizeof(v[0]), dim, fvec_init) != dim) {
+            LOG(ERROR) << "read_fvec_format : read feature error";
+            return -1;
+        }
+    }
+
+    return n;
+}
+
+
+int read_fvec_format(const char* file_name, uint32_t dim, uint64_t n, float* v) {
+    size_t expect_len = n * (sizeof(int) + sizeof(v[0]) * dim);
+
+    if (!check_file_length_info(file_name, expect_len)) {
+        return -1;
+    }
+
+    FILE* fvec_init = fopen(file_name, "rb");
+
+    if (!fvec_init) {
+        LOG(ERROR) << "read_fvec_format: cannot open for writing";
+        return -1;
+    }
+
+    int ret = read_fvec_format(fvec_init, dim, n, v);
+    fclose(fvec_init);
+    return ret;
 }
 
 void InitializeLogger(int choice) {
@@ -115,6 +196,7 @@ HierarchicalClusterIndex::HierarchicalClusterIndex() {
     init_params_value();
     omp_set_num_threads(FLAGS_threads_count);
     mkl_set_dynamic(true);
+    LOG(INFO) <<::mkl_enable_instructions;
 }
 
 HierarchicalClusterIndex::~HierarchicalClusterIndex() {
@@ -136,30 +218,30 @@ int HierarchicalClusterIndex::init() {
 
     //从文件获取配置信息
     if (read_model_file() != 0) {
-        LOG(ERROR)<<"read_model_file has error.";
+        LOG(ERROR) << "read_model_file has error.";
         return -1;
     }
 
     if (check_index_type() != 0) {
-        LOG(ERROR)<<"check_index_type has error.";
+        LOG(ERROR) << "check_index_type has error.";
         return -1;
     }
 
     //初始化内存
     if (init_model_memory() != 0) {
-        LOG(ERROR)<<"init_model_memory has error.";
+        LOG(ERROR) << "init_model_memory has error.";
         return -1;
     }
 
     //读码本
     if (read_coodbooks() != 0) {
-        LOG(ERROR)<<"read_coodbooks has error.";
+        LOG(ERROR) << "read_coodbooks has error.";
         return -1;
     }
 
     //读与样本有关的索引部分
     if (read_index() != 0) {
-        LOG(ERROR)<<"read_index has error.";
+        LOG(ERROR) << "read_index has error.";
         return -1;
     }
 
@@ -180,8 +262,8 @@ int HierarchicalClusterIndex::read_coodbooks() {
         return -1;
     }
 
-    int ret = fvecs_read(_conf.coarse_codebook_file_name.c_str(), _conf.feature_dim,
-                         _conf.coarse_cluster_count, _coarse_vocab);
+    int ret = read_fvec_format(_conf.coarse_codebook_file_name.c_str(), _conf.feature_dim,
+                               _conf.coarse_cluster_count, _coarse_vocab);
 
     if (ret != (int)_conf.coarse_cluster_count) {
         LOG(FATAL) << "load file error, file : " << _conf.coarse_codebook_file_name << " feature_dim : " <<
@@ -190,12 +272,11 @@ int HierarchicalClusterIndex::read_coodbooks() {
     }
 
     for (uint32_t i = 0; i < _conf.coarse_cluster_count; ++i) {
-        _coarse_norms[i] = fvec_norm2sqr(_coarse_vocab + _conf.feature_dim * i,
-                                         _conf.feature_dim) / 2;
+        _coarse_norms[i] = cblas_sdot(_conf.feature_dim, _coarse_vocab + _conf.feature_dim * i, 1,
+                                      _coarse_vocab + _conf.feature_dim * i, 1) / 2;
     }
 
     LOG(INFO) << "start load index file " << _conf.fine_codebook_file_name;
-
     //二级聚类中心文件长度检查
     uint64_t fine_vocab_length = (uint64_t)_conf.fine_cluster_count * _conf.feature_dim * sizeof(float);
     expect_length = (uint64_t)_conf.fine_cluster_count * sizeof(int) + fine_vocab_length;
@@ -205,8 +286,8 @@ int HierarchicalClusterIndex::read_coodbooks() {
         return -1;
     }
 
-    ret = fvecs_read(_conf.fine_codebook_file_name.c_str(), _conf.feature_dim,
-                     _conf.fine_cluster_count, _fine_vocab);
+    ret = read_fvec_format(_conf.fine_codebook_file_name.c_str(), _conf.feature_dim,
+                           _conf.fine_cluster_count, _fine_vocab);
 
     if (ret != (int)_conf.fine_cluster_count) {
         LOG(FATAL) << "load file error, file : " << _conf.fine_codebook_file_name << " feature_dim : " <<
@@ -217,20 +298,18 @@ int HierarchicalClusterIndex::read_coodbooks() {
     std::vector<float> fine_norms(_conf.fine_cluster_count);
 
     for (uint32_t i = 0; i < _conf.fine_cluster_count; ++i) {
-        fine_norms[i] = fvec_norm2sqr(_fine_vocab + _conf.feature_dim * i, _conf.feature_dim) / 2;
+        fine_norms[i] = cblas_sdot(_conf.feature_dim, _fine_vocab + _conf.feature_dim * i, 1,
+                                   _fine_vocab + _conf.feature_dim * i, 1) / 2;
     }
 
     std::vector<float> coarse_fine_products(_conf.fine_cluster_count * _conf.coarse_cluster_count);
-
     //矩阵乘
-    fmat_mul_full(_fine_vocab, _coarse_vocab, _conf.fine_cluster_count, _conf.coarse_cluster_count,
-                  _conf.feature_dim, "TN", coarse_fine_products.data());
-
+    matrix_multiplication(_fine_vocab, _coarse_vocab, _conf.fine_cluster_count, _conf.coarse_cluster_count,
+                          _conf.feature_dim, "TN", coarse_fine_products.data());
 
     for (uint32_t i = 0; i < _conf.fine_cluster_count * _conf.coarse_cluster_count; ++i) {
         int coarse_id = i / _conf.fine_cluster_count;
         int fine_id = i % _conf.fine_cluster_count;
-
         FineCluster& cur_fine_cluster = _coarse_clusters[coarse_id].fine_cell_list[fine_id];
         cur_fine_cluster.memory_idx_start = 0;
         cur_fine_cluster.stationary_cell_dist = fine_norms[fine_id] + coarse_fine_products[i];
@@ -244,23 +323,29 @@ int HierarchicalClusterIndex::save_coodbooks() const {
     LOG(INFO) << "HierarchicalClusterIndex start save index";
     save_model_file();
     //写一级聚类中心索引文件
-    int ret = write_fvec_format(_conf.coarse_codebook_file_name.c_str(),
-                                _coarse_vocab, _conf.coarse_cluster_count, _conf.feature_dim);
+    int ret = write_fvec_format(_conf.coarse_codebook_file_name.c_str(), _conf.feature_dim,
+                                _conf.coarse_cluster_count, _coarse_vocab);
 
     if (ret != 0) {
+        LOG(ERROR) << "write codebooks has error, ret = " << ret;
         return -1;
     }
 
     //写二级聚类中心索引文件
-    ret = write_fvec_format(_conf.fine_codebook_file_name.c_str(),
-                            _fine_vocab, _conf.fine_cluster_count, _conf.feature_dim);
-    return ret;
+    ret = write_fvec_format(_conf.fine_codebook_file_name.c_str(), _conf.feature_dim, _conf.fine_cluster_count,
+                            _fine_vocab);
+
+    if (ret != 0) {
+        LOG(ERROR) << "write codebooks has error, ret = " << ret;
+        return -1;
+    }
+
+    return 0;
 }
 
 int HierarchicalClusterIndex::read_index() {
     uint32_t cell_cnt = _conf.coarse_cluster_count * _conf.fine_cluster_count;
     std::vector<uint32_t> cell_start_memory_idx(cell_cnt + 1, _conf.total_point_count);
-
     std::vector<uint32_t> local_to_memory_idx(_conf.total_point_count);
 
     //读取local idx，计算与memory idx的映射关系
@@ -286,12 +371,12 @@ int HierarchicalClusterIndex::read_feature_index(uint32_t* local_to_memory_idx) 
         return -1;
     }
 
+    //申请内存
     {
         void* memb = nullptr;
         int32_t pagesize = getpagesize();
         //size_t all_feature_length = (size_t)_conf.total_point_count * _conf.feature_dim * sizeof(float);
         size_t size = all_feature_length + (pagesize - all_feature_length % pagesize);
-
         int err = posix_memalign(&memb, pagesize, size);
 
         if (err != 0) {
@@ -307,14 +392,13 @@ int HierarchicalClusterIndex::read_feature_index(uint32_t* local_to_memory_idx) 
     //原始特征加载至内存，按memory idx的顺序
     for (uint32_t idx = 0; idx < _conf.total_point_count; ++idx) {
         uint64_t memory_offset = (u_int64_t)local_to_memory_idx[idx] * (u_int64_t)_conf.feature_dim;
-        fvecs_fread(init_feature_stream, _all_feature + memory_offset, 1, _conf.feature_dim);
+        read_fvec_format(init_feature_stream, _conf.feature_dim, 1, _all_feature + memory_offset);
     }
 
     fclose(init_feature_stream);
 
     LOG(INFO) << "HierarchicalClusterIndex::read_quantization_index Suc.";
     return 0;
-
 }
 
 void load_int_array_by_idx_thread_fun(const std::string& file_name,
@@ -375,7 +459,6 @@ int HierarchicalClusterIndex::convert_local_to_memory_idx(uint32_t* cell_start_m
     }
 
     typedef std::pair<uint32_t, std::pair<float, uint32_t> > MemoryOrder;
-
     std::vector<MemoryOrder> point_reorder(_conf.total_point_count);
 
     for (uint32_t i = 0; i < _conf.total_point_count; ++i) {
@@ -403,7 +486,6 @@ int HierarchicalClusterIndex::convert_local_to_memory_idx(uint32_t* cell_start_m
     for (uint32_t i = 0; i < _conf.fine_cluster_count * _conf.coarse_cluster_count; ++i) {
         int start_point_id = cell_start_memory_idx[i];
         int end_point_id = cell_start_memory_idx[i + 1];
-
         int coarse_id = i / _conf.fine_cluster_count;
         int fine_id = i % _conf.fine_cluster_count;
 
@@ -427,7 +509,6 @@ int HierarchicalClusterIndex::convert_local_to_memory_idx(uint32_t* cell_start_m
     return 0;
 }
 
-
 template <typename T>
 char* SetValueAndIncPtr(char* ptr, const T& val) {
     *((T*)(ptr)) = val;
@@ -441,24 +522,19 @@ size_t HierarchicalClusterIndex::save_model_config(char* ptr) const {
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.feature_dim);
     temp_ptr = SetValueAndIncPtr<bool>(temp_ptr, _conf.whether_norm);
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.total_point_count);
-
     //filter
     temp_ptr = SetValueAndIncPtr<bool>(temp_ptr, _conf.whether_filter);
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.filter_nsq);
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.ks);
-
     //pq
     temp_ptr = SetValueAndIncPtr<bool>(temp_ptr, _conf.whether_pq);
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.nsq);
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.ks);
-
     //ip2cos
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.ip2cos);
-
     //cluster
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.coarse_cluster_count);
     temp_ptr = SetValueAndIncPtr<uint32_t>(temp_ptr, _conf.fine_cluster_count);
-
     return temp_ptr - ptr;
 }
 
@@ -474,20 +550,15 @@ char* HierarchicalClusterIndex::load_model_config(char* ptr) {
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.feature_dim);
     temp_ptr = GetValueAndIncPtr<bool>(temp_ptr, _conf.whether_norm);
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.total_point_count);
-
     temp_ptr = GetValueAndIncPtr<bool>(temp_ptr, _conf.whether_filter);
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.filter_nsq);
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.ks);
-
     temp_ptr = GetValueAndIncPtr<bool>(temp_ptr, _conf.whether_pq);
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.nsq);
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.ks);
-
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.ip2cos);
-
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.coarse_cluster_count);
     temp_ptr = GetValueAndIncPtr<uint32_t>(temp_ptr, _conf.fine_cluster_count);
-
     return temp_ptr;
 }
 
@@ -519,7 +590,6 @@ int HierarchicalClusterIndex::init_model_memory() {
 
     void* memb = nullptr;
     int32_t pagesize = getpagesize();
-
     size_t size = model_len + (pagesize - model_len % pagesize);
     LOG(INFO) << pagesize << " " << model_len << " " << size;
     int err = posix_memalign(&memb, pagesize, size);
@@ -530,8 +600,8 @@ int HierarchicalClusterIndex::init_model_memory() {
     }
 
     _model = reinterpret_cast<char*>(memb);
-    char* temp_data = _model;
 
+    char* temp_data = _model;
     _coarse_vocab = (float*)temp_data;
     temp_data += coarse_vocab_length;
 
@@ -554,14 +624,11 @@ int HierarchicalClusterIndex::init_model_memory() {
 
     fine_cluster_list[cell_cnt].memory_idx_start = _conf.total_point_count;
 
-    LOG(INFO) << "init _memory_to_local";
     _memory_to_local = (uint32_t*)temp_data;
-
     return 0;
 }
 
 int HierarchicalClusterIndex::read_model_file() {
-
     int fd = -1;
     fd = open(_conf.index_file_name.c_str(), O_RDONLY);
     struct stat st;
@@ -574,7 +641,6 @@ int HierarchicalClusterIndex::read_model_file() {
     size_t size = st.st_size;
     ssize_t file_size = static_cast<ssize_t>(st.st_size);
     ssize_t read_size = 0;
-
     std::unique_ptr<char[]> buffer(new char[st.st_size]);
 
     do {
@@ -597,14 +663,11 @@ int HierarchicalClusterIndex::read_model_file() {
 
     size_t part_size = 0;
     char* temp_buffer = buffer.get();
-
     temp_buffer = GetValueAndIncPtr<size_t>(temp_buffer, part_size);
     LOG(INFO) << "part_size=" << part_size << " st.st_size= " << st.st_size << " sizeof(size_t) = " << sizeof(
                   size_t);
-    
     temp_buffer = load_model_config(temp_buffer);
     _conf.show();
-
     return 0;
 }
 
@@ -621,12 +684,9 @@ int HierarchicalClusterIndex::save_model_file() const {
     /// index_conf
     size_t conf_struct_size = sizeof(_conf);
     std::unique_ptr<char[]> temp_ptr(new char[conf_struct_size]);
-
     size_t conf_size = save_model_config(temp_ptr.get());
     std::ofstream out_fvec_init;
-
     out_fvec_init.open(_conf.index_file_name.c_str(), std::ios::binary | std::ios::out);
-
     out_fvec_init.write((char*)&conf_size, sizeof(size_t));
     out_fvec_init.write((char*)temp_ptr.get(), conf_size);
     out_fvec_init.close();
@@ -637,13 +697,12 @@ int HierarchicalClusterIndex::search_nearest_coarse_cluster(SearchContext* conte
         const uint32_t top_coarse_cnt) {
     //base::Timer tm_cost;
     //tm_cost.start();
-
     SearchCellData& search_cell_data = context->get_search_cell_data();
-
     float* cluster_inner_product = search_cell_data.cluster_inner_product;
+    matrix_multiplication(_coarse_vocab, feature, _conf.coarse_cluster_count, 1, _conf.feature_dim, "TN",
+                          cluster_inner_product);
 
-    fmat_mul_full(_coarse_vocab, feature, _conf.coarse_cluster_count, 1, _conf.feature_dim, "TN",
-                  cluster_inner_product);
+
     //计算一级聚类中心的距离,使用最大堆
     float* coarse_distance = search_cell_data.coarse_distance;
     uint32_t* coarse_tag = search_cell_data.coarse_tag;
@@ -660,21 +719,17 @@ int HierarchicalClusterIndex::search_nearest_coarse_cluster(SearchContext* conte
 
     //堆排序
     max_heap.reorder();
-    //tm_cost.stop();
-    //DLOG(INFO)<<"search_top_"<<top_coarse_cnt<<"_coarse_cluster_cost_us:"<<tm_cost.u_elapsed();
-    //context->log_push("search_top_%d_coarse_cluster_cost_us", "%d", top_coarse_cnt, tm_cost.u_elapsed());
     return 0;
 }
 
 int HierarchicalClusterIndex::search_nearest_fine_cluster(SearchContext* context, const float* feature) {
     //base::Timer tm_cost;
     //tm_cost.start();
-
     SearchCellData& search_cell_data = context->get_search_cell_data();
     float* cluster_inner_product = search_cell_data.cluster_inner_product;
+    matrix_multiplication(_fine_vocab, feature, _conf.fine_cluster_count, 1, _conf.feature_dim,
+                          "TN", cluster_inner_product);
 
-    fmat_mul_full(_fine_vocab, feature, _conf.fine_cluster_count, 1, _conf.feature_dim,
-                  "TN", cluster_inner_product);
     MaxHeap max_heap(_conf.fine_cluster_count, search_cell_data.fine_distance,
                      search_cell_data.fine_tag);
 
@@ -692,17 +747,13 @@ int HierarchicalClusterIndex::search_nearest_fine_cluster(SearchContext* context
 
     for (uint32_t l = 0; l < _conf.search_coarse_count; ++l) {
         int coarse_id = coarse_tag[l];
-
         //计算query与当前一级聚类中心下cell的距离
         FineCluster* cur_fine_cluster_list = _coarse_clusters[coarse_id].fine_cell_list;
-        uint32_t updated_fine_cnt = 0;
         float min_dist = _coarse_clusters[coarse_id].min_dist_offset + coarse_distance[l];
-
         float max_stationary_dist = imitative_heap.get_pivot() - coarse_distance[l] -
                                     search_cell_data.fine_distance[0];
 
         for (uint32_t idx = 0; idx < _conf.fine_cluster_count; ++idx) {
-
             if (search_cell_data.fine_distance[idx] + min_dist >= imitative_heap.get_pivot()) {
                 //LOG(INFO)<<l<<" "<<idx<<" break;";
                 break;
@@ -716,24 +767,17 @@ int HierarchicalClusterIndex::search_nearest_fine_cluster(SearchContext* context
 
             float temp_dist = coarse_distance[l] + cur_fine_cluster_list[k].stationary_cell_dist +
                               search_cell_data.fine_distance[idx];
-
-
             int ret = imitative_heap.push(temp_dist, cur_fine_cluster_list + k,
                                           (cur_fine_cluster_list + k)->get_point_cnt());
 
             if (ret == 0) {
                 max_stationary_dist = imitative_heap.get_pivot() - coarse_distance[l] - search_cell_data.fine_distance[idx];
             }
-
-            updated_fine_cnt += ret;
         }
-
-
     }
 
     uint32_t cell_cnt = imitative_heap.get_top_idx();
     std::sort(search_cell_data.cell_distance.begin(), search_cell_data.cell_distance.begin() + cell_cnt);
-    
     return cell_cnt;
 }
 
@@ -746,28 +790,31 @@ int HierarchicalClusterIndex::search(const Request* request, Response* response)
     DataHandler<SearchContext> context(_context_pool);
 
     if (0 != context->reset(_conf)) {
-        LOG(ERROR) <<"init search context has error.";
+        LOG(ERROR) << "init search context has error.";
         return -1;
     }
 
     context->set_request(request);
-
     const float* feature = normalization(context.get(), request->feature);
-
     //输出query与一级聚类中心的top-search-cell个ID和距离
     int ret = search_nearest_coarse_cluster(context.get(), feature,
                                             _conf.search_coarse_count);
 
     if (ret != 0) {
-        LOG(ERROR)<<"search nearest coarse cluster has error.";
+        LOG(ERROR) << "search nearest coarse cluster has error.";
         return ret;
     }
 
     //计算query与二级聚类中心的距离并排序
     int search_cell_cnt = search_nearest_fine_cluster(context.get(), feature);
 
-    MaxHeap max_heap(request->topk, response->distance, response->local_idx);
+    if (search_cell_cnt < 0) {
+        LOG(ERROR) << "search nearest fine cluster has error.";
+        response->result_num = 0;
+        return search_cell_cnt;
+    }
 
+    MaxHeap max_heap(request->topk, response->distance, response->local_idx);
     ret = flat_topN_points(context.get(), feature, search_cell_cnt, max_heap);
 
     if (ret == 0) {
@@ -782,14 +829,11 @@ int HierarchicalClusterIndex::compute_exhaustive_distance_with_points(SearchCont
         const float* feature, MaxHeap& result_heap) {
     const SearchCellData& search_cell_data = context->get_search_cell_data();
     const FineCluster* cur_fine_cluster = search_cell_data.cell_distance[cell_idx].second.first;
-
     float* result_distance = result_heap.get_top_addr();
-
     size_t qty_16 = 16;
     float PORTABLE_ALIGN32 TmpRes[8];
     //经验值，剪枝掉的比例通常在40%-60%+
     _mm_prefetch((char*)(feature), _MM_HINT_T0);
-
     uint32_t point_list_cnt = cur_fine_cluster->get_point_cnt();
 
     for (uint32_t i = 0; i < point_list_cnt; ++i) {
@@ -835,8 +879,7 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_point_cnt, float* kme
     LOG(INFO) << "HierarchicalClusterIndex start train";
     base::Timer tm_cost;
     tm_cost.start();
-    //使用默认KMEANS参数
-    KmeansParams params(FLAGS_kmeans_init_berkeley);
+
     //point属于的cluster id
     std::unique_ptr<int[]> cluster_assign(new int[kmenas_point_cnt]);
     //记录当前最小的deviation error
@@ -847,17 +890,19 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_point_cnt, float* kme
     //记录每次kmeans产生的聚类中心
     std::unique_ptr<float[]> coarse_init_vocab(new float[_conf.coarse_cluster_count * _conf.feature_dim]);
     //std::unique_ptr<int[]> coarse_vocab_assign(new int[kmenas_point_cnt]);
-
     std::unique_ptr<float[]> fine_init_vocab(new float[_conf.fine_cluster_count * _conf.feature_dim]);
     std::unique_ptr<int[]> fine_vocab_assign(new int[kmenas_point_cnt]);
 
+    Kmeans kmeans_cluster(FLAGS_kmeans_init_berkeley);
+    //使用默认KMEANS参数
+    KmeansParams& params = kmeans_cluster.get_params();
+
     for (int ite = 0; ite < FLAGS_kmeans_iterations_count; ++ite) {
         //kmeans聚类得到一级聚类中心
-        float err = kmeans(_conf.feature_dim, kmenas_point_cnt, _conf.coarse_cluster_count, params.niter,
-                           train_vocab.get(), params.flags, params.seed, params.redo,
-                           coarse_init_vocab.get(), nullptr, cluster_assign.get(), nullptr);
+        float err = kmeans_cluster.kmeans(_conf.feature_dim, kmenas_point_cnt, _conf.coarse_cluster_count,
+                                          train_vocab.get(),
+                                          coarse_init_vocab.get(), nullptr, cluster_assign.get());
         LOG(INFO) << "deviation error of init coarse clusters is " << err << " when ite = " << ite;
-
 
         //计算残差
         memcpy(train_vocab.get(), kmeans_train_vocab, sizeof(float) * kmenas_point_cnt * _conf.feature_dim);
@@ -870,17 +915,15 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_point_cnt, float* kme
         }
 
         //残差向量kmeans聚类得到二级聚类中心T
-        err = kmeans(_conf.feature_dim, kmenas_point_cnt, _conf.fine_cluster_count, params.niter,
-                     train_vocab.get(), params.flags, params.seed, params.redo,
-                     fine_init_vocab.get(), nullptr, cluster_assign.get(), nullptr);
+        err = kmeans_cluster.kmeans(_conf.feature_dim, kmenas_point_cnt, _conf.fine_cluster_count,
+                                    train_vocab.get(),
+                                    fine_init_vocab.get(), nullptr, cluster_assign.get());
         LOG(INFO) << ite << " deviation error of init fine clusters is " << err << " when ite = " << ite;
 
         //如果小于当前最小的deviation error，更新记录的S&T
         if ((min_err - err) >= 1e-4) {
             memcpy(_coarse_vocab, coarse_init_vocab.get(),
                    sizeof(float) * _conf.coarse_cluster_count * _conf.feature_dim);
-            //memcpy(coarse_vocab_assign.get(), cluster_assign.get(), sizeof(float) * kmenas_point_cnt);
-
             memcpy(_fine_vocab, fine_init_vocab.get(),
                    sizeof(float) * _conf.fine_cluster_count * _conf.feature_dim);
             memcpy(fine_vocab_assign.get(), cluster_assign.get(), sizeof(int) * kmenas_point_cnt);
@@ -915,11 +958,14 @@ int HierarchicalClusterIndex::train(const u_int64_t kmenas_point_cnt, float* kme
                      fine_reorder_id.data());
 
     for (uint32_t j = 0; j < _conf.fine_cluster_count; ++j) {
-        float temp = fvec_norm2sqr(_fine_vocab + _conf.feature_dim * j, _conf.feature_dim) / 2;
+        //float temp = fvec_norm2sqr(_fine_vocab + _conf.feature_dim * j, _conf.feature_dim) / 2;
+        float temp = cblas_sdot(_conf.feature_dim, _fine_vocab + _conf.feature_dim * j, 1,
+                                _fine_vocab + _conf.feature_dim * j, 1) / 2;
         max_heap.max_heap_update(0 - std::sqrt(temp), j);
     }
 
     max_heap.reorder();
+
     memcpy(fine_init_vocab.get(), _fine_vocab,
            sizeof(float) * _conf.fine_cluster_count * _conf.feature_dim);
 
@@ -942,10 +988,11 @@ int HierarchicalClusterIndex::build() {
         LOG(INFO) << "read_model_file error";
         return -1;
     }
-    
+
     if (check_feature_dim() != 0) {
         return -1;
     }
+
 
     //从文件获取配置信息
     if (init_model_memory() != 0) {
@@ -968,8 +1015,22 @@ int HierarchicalClusterIndex::build() {
 int HierarchicalClusterIndex::save_index() {
     LOG(INFO) << "HierarchicalClusterIndex::save_index";
     save_model_file();
-    
-    ivec_write_raw(_conf.cell_assign_file_name.c_str(), (int*)_memory_to_local, _conf.total_point_count); 
+    //ivec_write_raw(_conf.cell_assign_file_name.c_str(), (int*)_memory_to_local, _conf.total_point_count);
+    FILE* f = fopen(_conf.cell_assign_file_name.c_str(), "wb");
+
+    if (f == nullptr) {
+        LOG(ERROR) << "cannot open " << _conf.cell_assign_file_name << " for writing";
+        return -1;
+    }
+
+    long ret = fwrite(_memory_to_local, sizeof(*_memory_to_local), _conf.total_point_count, f);
+    fclose(f);
+
+    if (ret != _conf.total_point_count) {
+        LOG(ERROR) << "writint to " << _conf.cell_assign_file_name << " has error";
+        return -1;
+    }
+
     return 0;
 }
 
@@ -978,7 +1039,7 @@ int HierarchicalClusterIndex::nearest_cell_assign(const float* coarse_distance,
         const float* fine_distance,
         const float query_norm,
         NearestCell& nearest_cell) const {
-
+    //计算一级聚类中心并排序
     std::vector<std::pair<float, int>> coarse_distance_list(_conf.coarse_cluster_count);
 
     for (u_int64_t i = 0; i < _conf.coarse_cluster_count; ++i) {
@@ -987,6 +1048,7 @@ int HierarchicalClusterIndex::nearest_cell_assign(const float* coarse_distance,
     }
 
     std::sort(coarse_distance_list.begin(), coarse_distance_list.end());
+    //遍历每个coarse下的所有fine cluster
     nearest_cell.init();
 
     for (uint32_t i = 0; i < _conf.coarse_cluster_count; ++i) {
@@ -1002,9 +1064,8 @@ int HierarchicalClusterIndex::nearest_cell_assign(const float* coarse_distance,
                 break;
             }
 
-            uint32_t cur_fine_id  = idx;//fine_reorder_id[idx];
+            uint32_t cur_fine_id  = idx;
             int cur_cell_id = current_coarse_id * _conf.fine_cluster_count + cur_fine_id;
-
             float score = current_coarse_term -
                           fine_distance[cur_fine_id] +
                           get_fine_cluster(cur_cell_id)->stationary_cell_dist;
@@ -1022,15 +1083,12 @@ int HierarchicalClusterIndex::nearest_cell_assign(const float* coarse_distance,
 int HierarchicalClusterIndex::assign(const ThreadParams& thread_params, uint32_t* cell_assign,
                                      float* error_distance,
                                      float* pruning_computation) const {
-
     std::unique_ptr<float[]> points_coarse_terms(new
             float[FLAGS_thread_chunk_size * _conf.coarse_cluster_count]);
     std::unique_ptr<float[]> points_fine_terms(new
             float[FLAGS_thread_chunk_size * _conf.fine_cluster_count]);
-
     std::unique_ptr<float[]> chunk_points(new
                                           float[FLAGS_thread_chunk_size * _conf.feature_dim]);
-
     NearestCell nearest_cell;
 
     for (uint32_t cid = 0; cid < thread_params.chunks_count; ++cid) {
@@ -1038,27 +1096,28 @@ int HierarchicalClusterIndex::assign(const ThreadParams& thread_params, uint32_t
                   thread_params.chunks_count;
         int real_thread_chunk_size = std::min(FLAGS_thread_chunk_size,
                                               (int)(thread_params.points_count - cid * FLAGS_thread_chunk_size));
-        int read_chunk_size = fvecs_fread(thread_params.learn_stream, chunk_points.get(), real_thread_chunk_size,
-                                          _conf.feature_dim);
+        int read_chunk_size = read_fvec_format(thread_params.learn_stream, _conf.feature_dim, real_thread_chunk_size,
+                                               chunk_points.get());
 
         if (read_chunk_size != real_thread_chunk_size) {
             LOG(ERROR) << "puck assign from " << thread_params.start_id << " read file error at cid = " << cid << " / " <<
                        thread_params.chunks_count << ", ret = " << read_chunk_size;
-            throw "fvecs_fread error!";
+            throw "read_fvec_format error!";
         }
 
-        fmat_mul_full(_coarse_vocab, chunk_points.get(), _conf.coarse_cluster_count,
-                      real_thread_chunk_size,
-                      _conf.feature_dim, "TN", points_coarse_terms.get());
-        fmat_mul_full(_fine_vocab, chunk_points.get(), _conf.fine_cluster_count,
-                      real_thread_chunk_size,
-                      _conf.feature_dim, "TN", points_fine_terms.get());
+        matrix_multiplication(_coarse_vocab, chunk_points.get(), _conf.coarse_cluster_count,
+                              real_thread_chunk_size,
+                              _conf.feature_dim, "TN", points_coarse_terms.get());
 
+        matrix_multiplication(_fine_vocab, chunk_points.get(), _conf.fine_cluster_count,
+                              real_thread_chunk_size,
+                              _conf.feature_dim, "TN", points_fine_terms.get());
+
+        //计算最近的cell
         for (int point_id = 0; point_id < real_thread_chunk_size; ++point_id) {
             float* cur_point_fea = chunk_points.get() + point_id * _conf.feature_dim;
             float* cur_coarse_distance = points_coarse_terms.get() + point_id * _conf.coarse_cluster_count;
             float* cur_fine_distance = points_fine_terms.get() + point_id * _conf.fine_cluster_count;
-
             float point_norms = cblas_sdot(_conf.feature_dim, cur_point_fea, 1, cur_point_fea, 1) / 2;
             nearest_cell_assign(cur_coarse_distance, cur_fine_distance,
                                 point_norms,
@@ -1080,13 +1139,12 @@ int ThreadParams::open_file(const char* train_fea_file_name, uint32_t feature_di
     learn_stream = fopen(train_fea_file_name, "r");
 
     if (!learn_stream) {
-        LOG(FATAL) << "open file "<<train_fea_file_name<<" has error.";
+        LOG(FATAL) << "open file " << train_fea_file_name << " has error.";
         return -1;
     }
 
     u_int64_t offset = (u_int64_t)start_id * feature_dim * sizeof(float) +
                        (u_int64_t)start_id * sizeof(int);
-
     //文件句柄指向要处理的point块初始地址
     int ret = fseek(learn_stream, offset, SEEK_SET);
 
@@ -1097,6 +1155,15 @@ int ThreadParams::open_file(const char* train_fea_file_name, uint32_t feature_di
                    ps.__pos <<
                    " when init thread params (start_id = " << start_id << ")";
         return -1;
+    }
+
+    return 0;
+}
+
+int ThreadParams::close_file() {
+    if (learn_stream) {
+        fclose(learn_stream);
+        learn_stream = nullptr;
     }
 
     return 0;
@@ -1116,29 +1183,31 @@ void HierarchicalClusterIndex::batch_assign(const uint32_t total_cnt, const std:
         _fine_norms = new float[_conf.fine_cluster_count];
 
         for (uint32_t j = 0; j < _conf.fine_cluster_count; ++j) {
-            _fine_norms[j] = fvec_norm2sqr(_fine_vocab + _conf.feature_dim * j, _conf.feature_dim) / 2;
+            //_fine_norms[j] = fvec_norm2sqr(_fine_vocab + _conf.feature_dim * j, _conf.feature_dim) / 2;
+            _fine_norms[j] = cblas_sdot(_conf.feature_dim, _fine_vocab + _conf.feature_dim * j, 1,
+                                        _fine_vocab + _conf.feature_dim * j, 1) / 2;
             _fine_norms[j] = 0 - std::sqrt(_fine_norms[j]);
         }
     }
-
+    
+    //线程个数由gflags参数threads_count指定，默认等于CPU核数
     for (uint32_t threadId = 0; threadId < _conf.threads_count; ++threadId) {
         threads.push_back(std::thread([&, threadId] {
             {
                 ThreadParams thread_params;
                 thread_params.points_count = std::ceil(1.0 * total_cnt / _conf.threads_count);
-
                 thread_params.start_id = threadId* thread_params.points_count;
                 thread_params.points_count = std::min(thread_params.points_count, (int)(total_cnt - thread_params.start_id));
 
                 if (thread_params.points_count > 0) {
                     try {
                         thread_params.chunks_count = std::ceil(1.0 * thread_params.points_count / FLAGS_thread_chunk_size);
-
                         int param_stat = thread_params.open_file(feature_file_name.c_str(), _conf.feature_dim);
-                        if (param_stat != 0){
+
+                        if (param_stat != 0) {
                             throw "open file has error.";
                         }
-                    
+
                         LOG(INFO) << "assign, thread_params.start_id = " << thread_params.start_id << " points_count = " <<
                                   thread_params.points_count << " feature_file_name = " << feature_file_name << " threadId = " << threadId;
                         assign(thread_params, cell_assign, error_distance.data() + threadId,  pruning_computation.data() + threadId);
@@ -1173,13 +1242,11 @@ void HierarchicalClusterIndex::batch_assign(const uint32_t total_cnt, const std:
               total_error / total_cnt << ", pruning computation = " << total_pruning_computation / total_cnt;
 }
 
-
 ///随机采样，去重
 int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt,
                     const u_int64_t sampling_cnt, const uint32_t feature_dim, float* sampling_vocab) {
-
     if (!sampling_vocab) {
-        LOG(FATAL) <<"sampling_vocab is nullptr";
+        LOG(FATAL) << "sampling_vocab is nullptr";
         return -1;
     }
 
@@ -1256,12 +1323,12 @@ int random_sampling(const std::string& init_file_name, const u_int64_t total_cnt
                 LOG(INFO) << "read sample " << available_sample << " from source file " << init_file_name;
             }
         }
-
     }
 
     learn_stream.close();
     return available_sample;
 }
+
 int HierarchicalClusterIndex::check_feature_dim() {
     int fd = -1;
     fd = open(_conf.feature_file_name.c_str(), O_RDONLY);
@@ -1276,19 +1343,22 @@ int HierarchicalClusterIndex::check_feature_dim() {
     uint32_t feature_dim;
 
     if (read(fd, (char*)&feature_dim, sizeof(uint32_t)) < 0) {
+        close(fd);
         LOG(ERROR) << "read file " << _conf.feature_file_name << " error.";
         return -1;
     }
 
     if (feature_dim != _conf.feature_dim) {
+        close(fd);
         LOG(ERROR) << "feature_dim of file " << _conf.feature_file_name << " is " << feature_dim <<
                    ", feature_dim in GFLAGS is  _conf.feature_dim";
         return -1;
     }
-
+    close(fd);
     _conf.total_point_count = st.st_size / per_point_len;
     return 0;
 }
+
 int HierarchicalClusterIndex::train() {
     if (check_feature_dim() != 0) {
         LOG(ERROR) << "check " << _conf.feature_file_name << " has error.";
@@ -1307,8 +1377,8 @@ int HierarchicalClusterIndex::train() {
 
     //随机抽样kmeans聚类的训练数据
     u_int64_t train_vocab_len = (u_int64_t)FLAGS_train_points_count * _conf.feature_dim;
-
     std::unique_ptr<float[]> kmeans_train_vocab(new float[train_vocab_len]);
+
     int train_points_count = random_sampling(_conf.feature_file_name, _conf.total_point_count,
                              FLAGS_train_points_count, _conf.feature_dim, kmeans_train_vocab.get());
 
@@ -1316,29 +1386,29 @@ int HierarchicalClusterIndex::train() {
         LOG(ERROR) << "sampling data has error.";
         return -1;
     }
-    if (train_points_count < (int)FLAGS_train_points_count){
+
+    if (train_points_count < (int)FLAGS_train_points_count) {
         google::SetCommandLineOption("train_points_count", std::to_string(train_points_count).c_str());
         LOG(INFO) << "true point cnt for kmeans = " << train_points_count;
     }
-    
+
     std::string cur_index_path = FLAGS_train_fea_file_name;
     cur_index_path = cur_index_path.substr(0, cur_index_path.rfind('/'));
     LOG(INFO) << "cur_index_path = " << cur_index_path;
     mkdir(cur_index_path.c_str(), 0777);
     //写文件，训练使用这批抽样数据
-    int ret = write_fvec_format(FLAGS_train_fea_file_name.c_str(),
-                                kmeans_train_vocab.get(), train_points_count, _conf.feature_dim);
+    int ret = write_fvec_format(FLAGS_train_fea_file_name.c_str(), _conf.feature_dim, train_points_count,
+                                kmeans_train_vocab.get());
 
     if (ret != 0) {
         return -1;
     }
 
-    if (train(train_points_count, kmeans_train_vocab.get()) != 0) {
+    if (train(FLAGS_train_points_count, kmeans_train_vocab.get()) != 0) {
         return 1;
     }
 
     return this->HierarchicalClusterIndex::save_coodbooks();
-
 }
 
 int HierarchicalClusterIndex::init_single_build() {
@@ -1368,13 +1438,16 @@ int HierarchicalClusterIndex::init_single_build() {
         _fine_norms = new float[_conf.fine_cluster_count];
 
         for (uint32_t j = 0; j < _conf.fine_cluster_count; ++j) {
-            _fine_norms[j] = fvec_norm2sqr(_fine_vocab + _conf.feature_dim * j, _conf.feature_dim) / 2;
+            //_fine_norms[j] = fvec_norm2sqr(_fine_vocab + _conf.feature_dim * j, _conf.feature_dim) / 2;
+            _fine_norms[j] = cblas_sdot(_conf.feature_dim, _fine_vocab + _conf.feature_dim * j, 1,
+                                        _fine_vocab + _conf.feature_dim * j, 1) / 2;
             _fine_norms[j] = 0 - std::sqrt(_fine_norms[j]);
         }
     }
 
     return 0;
 }
+
 int HierarchicalClusterIndex::single_build(BuildInfo* build_info) {
     if (_model == nullptr) {
         LOG(ERROR) << "should call init_model_memory() first to init builder";
@@ -1384,16 +1457,24 @@ int HierarchicalClusterIndex::single_build(BuildInfo* build_info) {
     float* chunk_points = build_info->feature.data();
 
     if (_conf.whether_norm) {
-        fvec_normalize(chunk_points, _conf.feature_dim, 2);
+        //fvec_normalize(chunk_points, _conf.feature_dim, 2);
+        float norm = cblas_snrm2(_conf.feature_dim, chunk_points, 1);
+
+        if (norm < 1e-6) {
+            LOG(ERROR) << "query norm is " << norm << ", could not be normalize";
+            return -1;
+        }
+
+        cblas_sscal(_conf.feature_dim, 1.0 / norm, chunk_points, 1);
     }
 
     std::unique_ptr<float[]> points_coarse_terms(new float[_conf.coarse_cluster_count]);
     std::unique_ptr<float[]> points_fine_terms(new float[_conf.fine_cluster_count]);
+    matrix_multiplication(_coarse_vocab, chunk_points, _conf.coarse_cluster_count,
+                          1, _conf.feature_dim, "TN", points_coarse_terms.get());
 
-    fmat_mul_full(_coarse_vocab, chunk_points, _conf.coarse_cluster_count,
-                  1, _conf.feature_dim, "TN", points_coarse_terms.get());
-    fmat_mul_full(_fine_vocab, chunk_points, _conf.fine_cluster_count,
-                  1, _conf.feature_dim, "TN", points_fine_terms.get());
+    matrix_multiplication(_fine_vocab, chunk_points, _conf.fine_cluster_count,
+                          1, _conf.feature_dim, "TN", points_fine_terms.get());
 
     float point_norms = cblas_sdot(_conf.feature_dim, chunk_points, 1, chunk_points, 1) / 2;
     nearest_cell_assign(points_coarse_terms.get(), points_fine_terms.get(), point_norms,
@@ -1401,7 +1482,7 @@ int HierarchicalClusterIndex::single_build(BuildInfo* build_info) {
     int cell_id = build_info->nearest_cell.cell_id;
 
     if (cell_id < 0) {
-        LOG(ERROR)<<"get nearest cell id has error, error cell id = "<<cell_id;
+        LOG(ERROR) << "get nearest cell id has error, error cell id = " << cell_id;
         return cell_id;
     }
 
@@ -1435,7 +1516,15 @@ const float* HierarchicalClusterIndex::normalization(SearchContext* context, con
         return search_cell_data.query_norm;
     } else if (_conf.whether_norm) {
         memcpy(search_cell_data.query_norm, feature, sizeof(float) * _conf.feature_dim);
-        fvec_normalize(search_cell_data.query_norm, _conf.feature_dim, 2);
+        //fvec_normalize(search_cell_data.query_norm, _conf.feature_dim, 2);
+        float norm = cblas_snrm2(_conf.feature_dim, search_cell_data.query_norm, 1);
+
+        if (norm < 1e-6) {
+            LOG(ERROR) << "query norm is " << norm << ", could not be normalize";
+            return nullptr;
+        }
+
+        cblas_sscal(_conf.feature_dim, 1.0 / norm, search_cell_data.query_norm, 1);
         return search_cell_data.query_norm;
     }
 
@@ -1455,19 +1544,17 @@ IndexType load_index_type() {
     return index._conf.index_type;
 }
 
-
 //获取文件行数，index初始化时候通过key file确定样本总个数
 int getFileLineCnt(const char* fileName) {
     struct stat st;
 
     if (stat(fileName, &st) != 0) {
-        LOG(ERROR)<<"checking file stat has error, file name = "<<fileName;
+        LOG(ERROR) << "checking file stat has error, file name = " << fileName;
         return -1;
     }
 
     char buff[1024];
     sprintf(buff, "wc -l %s", fileName);
-
     FILE* fstream = nullptr;
     fstream = popen(buff, "r");
     int total_line_cnt = -1;
@@ -1480,8 +1567,8 @@ int getFileLineCnt(const char* fileName) {
             buff[index] = '\0';
             total_line_cnt =  atoi(buff);
         }
-    }else{
-        LOG(ERROR)<<"checking file line cnt has error, file name = "<<fileName;
+    } else {
+        LOG(ERROR) << "checking file line cnt has error, file name = " << fileName;
     }
 
     if (fstream) {

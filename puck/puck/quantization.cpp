@@ -24,19 +24,12 @@
 #include <fstream>
 #include <functional>
 #include <unistd.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <mkl_cblas.h>
-#include "puck/base/yael/vector.h"
-#ifdef __cplusplus
-}
-#endif
 #include "puck/puck/quantization.h"
+#include "puck/hierarchical_cluster/hierarchical_cluster_index.h"
 #include <glog/logging.h>
-
-namespace faiss{
-    void fvec_L2sqr_ny(float* dis, const float* x,
+namespace faiss {
+void fvec_L2sqr_ny(float* dis, const float* x,
                    const float* y, size_t d, size_t ny);
 };
 
@@ -79,7 +72,6 @@ struct ThreadReaderParam {
 void load_bytes_array_thread(const ThreadReaderParam reader, unsigned char* code_bytes,
                              const uint32_t* local_2memory_idx) {
     std::ifstream input_file(reader.file_name.c_str(), std::ios::binary | std::ios::in);
-
     u_int64_t curr_file_offset = (u_int64_t)reader.start_id * reader.read_len + reader.file_offset;
     input_file.seekg(curr_file_offset);
 
@@ -90,10 +82,8 @@ void load_bytes_array_thread(const ThreadReaderParam reader, unsigned char* code
             memory_idx = local_2memory_idx[reader.start_id + i];
         }
 
-        //LOG(INFO)<<"local_idx = "<<local_idx<<" "<<reader.start_id + i;
         u_int64_t pq_curr_offset = (u_int64_t)memory_idx * (reader.read_len + reader.read_offset) +
                                    reader.read_offset;
-
         input_file.read((char*)(code_bytes + pq_curr_offset), reader.read_len);
 
         if ((i + 1) % 1000000 == 0) {
@@ -107,9 +97,9 @@ void load_bytes_array_thread(const ThreadReaderParam reader, unsigned char* code
 
 bool check_file_length_info(const std::string& file_name,
                             const uint64_t file_length);
+
 int Quantization::init_codebooks_memory() {
     u_int64_t pq_codebook_length = (u_int64_t)_params.nsq * _params.ks * _params.lsq;
-    //LOG(INFO) << "init_codebooks_memory " << pq_codebook_length;
     _coodbooks.reset(new float[pq_codebook_length]);
 
     if (_coodbooks.get() == nullptr) {
@@ -121,10 +111,10 @@ int Quantization::init_codebooks_memory() {
 }
 
 int Quantization::load_codebooks(const std::string& codebook_file) {
-    //LOG(INFO) << "load codebooks " << codebook_file;
-
-    int ret = fvecs_read(codebook_file.c_str(), _params.lsq,
-                         _params.nsq * _params.ks, _coodbooks.get());
+    //int ret = fvecs_read(codebook_file.c_str(), _params.lsq,
+    //                     _params.nsq * _params.ks, _coodbooks.get());
+    int ret = read_fvec_format(codebook_file.c_str(), _params.lsq,
+                               _params.nsq * _params.ks, _coodbooks.get());
 
     if (ret != int(_params.nsq * _params.ks)) {
         LOG(FATAL) << "load file error, file : " << codebook_file << " feature_dim : " <<
@@ -135,10 +125,10 @@ int Quantization::load_codebooks(const std::string& codebook_file) {
 
     return 0;
 }
+
 int Quantization::init_quantized_feature_memory() {
     uint64_t pq_feature_length = (u_int64_t)_total_point_count * _per_fea_len;
     LOG(INFO) << "init quantized feature memory, length = " << pq_feature_length;
-
     void* memb = nullptr;
     int32_t pagesize = getpagesize();
     pq_feature_length =  pq_feature_length + (pagesize - pq_feature_length % pagesize);
@@ -184,7 +174,6 @@ int Quantization::load_quantized_feature(const std::string& quantization_file,
     uint32_t threads_count = std::thread::hardware_concurrency();
     uint32_t per_thread_count = ceil(1.0 * _total_point_count / threads_count);
     std::vector<std::thread> threads;
-
     ThreadReaderParam params;
     params.file_name = quantization_file;
     params.read_len = _per_fea_len;
@@ -197,7 +186,6 @@ int Quantization::load_quantized_feature(const std::string& quantization_file,
         params.start_id = thread_id * per_thread_count;
         params.count = std::min(per_thread_count, _total_point_count - params.start_id);
         params.thread_idx = thread_id;
-
         threads.push_back(std::thread(std::bind(load_bytes_array_thread,
                                                 params, _quantized_feature.get(), local_2memory_idx)));
     }
@@ -208,7 +196,6 @@ int Quantization::load_quantized_feature(const std::string& quantization_file,
 
     LOG(INFO) << "load quantized feature " << quantization_file << " suc.";
     return 0;
-
 }
 
 int Quantization::load(const std::string& codebook_file, const std::string& quantized_feafile,
@@ -241,7 +228,6 @@ int Quantization::load(const std::string& codebook_file, const std::string& quan
 std::unique_ptr<float[]> Quantization::decode(uint64_t idx) const {
     unsigned char* pq_feature = get_quantized_feature(idx);
     pq_feature += _fea_offset;
-
     std::unique_ptr<float[]> residual(new float[_params.nsq * _params.lsq]);
 
     for (uint32_t m = 0; m < _params.nsq; ++m) {
@@ -254,6 +240,7 @@ std::unique_ptr<float[]> Quantization::decode(uint64_t idx) const {
 
     return std::move(residual);
 }
+
 int Quantization::set_static_value_of_formula(uint64_t idx, float* vocab) {
     if (idx >= _total_point_count || !vocab) {
         return -1;
@@ -270,39 +257,40 @@ int Quantization::set_static_value_of_formula(uint64_t idx, float* vocab) {
     return 0;
 }
 
-
 int Quantization::get_dist_table(const float*  feature, float* dist_table) const {
-
     for (uint32_t m = 0; m < _params.nsq; ++m) {
         faiss::fvec_L2sqr_ny(dist_table + m * _params.ks,
-                      feature + m * _params.lsq,
-                      _coodbooks.get() + (u_int64_t)m * _params.ks * _params.lsq,
-                      _params.lsq,
-                      _params.ks);
+                             feature + m * _params.lsq,
+                             _coodbooks.get() + (u_int64_t)m * _params.ks * _params.lsq,
+                             _params.lsq,
+                             _params.ks);
+    }
+
+    return 0;
+}
+int write_fvec_format(const char* file_name, const uint32_t dim, const uint64_t n, const float* fea_vocab);
+int Quantization::save_coodbooks(const std::string& file_name) const {
+    return write_fvec_format(file_name.c_str(), _params.lsq, _params.nsq * _params.ks, get_coodbooks());
+}
+
+int Quantization::save_index(const std::string& file_name) const {
+    FILE* f = fopen(file_name.c_str(), "wb");
+
+    if (f == nullptr) {
+        LOG(ERROR) << "cannot open " << file_name << " for writing";
+        return -1;
+    }
+
+    unsigned char* feature_data = get_quantized_feature(0);
+    long ret = fwrite(feature_data, get_per_fea_len(), _total_point_count, f);
+    fclose(f);
+
+    if (ret != _total_point_count) {
+        LOG(ERROR) << "writint to " << file_name << " has error";
+        return -1;
     }
 
     return 0;
 }
 
-int write_fvec_format(const char* file_name, const float* fea_vocab, const uint32_t fea_cnt,
-                       const int dim);
-
-int Quantization::save_coodbooks(const std::string& file_name) const {
-   return write_fvec_format(file_name.c_str(), get_coodbooks(), _params.nsq * _params.ks, _params.lsq);
-}
-
-void write_sequential_format(const char* file_name, const void* wrt_vocab, const size_t vocab_len) {
-    std::ofstream out_fvec_init;
-    out_fvec_init.open(file_name, std::ios::binary | std::ios::out);
-
-    out_fvec_init.write((char*)wrt_vocab, vocab_len);
-    out_fvec_init.close();
-}
-
-int Quantization::save_index(const std::string& file_name) const {
-    write_sequential_format(file_name.c_str(), get_quantized_feature(0), _total_point_count * get_per_fea_len());
-    return 0;
-}
-
 }//namespace puck
-

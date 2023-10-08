@@ -67,16 +67,17 @@ int SearchContext::reset(const IndexConf& conf) {
     //二级聚类中心最多需要top-neighbors_count个cell，空间多申请一些可避免频繁更新tag idx
     unsigned int all_cells_cnt = 1;
 
-    if (conf.index_type == IndexType::PUCK || conf.index_type == IndexType::HIERARCHICAL_CLUSTER) {
+    //if (conf.index_type == IndexType::PUCK ||  conf.index_type == IndexType::HIERARCHICAL_CLUSTER) {
+    if (conf.index_type == IndexType::HIERARCHICAL_CLUSTER) {
         all_cells_cnt = conf.neighbors_count * 1.1;
-    }
 
-    if (all_cells_cnt > conf.search_coarse_count * conf.fine_cluster_count) {
-        all_cells_cnt = conf.search_coarse_count * conf.fine_cluster_count;
-    }
+        if (all_cells_cnt > conf.search_coarse_count * conf.fine_cluster_count) {
+            all_cells_cnt = conf.search_coarse_count * conf.fine_cluster_count;
+        }
 
-    if (_search_cell_data.cell_distance.size() != all_cells_cnt) {
-        _search_cell_data.cell_distance.resize(all_cells_cnt);
+        if (_search_cell_data.cell_distance.size() != all_cells_cnt) {
+            _search_cell_data.cell_distance.resize(all_cells_cnt);
+        }
     }
 
     if (_inited) {
@@ -96,7 +97,6 @@ int SearchContext::reset(const IndexConf& conf) {
     size_t fine_ip_heap_size = (sizeof(float) + sizeof(uint32_t)) * conf.fine_cluster_count;
 
     size_t stage_fine = coarse_heap_size + fine_ip_dist + fine_ip_heap_size;
-    
 
     //model_size = std::max(model_size, stage_fine);
     if (conf.whether_filter) {

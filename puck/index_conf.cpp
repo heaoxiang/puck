@@ -63,7 +63,7 @@ IndexConf::IndexConf() {
     neighbors_count = FLAGS_neighbors_count;
     topk = FLAGS_topk;
     radius_rate = FLAGS_radius_rate;
-    
+
     //加载文件相关参数
     threads_count = FLAGS_threads_count;
     coarse_cluster_count = FLAGS_coarse_cluster_count;
@@ -102,17 +102,24 @@ int IndexConf::adaptive_train_param() {
         return 0;
     }
 
+    if (index_type == IndexType::HIERARCHICAL_CLUSTER) {
+        whether_filter = false;
+        whether_pq = false;
+        return 0;
+    }
+
     if (index_type == IndexType::PUCK) {
 
         google::CommandLineFlagInfo info;
         //filter_nsq 未设置
         whether_filter = true;
         bool unset_filter_nsq = google::GetCommandLineFlagInfo("filter_nsq", &info) && info.is_default;
+
         //用户指定
         if (!unset_filter_nsq) {
             return 0;
         }
-        
+
         if (unset_filter_nsq && ip2cos == 0) {
             uint32_t lsq = 4;
 
@@ -123,7 +130,7 @@ int IndexConf::adaptive_train_param() {
                     return 0;
                 }
             } while (++lsq <= feature_dim / 2);
-        }else if (unset_filter_nsq) {
+        } else if (unset_filter_nsq) {
             uint32_t lsq = 4;
 
             do {
@@ -135,12 +142,10 @@ int IndexConf::adaptive_train_param() {
                 }
             } while (++lsq <= feature_dim / 2);
         }
+
         return -1;
     }
-    if (index_type == IndexType::HIERARCHICAL_CLUSTER) {
-        whether_filter = false;
-        whether_pq = false; 
-    }
+
     return 0;
 }
 
@@ -159,6 +164,13 @@ int IndexConf::adaptive_search_param() {
         if (google::GetCommandLineFlagInfo("search_coarse_count", &info) && info.is_default) {
             search_coarse_count = std::min(20, (int)coarse_cluster_count);
         }
+    }
+
+    if (index_type == IndexType::HIERARCHICAL_CLUSTER) {
+        if (neighbors_count < topk) {
+            LOG(ERROR) << "neighbors_count should >= topk, should update the search params";
+            return -1;
+        }
     } else {
         google::CommandLineFlagInfo info;
 
@@ -168,8 +180,12 @@ int IndexConf::adaptive_search_param() {
         }
 
         //shoud be topk <= filter_topk <= neighbors_count;
-        if (neighbors_count < filter_topk) {
-            LOG(ERROR) << "neighbors_count should >= filter_topk, should update the search params";
+        //if (neighbors_count < filter_topk) {
+        //    LOG(ERROR) << "neighbors_count should >= filter_topk, should update the search params";
+        //    return -1;
+        //}
+        if (radius_rate < 1.0) {
+            LOG(ERROR) << "radius_rate should >= 1.0, should update the search params";
             return -1;
         }
 
@@ -186,33 +202,34 @@ void IndexConf::show() {
     LOG(INFO) << "feature_dim = " << feature_dim;
     LOG(INFO) << "whether_norm = " << whether_norm;
     LOG(INFO) << "index_type = " << int(index_type);
+    LOG(INFO) << "total_point_count = " << total_point_count;
 
-    //filter
-    if (whether_filter) {
-        LOG(INFO) << "whether_filter = " << whether_filter;
-        LOG(INFO) << "filter_nsq = " << filter_nsq;
-        LOG(INFO) << "ks = " << ks;
-    }
-
-    //pq
-    if (whether_pq) {
-        LOG(INFO) << "whether_pq = " << whether_pq;
-        LOG(INFO) << "nsq = " << nsq;
-        LOG(INFO) << "ks = " << ks;
-    }
 
     LOG(INFO) << "coarse_cluster_count = " << coarse_cluster_count;
     LOG(INFO) << "fine_cluster_count = " << fine_cluster_count;
-
     LOG(INFO) << "search_coarse_count = " << search_coarse_count;
 
     if (index_type == IndexType::TINKER) {
         LOG(INFO) << "tinker_neighborhood = " << FLAGS_tinker_neighborhood;
         LOG(INFO) << "tinker_construction = " << FLAGS_tinker_construction;
         LOG(INFO) << "tinker_search_range = " << tinker_search_range;
+    } else if (index_type == IndexType::HIERARCHICAL_CLUSTER) {
+        LOG(INFO) << "neighbors_count = " << neighbors_count;
+    } else if (index_type == IndexType::PUCK) {
+        LOG(INFO) << "radius_rate = " << radius_rate;
+        //filter
+        LOG(INFO) << "whether_filter = " << whether_filter;
+        LOG(INFO) << "filter_nsq = " << filter_nsq;
+        LOG(INFO) << "ks = " << ks;
+
+        //pq
+        if (whether_pq) {
+            LOG(INFO) << "whether_pq = " << whether_pq;
+            LOG(INFO) << "nsq = " << nsq;
+            LOG(INFO) << "ks = " << ks;
+        }
     }
 
-    LOG(INFO) << "neighbors_count = " << neighbors_count;
     LOG(INFO) << "topk = " << topk;
 
     if (ip2cos) {

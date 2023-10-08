@@ -11,7 +11,6 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-
 /**
  * @file max_heap.h
  * @author huangben@baidu.com
@@ -21,15 +20,11 @@
  *
  **/
 #pragma once
-
 #include <cstdio>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-
 namespace puck {
-
-
 class MaxHeap {
 public:
     MaxHeap(const uint32_t size, float* val, uint32_t* tag);
@@ -56,7 +51,6 @@ public:
     float* get_top_addr() const {
         return _heap_val + 1;
     }
-
 private:
     MaxHeap();
     /*
@@ -67,7 +61,6 @@ private:
      * @@param [in] new_tag : 标记
      **/
     void insert(uint32_t heap_size, uint32_t father_idx, float  new_val, uint32_t new_tag);
-
     void pop_top(uint32_t heap_size);
 private:
     float* _heap_val;
@@ -77,4 +70,3 @@ private:
 };
 
 }
-

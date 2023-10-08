@@ -11,7 +11,6 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-
 /**
  * @file   tinker_distfunc_opt.cpp
  * @author huangben@baidu.com
@@ -20,46 +19,42 @@
  * @brief
  *
  **/
-
-#include "puck/tinker/method/hnsw.h"
-#include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
-
-#include "puck/tinker/portable_prefetch.h"
-#include "puck/tinker/space.h"
-
 #include <algorithm> // std::min
 #include <limits>
 #include <vector>
+#include "puck/tinker/method/hnsw.h"
+#include "puck/tinker/method/hnsw_distfunc_opt_impl_inline.h"
+#include "puck/tinker/portable_prefetch.h"
+#include "puck/tinker/space.h"
 
 namespace similarity {
-
 template <typename dist_t>
 void
 Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, const int topk,
                                const std::vector<int>& enterpointIds, std::priority_queue<std::pair<float, int>>& closestDistQueuei) {
-
     TMP_RES_ARRAY(TmpRes);
     size_t qty = feature_dim;
     VisitedList* vl = visitedlistpool->getFreeVisitedList();
     vl_type* massVisited = vl->mass;
     vl_type currentV = vl->curV;
-
     std::priority_queue<EvaluatedMSWNodeInt<dist_t>>
-            candidateQueuei; // the set of elements which we can use to evaluate
+            candidateQueuei;
 
     int distance_computations = 0;
 
     for (auto& enterpointId : enterpointIds) {
-
         int curNodeNum = enterpointId;
         dist_t curdist = (fstdistfunc_(
-                              pVectq, (float*)(data_level0_memory_ + curNodeNum * memoryPerObject_ + offsetData_ + objectDataOffset_), qty, TmpRes));
+                              pVectq, (float*)(data_level0_memory_ + curNodeNum * memoryPerObject_ + offsetData_ + objectDataOffset_), qty,
+                              TmpRes));
         ++distance_computations;
         massVisited[curNodeNum] = currentV;
+
         if (closestDistQueuei.size() < (size_t)topk || curdist < closestDistQueuei.top().first) {
             candidateQueuei.emplace(-curdist, curNodeNum);
             closestDistQueuei.emplace(curdist, curNodeNum);
-            if (closestDistQueuei.size() > (size_t)topk){
+
+            if (closestDistQueuei.size() > (size_t)topk) {
                 closestDistQueuei.pop();
             }
         }
@@ -106,7 +101,6 @@ Hnsw<dist_t>::SearchOld_level0(const float* pVectq, const size_t feature_dim, co
 
     visitedlistpool->releaseVisitedList(vl);
 }
-
 
 template class Hnsw<float>;
 }

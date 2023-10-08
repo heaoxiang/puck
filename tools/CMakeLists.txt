@@ -8,7 +8,6 @@ file(
     "../puck/tinker/*.cpp"
     "../puck/tinker/*/*.cc"
     "../puck/*.cpp"
-    "../puck/base/yael/*.c"
 )
 
 add_executable(train)

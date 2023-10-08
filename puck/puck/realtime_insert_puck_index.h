@@ -20,7 +20,6 @@
  *
  **/
 #pragma once
-
 #include <mutex>
 #include <memory>
 #include <vector>
@@ -30,7 +29,6 @@ struct InsertFineCluster;
 struct IndexFileHandle;
 struct InsertRequest;
 struct InsertDataMemory;
-
 class RealtimeInsertPuckIndex: public PuckIndex {
 public:
     RealtimeInsertPuckIndex();
@@ -45,15 +43,6 @@ public:
      * @@return 0 => 正常 非0 => 错误
      **/
     int insert(const InsertRequest* request);
-
-
-    /*
-     * @brief 检索最近的topk个样本
-     * @@param [in] request : 请求数据
-     * @@param [in] response : 返回结果
-     * @@return 0 => 正常 非0 => 错误
-     **/
-    int search(const Request* request, Response* response);
     const IndexConf get_conf() {
         return _conf;
     }
@@ -61,47 +50,43 @@ public:
      * @brief local idx 获取对应的lable
      **/
     int get_label(const uint32_t label_id, std::string& label);
-
 protected:
-
     /*
      * @brief insert会导致文件长度变化，重新整理索引文件
      **/
     int reorganize_inserted_index();
-
     /*
      * @brief 处理单个索引文件
      **/
     int reorganize(const std::string& filename, uint64_t file_length);
     int append_insert_memory(uint32_t group_id);
-
     /*
      * @brief insert的样本写索引文件
      **/
     int append_index(const InsertRequest* request, puck::BuildInfo& build_info, uint32_t insert_id);
 protected:
     int read_labels();
-    /*
-    * @brief 计算query与top_coarse_cnt个一级聚类中心的下所有二级聚类中心的距离
-    * @@param [in\out] context : context由内存池管理
-    * @@param [in] feature : query的特征向量
-    * @@return (int) : 正常返回保留的cell个数(>0)，错误返回值<0
-    **/
-    int search_nearest_fine_cluster(SearchContext* context, const float* feature);
-
 protected:
     /*
      * @brief 计算query与某个cell下所有样本的距离（样本的filter量化特征）
      * @@param [in\out] context : context由内存池管理
-     * @@param [in] cell_idx : 某个cell的id
-     * @@param [in] pq_dist_table : pq_dist_table
+     * @@param [in] FineCluster : cell指针
+     * @@param [in] cell_dist : query和cell的距离
      * @@param [in] result_heap : 堆结构，存储query与样本的topk
-     * @@return 0 => 正常 非0 => 错误
+     * @@return (int) : 正常返回0，错误返回值<0
      **/
-    virtual int compute_quantized_distance(SearchContext* context, const int cell_idx,
-                                           const float* pq_dist_table, MaxHeap& result_heap);
+    virtual int compute_quantized_distance(SearchContext* context, const FineCluster*, const float cell_dist,
+                                           MaxHeap& result_heap);
+    /*
+     * @brief 计算query与部分样本的距离(query与filter特征的topN个样本）
+     * @@param [in\out] context : context由内存池管理
+     * @@param [in] feature : query的特征向量
+     * @@param [in] filter_topk : cell指针
+     * @@param [in] result_heap : 堆结构，存储query与样本的topk
+     * @@return (int) : 正常返回0，错误返回值<0
+     **/
     virtual int rank_topN_points(SearchContext* context, const float* feature, const uint32_t filter_topk,
-                               MaxHeap& result_heap);
+                                 MaxHeap& result_heap);
 protected:
     //Insert points of each cell
     std::unique_ptr<InsertFineCluster[]> _insert_fine_cluster;
@@ -149,7 +134,6 @@ struct InsertFineCluster {
         insert_points = nullptr;
     }
     uint32_t get_point_cnt() const {
-        //LOG(INFO) << "get_point_cnt() " << point_cnt;
         return point_cnt;
     }
     ~InsertFineCluster();
@@ -168,11 +152,9 @@ struct IndexFileHandle {
     IndexFileHandle(IndexConf& index_conf): conf(index_conf) {}
     ~IndexFileHandle();
     int init();
-
     bool open_handle(std::ofstream& file_stream, std::string& file_name);
     bool close_handle(std::ofstream& file_stream);
     IndexConf& conf;
-
     std::ofstream cell_assign_file;
     std::ofstream label_file;
     std::ofstream pq_quantization_file;
@@ -182,4 +164,3 @@ struct IndexFileHandle {
 };
 
 }//namespace
-

@@ -16,7 +16,7 @@ if GLOBAL_GCC_VERSION() == 'gcc82':
     CPPFLAGS('-Wno-cast-function-type')
     CPPFLAGS('-Wno-error=sign-compare')
 
-CPPFLAGS('-std=c++11 -Wall -fopenmp  -msse4 -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g -DFINTEGER=int')
+CPPFLAGS('-std=c++11 -Wall -fopenmp -mavx -mavx2 -msse4 -Wcast-align -Ofast -lm -lrt -pthread  -DHAVE_CXX0X -march=native -Wl,--no-as-needed -fpic -g -DFINTEGER=int')
 
 #link flags
 LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
@@ -24,7 +24,7 @@ LDFLAGS('-lpthread -pthread -lcrypto -lrt -ldl -fopenmp -lz')
 #-I path
 INCPATHS('../')
 
-user_sources=GLOB(' ../puck/*.cpp ../puck/base/*.cpp ../puck/base/yael/*.c  ../puck/gflags/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/puck/*.cpp ../puck/tinker/*.cpp ../puck/tinker/method/*.cc')
+user_sources=GLOB(' ../puck/*.cpp ../puck/base/*.cpp  ../puck/gflags/*.cpp ../puck/hierarchical_cluster/*.cpp ../puck/puck/*.cpp ../puck/tinker/*.cpp ../puck/tinker/method/*.cc')
 
 train_source=" train.cpp " + user_sources
 build_source=" build.cpp " + user_sources
